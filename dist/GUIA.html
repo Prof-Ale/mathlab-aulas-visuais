@@ -1,0 +1,38 @@
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MathLab — Guia</title><style>body{font-family:"Segoe UI",Arial,sans-serif;color:#1d2433;line-height:1.55;margin:0;background:#eef1f7}
+.doc{max-width:820px;margin:0 auto;background:#fff;padding:36px 44px}
+.doc h1{color:#14264f;border-bottom:4px solid #f2b705;padding-bottom:8px;margin-top:0}
+.meta{color:#55607a;font-size:.92em;margin-bottom:18px}
+.sec{border-left:6px solid #14264f;background:#f7f9fd;border-radius:0 10px 10px 0;padding:6px 18px 10px;margin:18px 0;page-break-inside:avoid}
+.sec>h2{margin:.5em 0 .3em;font-size:1.2em;color:#14264f}
+.b-exemplo{border-color:#22a559;background:#f1faf4}.b-atividade{border-color:#f28a1f;background:#fff7ee}.b-exercicios{border-color:#7a4bd1;background:#f7f3ff}
+.b-gabarito{border-color:#1e6fd9;background:#eef5ff}.b-nota{border-color:#d6453d;background:#fff3f2}.b-acessibilidade{border-color:#0e8f8f;background:#effafa}.b-problematizacao{border-color:#f2b705;background:#fffbea}
+.math{font-family:Cambria,"Times New Roman",serif;font-style:italic;background:#fff8d6;padding:0 3px;border-radius:3px}
+.fig{text-align:center;margin:10px 0}.fig svg{max-width:100%;height:auto}
+table{border-collapse:collapse;margin:8px 0}th,td{border:1px solid #b9c3d9;padding:4px 10px}th{background:#e8edf8}
+blockquote{border-left:4px solid #f2b705;margin:8px 0;padding:2px 12px;color:#44506b}
+.refs li,.lims li{margin:3px 0}
+@page{size:A4;margin:14mm}
+@media print{body{background:#fff}.doc{max-width:none;padding:0}.pgbreak{page-break-after:always}}.doc{margin-top:0}code,pre{background:#eef1f7;padding:2px 5px;border-radius:4px}pre{padding:10px;overflow:auto}</style></head><body><div class="doc"><h3>MathLab Aulas Visuais — versão 1.1</h3>
+<p>Ferramenta de <strong>autoria docente para qualquer disciplina</strong>. O professor pede um material em linguagem natural e recebe:</p>
+<ul><li>um <strong>material didático completo</strong>, adaptado ao tipo de conhecimento (formal, empírico, interpretativo, histórico, linguístico, prático);</li><li>uma <strong>apostila visual completa</strong>: <strong>capa</strong> em pôster (caixas numeradas, dica de ouro, &quot;você sabia?&quot;, atenção, faixa &quot;Em resumo&quot;) + <strong>miolo</strong> em páginas A4 com o mesmo visual (apresentação, sumário com páginas, um cartão colorido por bloco, figuras, caixas de destaque, resumo final, referências);</li><li><strong>editor por blocos</strong> com histórico de versões, <strong>auditoria</strong> em 10 categorias e <strong>exportação</strong> (HTML, PDF pelo navegador, Markdown, JSON, SVG).</li></ul>
+<p>Duas peças que trabalham juntas:</p>
+<table><thead><tr><th>Peça</th><th>O que faz</th><th>Onde roda</th></tr></thead><tbody><tr><td><strong>Skill / Gem</strong> (<code>skill/SKILL.md</code>, <code>gemini/GEM_INSTRUCOES.md</code>)</td><td>Escreve o conteúdo, sem inventar referências, e devolve JSON</td><td>Claude ou Gemini Pro (Gem)</td></tr><tr><td><strong>Site</strong> (<code>index.html</code>)</td><td>Importa o JSON, edita, audita, versiona, exporta, monta o pôster e o prompt da imagem</td><td>Navegador (GitHub Pages ou arquivo único)</td></tr></tbody></table>
+<p>Nenhum dado sai do navegador. Não há servidor, chave de API nem chamada externa.</p>
+<h4>Uso rápido (sem custo extra)</h4>
+<ol start="1"><li>Abra o site e vá em <strong>Criar</strong>. Preencha disciplina, etapa, tema e duração.</li><li>Clique em <strong>Copiar pedido</strong> e cole no seu <strong>Gem</strong> do Gemini (ou no Claude com a skill).</li><li>Copie o JSON que ele devolver, cole em <strong>Criar → Importar material</strong>.</li><li>Revise no <strong>Editor</strong>, ajuste a <strong>Capa (pôster)</strong>, confira a <strong>Apostila completa</strong>, rode a <strong>Auditoria</strong> e <strong>Exporte</strong> (botão &quot;Apostila completa&quot;).</li><li>Para a versão ilustrada: em <strong>Capa (pôster)</strong>, clique em <strong>Copiar prompt da imagem</strong> e cole no Gemini (Nano Banana). O pôster em HTML continua sendo a versão exata, porque IA de imagem pode errar letras.</li></ol>
+<h4>Instalar o Gem (Gemini Pro)</h4>
+<ol start="1"><li>Em gemini.google.com, abra <strong>Gems → Novo Gem</strong>.</li><li>Nome: <code>MathLab</code>. Em <strong>Instruções</strong>, cole todo o texto de <code>gemini/GEM_INSTRUCOES.md</code>.</li><li>Salve. Use esse Gem sempre que for gerar material.</li></ol>
+<h4>Instalar a skill (Claude)</h4>
+<p>Use <code>skill/SKILL.md</code> como skill chamada <code>mathlab-aulas-visuais</code>.</p>
+<h4>Publicar no GitHub Pages</h4>
+<ol start="1"><li>Crie um repositório e suba <strong>todo o conteúdo desta pasta</strong>.</li><li>Em <strong>Settings → Pages → Build and deployment → Source</strong>, escolha <strong>GitHub Actions</strong>.</li><li>A cada envio para <code>main</code>, o fluxo <code>.github/workflows/pages.yml</code> roda os testes e publica o site.</li><li>O endereço será <code>https://SEU-USUARIO.github.io/NOME-DO-REPOSITORIO/</code>.</li></ol>
+<p>Sem GitHub: abra <code>dist/mathlab-standalone.html</code> com duplo clique (arquivo único, funciona offline).</p>
+<h4>Desenvolvimento</h4>
+<ul><li><code>npm test        # testes do núcleo (auditoria, importação, exportação, segurança do SVG)</code></li><li><code>npm run build   # gera dist/mathlab-standalone.html</code></li></ul>
+<ul><li><code>js/core.js</code>: núcleo sem dependências (esquema, auditoria, Markdown seguro, geradores de SVG, pôster, exportação).</li><li><code>js/app.js</code>: interface. Persistência em <code>localStorage</code> (faça backup pela Biblioteca).</li><li>Tema do pôster: <code>POSTER_THEMES</code> e <code>POSTER_CSS</code> em <code>js/core.js</code>. É onde se troca o visual.</li></ul>
+<h4>O que mudou na 1.1</h4>
+<ul><li><strong>Miolo da apostila</strong>: antes só havia a capa (pôster) e o material em HTML simples. Agora a aba <strong>Apostila completa</strong> monta capa + miolo em páginas A4 no mesmo visual, com paginação pela altura real da folha, sumário com número de página e rodapé.</li><li><strong>Caixas de destaque por bloco</strong> (<code>callout</code>: dica, sabia, atencao, prova), campo opcional e compatível com materiais antigos.</li><li>Aviso honesto: o desenho do miolo é <strong>proposta nossa</strong> no estilo da capa; não foi copiado de nenhuma apostila de terceiros. Se você tiver um modelo de miolo que prefere, o visual se ajusta em <code>BOOK_CSS</code> (<code>js/core.js</code>).</li></ul>
+<h4>Regras do projeto</h4>
+<p>Não inventar referências nem resultados de testes; não aprovar automaticamente (a auditoria é por regras e <strong>não</strong> substitui a revisão do professor); esqueleto offline é sempre reprovado até ser preenchido; exclusões pedem confirmação e baixam backup antes; versões nunca são apagadas ao restaurar.</p>
+<h4>Ainda não está nesta versão</h4>
+<p>Exportação em <strong>Word (.docx)</strong> e <strong>PowerPoint (.pptx)</strong>, integração direta com API do Gemini e busca de referências no Crossref/OpenAlex. O caminho principal (Gem + importar JSON) cobre o essencial sem custo.</p></div></body></html>
