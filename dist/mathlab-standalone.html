@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>MathLab Aulas Visuais v1.3 — Prof. Alê Barbosa</title>
+<title>MathLab Aulas Visuais v1.4 — Prof. Alê Barbosa</title>
 <meta name="description" content="Ferramenta de autoria docente: crie, edite, audite e exporte aulas e apostilas visuais de qualquer disciplina.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -64,7 +64,7 @@ details{margin:6px 0}summary{cursor:pointer;color:var(--navy2);font-weight:600}
 </head>
 <body>
 <header class="top">
-  <div class="brand"><span class="logo">∑</span><div><strong>MathLab</strong> <span class="gold">Aulas Visuais</span> <span class="gold">v1.3</span><small>Psicologia Histórico-Cultural · Prof. Alê Barbosa</small></div></div>
+  <div class="brand"><span class="logo">∑</span><div><strong>MathLab</strong> <span class="gold">Aulas Visuais</span> <span class="gold">v1.4</span><small>Psicologia Histórico-Cultural · Prof. Alê Barbosa</small></div></div>
   <nav id="tabs" aria-label="Seções"></nav>
 </header>
 <main id="main" tabindex="-1"></main>
@@ -78,9 +78,14 @@ details{margin:6px 0}summary{cursor:pointer;color:var(--navy2);font-weight:600}
 })(typeof self !== 'undefined' ? self : this, function () {
   'use strict';
 
-  const VERSION = '1.3.0';
+  const VERSION = '1.4.0';
   const SCHEMA = 'mathlab.material/2';
   const DEFAULT_AUTHOR = 'Prof. Alê Barbosa';
+
+  const INTERIOR_STYLES = {
+    editorial: 'Editorial Clean (respiro, pílula de página, abertura com guia e colofão)',
+    ludico: 'Lúdico / HQ (caixas coloridas numeradas)',
+  };
 
   const AVATAR_OPTIONS = {
     'avatar-prof-ale-1.jpg': 'Prof. Alê — Jaleco e Livro (Pesquisa)',
@@ -531,8 +536,11 @@ details{margin:6px 0}summary{cursor:pointer;color:var(--navy2);font-weight:600}
       m.poster = {
         title: String(p.title || m.title), subtitle: String(p.subtitle || ''), author: String(p.author || m.author || DEFAULT_AUTHOR), mascot: String(p.mascot || ''),
         coverClean: p.coverClean !== false,
+        interiorStyle: INTERIOR_STYLES[p.interiorStyle] ? p.interiorStyle : 'editorial',
         avatarChoice: AVATAR_OPTIONS[p.avatarChoice] ? p.avatarChoice : 'avatar-prof-ale-1.jpg',
         logoChoice: LOGO_OPTIONS[p.logoChoice] ? p.logoChoice : 'logo-mathlab-clean.jpg',
+        videoTitle: String(p.videoTitle || '').trim(),
+        videoUrl: String(p.videoUrl || '').trim(),
         sections: (Array.isArray(p.sections) ? p.sections : []).slice(0, 6).map((s, i) => ({ label: String(s.label || 'Seção ' + (i + 1)), title: String(s.title || ''), text: String(s.text || '') })),
         goldTip: String(p.goldTip || ''), didYouKnow: String(p.didYouKnow || ''), attention: String(p.attention || ''),
         summary: (Array.isArray(p.summary) ? p.summary : []).slice(0, 5).map((s) => ({ icon: String(s.icon || '⭐'), label: String(s.label || ''), text: String(s.text || '') })),
@@ -766,6 +774,25 @@ details{margin:6px 0}summary{cursor:pointer;color:var(--navy2);font-weight:600}
     '.mlsynth-q{margin:8px 0 4px;font-size:13.5px;font-weight:700;color:#2c4a8f}.mlsynth-line{border-bottom:1.5px dashed #9fb0cf;height:20px;margin-bottom:6px}',
     '.mlrefs{font-size:12.5px;line-height:1.4}.mlrefs li{margin:3px 0}',
     '.mlnote{font-size:12px;color:#55607a;border:2px dashed #b9c3d9;border-radius:10px;padding:6px 10px;margin-top:10px}',
+    '.mlbook.ml-ed .mlpage:not(.mlcover){background:#ffffff;padding:22px 40px 58px}',
+    '.mlbook.ml-ed .mlph{border-bottom:3px solid var(--c2);padding-bottom:6px;margin-bottom:18px}',
+    '.mlph-pg{display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:26px;padding:0 10px;border-radius:6px;background:var(--c2);color:#fff;font-family:"Fredoka",sans-serif;font-weight:700;font-size:14px}',
+    '.mlbook.ml-ed .mlpf{left:40px;right:40px;border-top:2px solid var(--c2);border-bottom:0;align-items:center}',
+    '.mlnav{display:inline-flex;gap:6px;align-items:center}.mlnav a{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:6px;background:#eef2f8;color:var(--tt);text-decoration:none;font-size:13px;border:1px solid #cbd5e1}',
+    '.mlbook.ml-ed .mlc{border:0;border-radius:0;box-shadow:none;padding:4px 0 6px;margin:16px 0 14px;background:transparent;font-size:15px;line-height:1.6}',
+    '.mlbook.ml-ed .mlc-tag{position:static;background:transparent;color:var(--tt);padding:0;margin:0 0 4px;border-radius:0;font-size:18px;max-width:none}',
+    '.mlbook.ml-ed .mlc-num{background:var(--tt);color:#fff;width:26px;height:26px;font-size:13px}',
+    '.mlbook.ml-ed .mlc-ped{border:0;background:#eef4ff;color:#2c4a8f;margin:0 0 8px}',
+    '.mlbook.ml-ed .mlco{border:0;border-left:5px solid var(--c1);border-radius:10px;box-shadow:none;background:#f1f5f9;padding:11px 15px;margin:12px 0}',
+    '.mlbook.ml-ed .mlco.gold{background:#fff8db;border-left-color:#eab308}.mlbook.ml-ed .mlco.know{background:#e0f2fe;border-left-color:#0284c7}.mlbook.ml-ed .mlco.warn{background:#fee2e2;border-left-color:#dc2626}.mlbook.ml-ed .mlco.prova{background:#f3e8ff;border-left-color:#7c3aed}',
+    '.mlbook.ml-ed .mlc .fig{border:1px solid #dbe4f0;background:#fafcff;padding:14px;margin:14px 0}',
+    '.mled-guide{display:grid;grid-template-columns:130px 1fr;gap:18px;align-items:center;border:2px solid var(--c2);border-left:0;border-radius:0 18px 18px 0;padding:16px 18px 16px 0;margin:14px 0}',
+    '.mled-guide-av{text-align:center}.mled-guide-av img{width:108px;height:108px;border-radius:50%;object-fit:cover;object-position:top center;border:3px solid var(--c2)}.mled-guide-av svg{width:100px;height:auto}',
+    '.mlvid{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#e8f2dc;border:2px solid var(--c2);border-radius:12px;padding:10px 16px;margin:12px 0;text-decoration:none;color:var(--tt)}',
+    '.mlvid strong{display:block;font-family:"Fredoka",sans-serif;font-size:15px}.mlvid span{font-size:12.5px;color:#334155}',
+    '.mlauthor-box{display:flex;gap:14px;align-items:center;background:#f8fafc;border:1.5px solid #cbd5e1;border-radius:12px;padding:12px 16px;margin:12px 0}',
+    '.mlauthor-box img{width:64px;height:64px;border-radius:50%;object-fit:cover;object-position:top center;border:2px solid var(--ac)}',
+    '.mlcolophon{font-size:11.5px;color:#475569;border-top:1.5px solid #cbd5e1;padding-top:10px;margin-top:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:6px}',
     '@page{size:A4;margin:0}',
     '@media print{.mlbook{background:#fff;padding:0}.mlpage{width:210mm;min-height:296mm;margin:0;border-radius:0;box-shadow:none;page-break-after:always;break-after:page;padding:12mm 12mm 18mm}.mlpage.mlcover .mlp,.mlpage.mlcover .mlclean{min-height:296mm;border-radius:0}.mlpf{left:12mm;right:12mm;bottom:6mm}.mlc,.mlco,.mlsynth{break-inside:avoid;page-break-inside:avoid}}',
     '@media(max-width:820px){.mlpage{padding:18px 14px 54px;min-height:0}.mlpf{left:14px;right:14px}.mlh2{font-size:23px}}',
@@ -777,29 +804,37 @@ details{margin:6px 0}summary{cursor:pointer;color:var(--navy2);font-weight:600}
     return 28 + wc(b.content) + (b.svg ? 150 : 0) + (b.callout ? 30 : 0);
   }
 
-  const BOOK_SCRIPT = "<script>(function(){\nvar H=1123,pages=function(){return Array.prototype.slice.call(document.querySelectorAll('.mlpage:not(.mlcover)'));};\nfunction mk(src){var d=document.createElement('div');d.className='mlpage';d.setAttribute('data-kind','content');var h=src.querySelector('.mlph'),f=src.querySelector('.mlpf');if(h)d.appendChild(h.cloneNode(true));if(f)d.appendChild(f.cloneNode(true));return d;}\nfunction kids(p){return Array.prototype.filter.call(p.children,function(c){return c.classList.contains('mlmove');});}\nfunction over(p){return p.scrollHeight>H+1;}\nfunction run(){\n var list=pages();\n for(var i=0;i<list.length;i++){\n  var p=list[i];\n  var guard=0;\n  while(over(p)&&kids(p).length>1&&guard++<60){\n   var k=kids(p),last=k[k.length-1];\n   var nx=p.nextElementSibling;\n   if(!nx||!nx.classList.contains('mlpage')||nx.getAttribute('data-kind')==='final'||p.getAttribute('data-kind')==='final'||!nx.classList.contains('mlpage')||nx.getAttribute('data-moved')!=='1'){\n    nx=mk(p);nx.setAttribute('data-moved','1');p.parentNode.insertBefore(nx,p.nextSibling);list.splice(i+1,0,nx);\n   }\n   var first=nx.querySelector('.mlmove');\n   if(first)nx.insertBefore(last,first);else nx.insertBefore(last,nx.querySelector('.mlpf'));\n  }\n }\n var all=pages(),off=document.querySelectorAll('.mlcover').length,tot=all.length+off;\n var toc=[];\n all.forEach(function(p,i){\n  var f=p.querySelectorAll('.mlpf span');if(f.length)f[f.length-1].textContent=(i+1+off)+' / '+tot;\n  Array.prototype.forEach.call(p.querySelectorAll('.mlc[data-n]'),function(c){if(c.getAttribute('data-n'))toc.push('<li><b>'+c.getAttribute('data-n')+'.</b> '+c.getAttribute('data-t')+'<i></i><b>pág. '+(i+1+off)+'</b></li>');});\n });\n var ul=document.querySelector('.mltoc');if(ul&&toc.length)ul.innerHTML=toc.join('');\n}\nif(document.readyState==='complete')run();else window.addEventListener('load',run);\n})();<\/script>";
+  const BOOK_SCRIPT = "<script>(function(){\nvar H=1123,pages=function(){return Array.prototype.slice.call(document.querySelectorAll('.mlpage:not(.mlcover)'));};\nfunction mk(src){var d=document.createElement('div');d.className='mlpage';d.setAttribute('data-kind','content');var h=src.querySelector('.mlph'),f=src.querySelector('.mlpf');if(h)d.appendChild(h.cloneNode(true));if(f)d.appendChild(f.cloneNode(true));return d;}\nfunction kids(p){return Array.prototype.filter.call(p.children,function(c){return c.classList.contains('mlmove');});}\nfunction over(p){return p.scrollHeight>H+1;}\nfunction run(){\n var list=pages();\n for(var i=0;i<list.length;i++){\n  var p=list[i];\n  var guard=0;\n  while(over(p)&&kids(p).length>1&&guard++<60){\n   var k=kids(p),last=k[k.length-1];\n   var nx=p.nextElementSibling;\n   if(!nx||!nx.classList.contains('mlpage')||nx.getAttribute('data-kind')==='final'||p.getAttribute('data-kind')==='final'||!nx.classList.contains('mlpage')||nx.getAttribute('data-moved')!=='1'){\n    nx=mk(p);nx.setAttribute('data-moved','1');p.parentNode.insertBefore(nx,p.nextSibling);list.splice(i+1,0,nx);\n   }\n   var first=nx.querySelector('.mlmove');\n   if(first)nx.insertBefore(last,first);else nx.insertBefore(last,nx.querySelector('.mlpf'));\n  }\n }\n var all=pages(),off=document.querySelectorAll('.mlcover').length,tot=all.length+off;\n var toc=[];\n all.forEach(function(p,i){\n  var f=p.querySelectorAll('.mlpf span');if(f.length)f[f.length-1].textContent=(i+1+off)+' / '+tot;\n  var pg=p.querySelector('.mlph-pg');if(pg)pg.textContent=(i+1+off);\n  Array.prototype.forEach.call(p.querySelectorAll('.mlc[data-n]'),function(c){if(c.getAttribute('data-n'))toc.push('<li><b>'+c.getAttribute('data-n')+'.</b> '+c.getAttribute('data-t')+'<i></i><b>pág. '+(i+1+off)+'</b></li>');});\n });\n var ul=document.querySelector('.mltoc');if(ul&&toc.length)ul.innerHTML=toc.join('');\n}\nif(document.readyState==='complete')run();else window.addEventListener('load',run);\n})();<\/script>";
 
   function toApostila(m, o) {
     m = normalize(m); o = o || {};
     const theme = (m.poster && m.poster.theme) || 'alegre';
-    const BUDGET = 580;
+    const isEd = !m.poster || m.poster.interiorStyle !== 'ludico';
+    const BUDGET = isEd ? 640 : 580;
     const pages = []; /* cada página: { kind, html, title } */
     const lg = m.poster ? logoHtml(m.poster.logoChoice) : '';
-    const head = '<div class="mlph"><div class="mlph-left">' + (lg || MASCOT_SVG) + '<div><b>' + esc(m.title) + '</b><small>' + [m.discipline, m.level].filter(Boolean).map(esc).join(' · ') + '</small></div></div><span class="mlph-badge">' + esc(m.author || DEFAULT_AUTHOR) + '</span></div>';
-    const card = (n, icon, label, inner, c, ttl, ped) => '<section class="mlc mlmove" data-n="' + (typeof n === 'number' ? n : '') + '" data-t="' + esc(ttl || '') + '" style="--c:var(--c' + c + ')"><div class="mlc-tag"><span class="mlc-num">' + n + '</span>' + icon + ' ' + esc(label) + '</div>' + (ped ? '<div class="mlc-ped">' + esc(ped) + '</div>' : '') + inner + '</section>';
+    const av = m.poster ? avatarHtml(m.poster.avatarChoice) : MASCOT_SVG;
+    const head = (pn) => isEd
+      ? '<div class="mlph"><div class="mlph-left">' + (lg || MASCOT_SVG) + '<div><b>' + esc(m.title) + '</b><small>' + [m.discipline, m.level].filter(Boolean).map(esc).join(' · ') + '</small></div></div><span class="mlph-pg">' + (pn || '') + '</span></div>'
+      : '<div class="mlph"><div class="mlph-left">' + (lg || MASCOT_SVG) + '<div><b>' + esc(m.title) + '</b><small>' + [m.discipline, m.level].filter(Boolean).map(esc).join(' · ') + '</small></div></div><span class="mlph-badge">' + esc(m.author || DEFAULT_AUTHOR) + '</span></div>';
+    const card = (n, icon, label, inner, c, ttl, ped) => '<section class="mlc mlmove" data-n="' + (typeof n === 'number' ? n : '') + '" data-t="' + esc(ttl || '') + '" style="--c:var(--c' + c + ')"><div class="mlc-tag"><span class="mlc-num">' + n + '</span>' + (isEd ? '' : icon + ' ') + esc(label) + '</div>' + (ped ? '<div class="mlc-ped">' + esc(ped) + '</div>' : '') + inner + '</section>';
 
     /* abertura do miolo: percurso histórico-cultural */
     const profLabel = m.contentProfile === 'expositivo' ? 'Expositivo' : m.contentProfile === 'expositivo_visual' ? 'Expositivo Visual' : m.contentProfile === 'pratica' ? 'Prática' : 'Completo';
-    let intro = head + '<h2 class="mlh2">Antes de começar</h2><p class="mlsub-hand">Percurso de mediação — dos conhecimentos cotidianos aos científicos</p><div class="mlinfo">' +
+    let intro = '<div id="ml-toc"></div>@@HEAD@@<h2 class="mlh2">Antes de começar</h2><p class="mlsub-hand">Percurso de mediação — dos conhecimentos cotidianos aos científicos</p><div class="mlinfo">' +
       [m.discipline, m.level, m.duration && '⏱️ ' + m.duration, '📘 ' + profLabel, '🧠 Psicologia Histórico-Cultural'].filter(Boolean).map((x) => '<span>' + esc(x) + '</span>').join('') + '</div>';
+    if (isEd) intro += '<div class="mled-guide mlmove"><div class="mled-guide-av">' + av + '</div><div>@@TOC@@</div></div>';
+    if (m.poster && m.poster.videoUrl && /^https?:\/\//i.test(m.poster.videoUrl)) {
+      intro += '<a class="mlvid mlmove" href="' + esc(m.poster.videoUrl) + '" target="_blank" rel="noopener"><div><strong>▶ Videoaula complementar</strong><span>' + esc(m.poster.videoTitle || m.title) + '</span></div><span>Abrir ↗</span></a>';
+    }
     if (m.prerequisites.length) intro += card('🔑', '', 'O que você já traz (Conceitos cotidianos)', '<ul>' + m.prerequisites.map((x) => '<li>' + inline(x) + '</li>').join('') + '</ul>', 2);
     if (m.objectives.length) intro += card('🎯', '', 'Para onde vamos juntos (Objetivos na ZDP)', '<ul>' + m.objectives.map((x) => '<li>' + inline(x) + '</li>').join('') + '</ul>', 1);
-    intro += '<div class="mlmove mltocwrap">@@TOC@@</div>';
+    if (!isEd) intro += '<div class="mlmove mltocwrap">@@TOC@@</div>';
     pages.push({ kind: 'intro', html: intro, title: 'Antes de começar' });
 
     /* páginas de conteúdo: empacota por peso */
     let cur = null, w = 0, n = 0;
-    const open = () => { cur = { kind: 'content', html: head, title: '', items: [] }; pages.push(cur); w = 0; };
+    const open = () => { cur = { kind: 'content', html: '@@HEAD@@', title: '', items: [] }; pages.push(cur); w = 0; };
     m.blocks.forEach((b) => {
       const bw = blockWeight(b);
       if (!cur || (w > 0 && w + bw > BUDGET)) open();
@@ -809,8 +844,8 @@ details{margin:6px 0}summary{cursor:pointer;color:var(--navy2);font-weight:600}
       cur.items.push({ n: n, title: b.title });
     });
 
-    /* página final: em resumo + minha síntese + referências + limitações */
-    let fin = head + '<h2 class="mlh2">Em resumo e síntese</h2>';
+    /* página final: em resumo + minha síntese + sobre o autor + colofão */
+    let fin = '@@HEAD@@<h2 class="mlh2">Em resumo e síntese</h2>';
     const sm = (m.poster && m.poster.summary) || [];
     if (sm.length) fin += '<div class="mlsum mlmove">' + sm.map((s) => '<div><i>' + esc(s.icon || '⭐') + '</i><strong>' + esc(s.label) + '</strong>' + esc(s.text || '') + '</div>').join('') + '</div>';
     if (m.poster && m.poster.goldTip) fin += '<div class="mlco gold mlmove"><h4>' + CALLOUTS.dica[0] + '</h4>' + esc(m.poster.goldTip) + '</div>';
@@ -821,6 +856,8 @@ details{margin:6px 0}summary{cursor:pointer;color:var(--navy2);font-weight:600}
       '<div class="mlsynth-q">3. Uma dúvida ou exemplo próprio para discutir em aula:</div><div class="mlsynth-line"></div></div>';
     if (m.references.length) fin += card('📚', '', 'Referências', '<ul class="mlrefs">' + m.references.map((r) => '<li>' + esc(r.authors) + ' (' + esc(r.year) + '). <em>' + esc(r.title) + '</em>. ' + esc(r.venue) + (r.doi ? ' DOI: ' + esc(r.doi) : '') + ' <small>[acesso: ' + esc(r.accessLevel) + ']</small></li>').join('') + '</ul>', 3);
     if (m.limitations.length) fin += card('⚠️', '', 'Sobre este material', '<ul>' + m.limitations.map((x) => '<li>' + inline(x) + '</li>').join('') + '</ul>', 4);
+    fin += '<div class="mlauthor-box mlmove">' + (m.poster && m.poster.avatarChoice !== 'svg' ? av : '') + '<div><strong>' + esc(m.author || DEFAULT_AUTHOR) + '</strong><br><small>MathLab Educação · Matemática em Investigação. Material didático fundamentado na Psicologia Histórico-Cultural e validado pelo docente.</small></div></div>';
+    fin += '<div class="mlcolophon mlmove" id="ml-colophon"><div><b>Título:</b> ' + esc(m.title) + '</div><div><b>Autoria:</b> ' + esc(m.author || DEFAULT_AUTHOR) + '</div><div><b>Perfil:</b> ' + esc(profLabel) + '</div><div><b>Estilo do miolo:</b> ' + (isEd ? 'Editorial Clean' : 'Lúdico / HQ') + '</div><div><b>Tipografia:</b> Fredoka · Caveat · Nunito</div><div><b>Formato:</b> A4 · Versão ' + VERSION + '</div></div>';
     fin += '<p class="mlnote mlmove">Este material deve ser conferido e validado pelo professor antes do uso em aula.</p>';
     pages.push({ kind: 'final', html: fin, title: 'Em resumo' });
 
@@ -832,14 +869,15 @@ details{margin:6px 0}summary{cursor:pointer;color:var(--navy2);font-weight:600}
     const total = pages.length + coverCount;
     const toc = [];
     pages.forEach((p, i) => { p.pn = first + i; if (p.items) p.items.forEach((it) => toc.push('<li><b>' + it.n + '.</b> ' + esc(it.title) + '<i></i><b>pág. ' + p.pn + '</b></li>')); });
-    const tocHtml = toc.length ? '<h2 class="mlh2" style="margin-top:16px">Nesta apostila</h2><ul class="mltoc">' + toc.join('') + '</ul>' : '';
+    const tocHtml = toc.length ? '<h2 class="mlh2" style="margin-top:4px;font-size:22px">Nesta apostila</h2><ul class="mltoc">' + toc.join('') + '</ul>' : '';
     const out = [];
-    if (hasCleanCover) out.push('<div class="mlpage mlcover mlcleanwrap">' + renderCleanCover(m) + '</div>');
-    if (hasPoster) out.push('<div class="mlpage mlcover">' + renderPoster(m.poster, m.author) + '</div>');
+    if (hasCleanCover) out.push('<div class="mlpage mlcover mlcleanwrap" id="ml-top">' + renderCleanCover(m) + '</div>');
+    if (hasPoster) out.push('<div class="mlpage mlcover"' + (!hasCleanCover ? ' id="ml-top"' : '') + '>' + renderPoster(m.poster, m.author) + '</div>');
     pages.forEach((p) => {
-      out.push('<div class="mlpage" data-kind="' + p.kind + '">' + p.html.replace('@@TOC@@', tocHtml) + '<div class="mlpf"><span>MathLab Educação · ' + esc(m.title) + (m.author ? ' · ' + esc(m.author) : '') + '</span><span>' + p.pn + ' / ' + total + '</span></div></div>');
+      const nav = isEd ? '<span class="mlnav"><a href="#ml-toc" title="Sumário">📑</a><a href="#ml-top" title="Início">🏠</a></span>' : '';
+      out.push('<div class="mlpage" data-kind="' + p.kind + '">' + p.html.replace('@@HEAD@@', head(p.pn)).replace('@@TOC@@', tocHtml) + '<div class="mlpf">' + nav + '<span>MathLab Educação · ' + esc(m.title) + (m.author ? ' · ' + esc(m.author) : '') + '</span><span>' + p.pn + ' / ' + total + '</span></div></div>');
     });
-    return '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + esc(m.title) + ' — apostila</title>' + FONTS_LINK + '<style>' + COVER_CSS + '\n' + POSTER_CSS + '\n' + BOOK_CSS + '</style></head><body><div class="mlbook" style="' + themeStyle(theme) + '">' + out.join('\n') + '</div>' + BOOK_SCRIPT + '</body></html>';
+    return '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + esc(m.title) + ' — apostila</title>' + FONTS_LINK + '<style>' + COVER_CSS + '\n' + POSTER_CSS + '\n' + BOOK_CSS + '</style></head><body><div class="mlbook' + (isEd ? ' ml-ed' : '') + '" style="' + themeStyle(theme) + '">' + out.join('\n') + '</div>' + BOOK_SCRIPT + '</body></html>';
   }
 
   /* ---------- esqueleto offline (honesto: não finge conteúdo) ---------- */
@@ -905,7 +943,7 @@ details{margin:6px 0}summary{cursor:pointer;color:var(--navy2);font-weight:600}
     });
   }
 
-  return { VERSION, SCHEMA, DEFAULT_AUTHOR, AVATAR_OPTIONS, LOGO_OPTIONS, BLOCK_PEDAGOGY, CONTENT_PROFILES, EPISTEMIC, BLOCK_TYPES, POSTER_THEMES, COVER_CSS, POSTER_CSS, DOC_CSS, VISUALS, esc, uid, wc, clone, detectType, sanitizeSvg, renderMarkdown, renderCleanCover, renderPoster, buildImagePrompt, buildRequestText, normalize, parseModelJson, importFromText, audit, toMarkdown, toHTML, toApostila, CALLOUTS, scaffold, demo };
+  return { VERSION, SCHEMA, DEFAULT_AUTHOR, INTERIOR_STYLES, AVATAR_OPTIONS, LOGO_OPTIONS, BLOCK_PEDAGOGY, CONTENT_PROFILES, EPISTEMIC, BLOCK_TYPES, POSTER_THEMES, COVER_CSS, POSTER_CSS, DOC_CSS, VISUALS, esc, uid, wc, clone, detectType, sanitizeSvg, renderMarkdown, renderCleanCover, renderPoster, buildImagePrompt, buildRequestText, normalize, parseModelJson, importFromText, audit, toMarkdown, toHTML, toApostila, CALLOUTS, scaffold, demo };
 });
 
 </script>
@@ -1078,10 +1116,11 @@ details{margin:6px 0}summary{cursor:pointer;color:var(--navy2);font-weight:600}
     const L = C.EPISTEMIC[d.epistemicType].labels;
     return '<div class="two"><div class="card"><h2>Capa Clean & Folha de Rosto</h2><p class="muted">A Capa Clean abre a apostila (título, subtítulo, logo, avatar e autor); a Folha de Rosto traz o mapa visual com caixas curtas (até 25 palavras).</p>' +
       '<label><input type="checkbox" style="width:auto" data-f="poster.coverClean"' + (p.coverClean !== false ? ' checked' : '') + '> Incluir Capa Clean (Página 1) antes da Folha de Rosto</label>' +
+      '<label>Estilo do Miolo</label><select data-f="poster.interiorStyle">' + Object.keys(C.INTERIOR_STYLES).map((k) => '<option value="' + k + '"' + ((p.interiorStyle || 'editorial') === k ? ' selected' : '') + '>' + esc(C.INTERIOR_STYLES[k]) + '</option>').join('') + '</select>' +
       '<label>Avatar do Prof. Alê / Mascote</label><select data-f="poster.avatarChoice">' + Object.keys(C.AVATAR_OPTIONS).map((k) => '<option value="' + k + '"' + ((p.avatarChoice || 'avatar-prof-ale-1.jpg') === k ? ' selected' : '') + '>' + esc(C.AVATAR_OPTIONS[k]) + '</option>').join('') + '</select>' +
       '<label>Logo MathLab</label><select data-f="poster.logoChoice">' + Object.keys(C.LOGO_OPTIONS).map((k) => '<option value="' + k + '"' + ((p.logoChoice || 'logo-mathlab-clean.jpg') === k ? ' selected' : '') + '>' + esc(C.LOGO_OPTIONS[k]) + '</option>').join('') + '</select>' +
       '<label>Tema de cores</label><select data-f="poster.theme">' + Object.keys(C.POSTER_THEMES).map((k) => '<option value="' + k + '"' + (p.theme === k ? ' selected' : '') + '>' + esc(C.POSTER_THEMES[k].nome) + '</option>').join('') + '</select>' +
-      inp('poster.title', 'Título do pôster') + inp('poster.subtitle', 'Subtítulo') + inp('poster.author', 'Autor na capa', C.DEFAULT_AUTHOR) + inp('poster.mascot', 'Mascote (descrição para a IA de imagem)', 'Ex.: estudante sorridente de mochila azul') +
+      inp('poster.title', 'Título do pôster') + inp('poster.subtitle', 'Subtítulo') + inp('poster.author', 'Autor na capa', C.DEFAULT_AUTHOR) + inp('poster.videoTitle', 'Videoaula complementar (título opcional)', 'Ex.: Aula em vídeo — Prof. Alê') + inp('poster.videoUrl', 'Link da videoaula (opcional)', 'https://youtube.com/...') + inp('poster.mascot', 'Mascote (descrição para a IA de imagem)', 'Ex.: estudante sorridente de mochila azul') +
       '<h3>Caixas numeradas</h3>' + p.sections.map((s, i) => '<div class="blk"><div class="row"><div>' + inp('poster.sections.' + i + '.label', 'Rótulo ' + (i + 1), L[i] || '') + '</div><div>' + inp('poster.sections.' + i + '.title', 'Subtítulo (opcional)') + '</div></div>' + area('poster.sections.' + i + '.text', 'Texto', 3) + '<button class="b danger sm" data-a="delsec" data-i="' + i + '">Remover caixa</button></div>').join('') +
       (p.sections.length < 6 ? '<div class="btns"><button class="b ghost" data-a="addsec">+ Caixa numerada</button></div>' : '') +
       '<h3>Caixas extras</h3>' + inp('poster.goldTip', '💡 Dica de ouro') + inp('poster.didYouKnow', 'Você sabia?') + inp('poster.attention', '⚠️ Atenção aos detalhes') +

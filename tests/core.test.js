@@ -108,8 +108,8 @@ test('"R$" (reais) não vira fórmula nem gera aviso falso', () => {
   assert.ok(C.audit(m).soft.some((x) => /\$/.test(x.msg)), 'deve avisar fórmula realmente desbalanceada');
 });
 
-test('v1.3: versão do núcleo é 1.3.x e autor padrão é Prof. Alê Barbosa', () => {
-  assert.match(C.VERSION, /^1\.3\./);
+test('v1.4: versão do núcleo é 1.4.x e autor padrão é Prof. Alê Barbosa', () => {
+  assert.match(C.VERSION, /^1\.4\./);
   assert.strictEqual(C.DEFAULT_AUTHOR, 'Prof. Alê Barbosa');
 });
 
@@ -217,4 +217,19 @@ test('v1.3: Capa Clean, Folha de Rosto, etiquetas Histórico-Culturais e Minha S
   assert.match(h, /Minha Síntese \(Registro do Estudante\)/);
   assert.match(h, /Caveat/);
   assert.match(h, /Nunito/);
+});
+
+test('v1.4: Miolo Editorial Clean inclui pílula de página, guia, navegação, videoaula opcional, Sobre o Autor e Colofão', () => {
+  const m = C.demo();
+  m.poster.interiorStyle = 'editorial';
+  m.poster.videoTitle = 'Aula de Inteiros';
+  m.poster.videoUrl = 'https://youtube.com/watch?v=123';
+  const h = C.toApostila(m);
+  assert.match(h, /class="mlbook ml-ed"/);
+  assert.match(h, /class="mlph-pg"/);
+  assert.match(h, /class="mled-guide mlmove"/);
+  assert.match(h, /class="mlnav"/);
+  assert.match(h, /Aula de Inteiros/);
+  assert.match(h, /class="mlauthor-box mlmove"/);
+  assert.match(h, /id="ml-colophon"/);
 });
