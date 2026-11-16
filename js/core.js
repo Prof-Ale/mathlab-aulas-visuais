@@ -350,7 +350,6 @@
     const auth = String(p.author || m.author || DEFAULT_AUTHOR).trim();
     const title = (p && p.title) || m.title || 'Material Didático';
     const sub = (p && p.subtitle) || (m.topic && m.topic !== title ? m.topic : 'Material didático visual');
-    const av = avatarHtml(p.avatarChoice, 'mlclean-avatar');
     const lg = logoHtml(p.logoChoice, 'mlclean-logo');
     const profLabel = m.contentProfile === 'expositivo' ? 'Expositivo' : m.contentProfile === 'expositivo_visual' ? 'Expositivo Visual' : m.contentProfile === 'pratica' ? 'Prática' : 'Completo';
     const pills = [m.discipline, m.level, profLabel].filter(Boolean).map((x) => '<span>' + esc(x) + '</span>').join('');
@@ -359,7 +358,7 @@
       '<section class="mlclean-mid"><div class="mlclean-pills">' + pills + '</div>' +
       '<h1 class="mlclean-title">' + esc(title) + '</h1>' +
       '<p class="mlclean-sub">' + esc(sub) + '</p>' +
-      '<div class="mlclean-avatar-wrap">' + (p.avatarChoice === 'svg' ? '<div style="width:128px">' + MASCOT_SVG + '</div>' : av) +
+      '<div class="mlclean-avatar-wrap"><div style="width:128px">' + MASCOT_SVG + '</div>' +
       '<div class="mlclean-author">' + esc(auth) + '</div><div class="mlclean-role">Autoria Docente · Psicologia Histórico-Cultural</div></div></section>' +
       '<footer class="mlclean-bot"><span>' + (m.duration ? '⏱️ ' + esc(m.duration) : 'Material de Apoio Pedagógico') + '</span><span>Versão ' + VERSION + ' · Validado pelo professor</span></footer>' +
       '</article>';
@@ -368,7 +367,7 @@
   function renderPoster(p, author) {
     if (!p) return '';
     const auth = String(p.author || author || DEFAULT_AUTHOR).trim();
-    const av = avatarHtml(p.avatarChoice);
+    const av = MASCOT_SVG;
     const lg = logoHtml(p.logoChoice);
     const secs = (p.sections || []).map((s, i) =>
       '<div class="mlp-card" style="--c:var(--c' + ((i % 5) + 1) + ')"><div class="mlp-tag"><span class="mlp-num">' + (i + 1) + '</span>' + esc(s.label || '') + '</div>' +
@@ -757,7 +756,7 @@
     const profLabel = m.contentProfile === 'expositivo' ? 'Expositivo' : m.contentProfile === 'expositivo_visual' ? 'Expositivo Visual' : m.contentProfile === 'pratica' ? 'Prática' : 'Completo';
     let intro = '<div id="ml-toc"></div>@@HEAD@@<h2 class="mlh2">Antes de começar</h2><p class="mlsub-hand">Percurso de mediação — dos conhecimentos cotidianos aos científicos</p><div class="mlinfo">' +
       [m.discipline, m.level, m.duration && '⏱️ ' + m.duration, '📘 ' + profLabel, '🧠 Psicologia Histórico-Cultural'].filter(Boolean).map((x) => '<span>' + esc(x) + '</span>').join('') + '</div>';
-    if (isEd) intro += '<div class="mled-guide mlmove"><div class="mled-guide-av">' + av + '</div><div>@@TOC@@</div></div>';
+    if (isEd) intro += '<div class="mled-guide mlmove"><div class="mled-guide-av">' + MASCOT_SVG + '</div><div>@@TOC@@</div></div>';
     if (m.poster && m.poster.videoUrl && /^https?:\/\//i.test(m.poster.videoUrl)) {
       intro += '<a class="mlvid mlmove" href="' + esc(m.poster.videoUrl) + '" target="_blank" rel="noopener"><div><strong>▶ Videoaula complementar</strong><span>' + esc(m.poster.videoTitle || m.title) + '</span></div><span>Abrir ↗</span></a>';
     }

@@ -239,4 +239,8 @@ test('v1.5: impressão oculta .mlnav e material legado v1.3 mantém estilo lúdi
   assert.match(h, /@media print\{[\s\S]*\.mlnav\{display:none!important\}/);
   const leg = C.normalize({ title: 'Antigo', meta: { version: '1.3.0' }, poster: { title: 'Antigo' } });
   assert.strictEqual(leg.poster.interiorStyle, 'ludico');
+  const m = C.demo();
+  assert.ok(!/avatar-prof-ale-/.test(C.renderCleanCover(m)), 'Capa Clean usa avatar cartoon/HQ, não foto real');
+  assert.ok(!/avatar-prof-ale-/.test(C.renderPoster(m.poster)), 'Folha de Rosto usa avatar cartoon/HQ, não foto real');
+  assert.match(h, /class="mlauthor-box mlmove"><img[^>]*avatar-prof-ale-/, 'Foto real aparece somente na seção Sobre o Autor');
 });
