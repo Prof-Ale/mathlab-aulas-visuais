@@ -108,8 +108,8 @@ test('"R$" (reais) não vira fórmula nem gera aviso falso', () => {
   assert.ok(C.audit(m).soft.some((x) => /\$/.test(x.msg)), 'deve avisar fórmula realmente desbalanceada');
 });
 
-test('v1.2: versão do núcleo é 1.2.x e autor padrão é Prof. Alê Barbosa', () => {
-  assert.match(C.VERSION, /^1\.2\./);
+test('v1.3: versão do núcleo é 1.3.x e autor padrão é Prof. Alê Barbosa', () => {
+  assert.match(C.VERSION, /^1\.3\./);
   assert.strictEqual(C.DEFAULT_AUTHOR, 'Prof. Alê Barbosa');
 });
 
@@ -206,4 +206,15 @@ test('v1.2: renderPoster, toApostila e buildImagePrompt incluem Prof. Alê Barbo
   assert.match(C.renderPoster(m.poster), /Prof\. Alê Barbosa/);
   assert.match(C.toApostila(m), /Prof\. Alê Barbosa/);
   assert.match(C.buildImagePrompt(m), /Prof\. Alê Barbosa/);
+});
+
+test('v1.3: Capa Clean, Folha de Rosto, etiquetas Histórico-Culturais e Minha Síntese na apostila', () => {
+  const m = C.demo();
+  const h = C.toApostila(m);
+  assert.match(h, /class="mlclean"/);
+  assert.match(h, /MathLab Educação/);
+  assert.match(h, /Conceito Científico &amp; Mediação Semiótica/);
+  assert.match(h, /Minha Síntese \(Registro do Estudante\)/);
+  assert.match(h, /Caveat/);
+  assert.match(h, /Nunito/);
 });

@@ -164,7 +164,10 @@
     const d = S.draft, p = d.poster;
     if (!p) return '<div class="card empty"><h2>Este material ainda não tem apostila visual</h2><p>A apostila visual é o pôster de uma página com caixas numeradas, dicas e resumo.</p><button class="b gold" data-a="mkposter">Criar apostila visual</button></div>';
     const L = C.EPISTEMIC[d.epistemicType].labels;
-    return '<div class="two"><div class="card"><h2>Apostila visual</h2><p class="muted">Textos curtos (até uns 25 palavras por caixa) ficam melhores no pôster e na IA de imagem.</p>' +
+    return '<div class="two"><div class="card"><h2>Capa Clean & Folha de Rosto</h2><p class="muted">A Capa Clean abre a apostila (título, subtítulo, logo, avatar e autor); a Folha de Rosto traz o mapa visual com caixas curtas (até 25 palavras).</p>' +
+      '<label><input type="checkbox" style="width:auto" data-f="poster.coverClean"' + (p.coverClean !== false ? ' checked' : '') + '> Incluir Capa Clean (Página 1) antes da Folha de Rosto</label>' +
+      '<label>Avatar do Prof. Alê / Mascote</label><select data-f="poster.avatarChoice">' + Object.keys(C.AVATAR_OPTIONS).map((k) => '<option value="' + k + '"' + ((p.avatarChoice || 'avatar-prof-ale-1.jpg') === k ? ' selected' : '') + '>' + esc(C.AVATAR_OPTIONS[k]) + '</option>').join('') + '</select>' +
+      '<label>Logo MathLab</label><select data-f="poster.logoChoice">' + Object.keys(C.LOGO_OPTIONS).map((k) => '<option value="' + k + '"' + ((p.logoChoice || 'logo-mathlab-clean.jpg') === k ? ' selected' : '') + '>' + esc(C.LOGO_OPTIONS[k]) + '</option>').join('') + '</select>' +
       '<label>Tema de cores</label><select data-f="poster.theme">' + Object.keys(C.POSTER_THEMES).map((k) => '<option value="' + k + '"' + (p.theme === k ? ' selected' : '') + '>' + esc(C.POSTER_THEMES[k].nome) + '</option>').join('') + '</select>' +
       inp('poster.title', 'Título do pôster') + inp('poster.subtitle', 'Subtítulo') + inp('poster.author', 'Autor na capa', C.DEFAULT_AUTHOR) + inp('poster.mascot', 'Mascote (descrição para a IA de imagem)', 'Ex.: estudante sorridente de mochila azul') +
       '<h3>Caixas numeradas</h3>' + p.sections.map((s, i) => '<div class="blk"><div class="row"><div>' + inp('poster.sections.' + i + '.label', 'Rótulo ' + (i + 1), L[i] || '') + '</div><div>' + inp('poster.sections.' + i + '.title', 'Subtítulo (opcional)') + '</div></div>' + area('poster.sections.' + i + '.text', 'Texto', 3) + '<button class="b danger sm" data-a="delsec" data-i="' + i + '">Remover caixa</button></div>').join('') +
@@ -172,7 +175,7 @@
       '<h3>Caixas extras</h3>' + inp('poster.goldTip', '💡 Dica de ouro') + inp('poster.didYouKnow', 'Você sabia?') + inp('poster.attention', '⚠️ Atenção aos detalhes') +
       '<h3>Faixa “Em resumo”</h3>' + p.summary.map((s, i) => '<div class="row"><div>' + inp('poster.summary.' + i + '.icon', 'Ícone (emoji)') + '</div><div>' + inp('poster.summary.' + i + '.label', 'Rótulo') + '</div><div>' + inp('poster.summary.' + i + '.text', 'Texto') + '</div><div><label>&nbsp;</label><button class="b danger sm" data-a="delsum" data-i="' + i + '">✕</button></div></div>').join('') +
       (p.summary.length < 5 ? '<div class="btns"><button class="b ghost" data-a="addsum">+ Item</button></div>' : '') + '</div>' +
-      '<div><div class="card"><h3>Prévia</h3><div id="posterPreview" class="preview">' + C.renderPoster(p, d.author) + '</div></div>' +
+      '<div><div class="card"><h3>Prévia (Capa Clean + Folha de Rosto)</h3><div id="posterPreview" class="preview">' + (p.coverClean !== false ? '<div style="margin-bottom:16px">' + C.renderCleanCover(d) + '</div>' : '') + C.renderPoster(p, d.author) + '</div></div>' +
       '<div class="card"><h3>Versão ilustrada com IA</h3><p class="muted">Copie o prompt, abra o Gemini (Nano Banana) e cole. O formato da imagem você escolhe no próprio app. IA de imagem às vezes erra letras: confira o texto na imagem. O pôster em HTML ao lado é sempre a versão exata.</p><div class="btns"><button class="b gold" data-a="copyimg">Copiar prompt da imagem</button><button class="b ghost" data-a="dlposter">Baixar pôster (HTML)</button><button class="b ghost" data-a="printposter">Imprimir / PDF</button></div><details><summary>Ver o prompt</summary><pre class="code">' + esc(C.buildImagePrompt(d)) + '</pre></details></div></div></div>';
   }
 
@@ -297,12 +300,12 @@
     if (el.dataset.f) {
       setPath(el.dataset.f, el.type === 'checkbox' ? el.checked : el.dataset.lines ? el.value.split('\n').map((x) => x.trim()).filter(Boolean) : el.value);
       S.dirty = true; const m = $('#dirtymark'); if (m) { m.className = 'dirty'; m.textContent = '● alterações não salvas'; }
-      if (S.tab === 'poster' && S.draft.poster) { const pv = $('#posterPreview'); if (pv) pv.innerHTML = C.renderPoster(S.draft.poster, S.draft.author); }
+      if (S.tab === 'poster' && S.draft.poster) { const pv = $('#posterPreview'); if (pv) pv.innerHTML = (S.draft.poster.coverClean !== false ? '<div style="margin-bottom:16px">' + C.renderCleanCover(S.draft) + '</div>' : '') + C.renderPoster(S.draft.poster, S.draft.author); }
     }
   });
   window.addEventListener('beforeunload', (e) => { if (S.dirty) { e.preventDefault(); e.returnValue = ''; } });
 
-  const st = document.createElement('style'); st.textContent = C.POSTER_CSS; document.head.appendChild(st);
+  const st = document.createElement('style'); st.textContent = C.COVER_CSS + '\n' + C.POSTER_CSS; document.head.appendChild(st);
   $('#ver').textContent = 'v' + C.VERSION;
   render();
   window.__mathlab = { S, lib: () => lib, A, render };
