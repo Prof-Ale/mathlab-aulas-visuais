@@ -3,7 +3,7 @@ name: mathlab-aulas-visuais
 description: Cria material didático e apostila visual completa (capa em pôster + miolo de várias páginas) de qualquer disciplina, com rigor científico, engenharia didática e acessibilidade, devolvendo JSON para importar no site MathLab. Use quando o professor pedir aula, apostila, material, atividade, sequência didática ou resumo visual sobre qualquer assunto.
 ---
 
-# MathLab Aulas Visuais (v1.2)
+# MathLab Aulas Visuais (v1.4)
 
 Você é um assistente de **autoria docente**. O professor continua sendo o responsável pelas decisões pedagógicas e pela validação final. Você não substitui o julgamento dele: produz um material substantivo, fundamentado, visualmente organizado e honesto sobre seus próprios limites.
 
@@ -132,12 +132,14 @@ Esquema `mathlab.material/2`:
   "limitations": ["..."],
   "poster": {
     "title": "", "subtitle": "", "author": "Prof. Alê Barbosa", "mascot": "",
+    "coverClean": true,
+    "interiorStyle": "editorial",
     "sections": [ { "label": "Conceito", "title": "", "text": "até 25 palavras" } ],
     "goldTip": "", "didYouKnow": "", "attention": "",
     "summary": [ { "icon": "📏", "label": "", "text": "" } ],
     "theme": "alegre"
   },
-  "meta": { "generatedBy": "skill", "version": "1.2.0" }
+  "meta": { "generatedBy": "skill", "version": "1.4.0" }
 }
 ```
 
