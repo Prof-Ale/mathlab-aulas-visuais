@@ -14,7 +14,8 @@
   }
 
   const S = { tab: 'biblioteca', pid: null, mid: null, draft: null, dirty: false, showPrev: false, showVers: false, showArch: false,
-    form: { author: C.DEFAULT_AUTHOR, discipline: '', level: '', topic: '', duration: '1 aula de 50 minutos', objectives: '', type: 'auto', contentProfile: 'completo', target: '', pasted: '' }, vis: { kind: 'numberLine', text: '-6, 6, -2, 5', title: '' } };
+    diario: (() => { try { return JSON.parse(localStorage.getItem('mathlab.diario.v1') || 'null'); } catch (e) { return null; } })(),
+    form: { author: C.DEFAULT_AUTHOR, discipline: '', level: '', topic: '', duration: '1 aula de 50 minutos', objectives: '', type: 'auto', contentProfile: 'completo', registro: 'escolar', destinatario: 'estudante', target: '', pasted: '' }, vis: { kind: 'numberLine', text: '-6, 6, -2, 5', title: '' } };
 
   /* ---------- modelo: projetos > materiais > versões ---------- */
   const proj = (id) => lib.projects.find((p) => p.id === (id || S.pid));
@@ -101,12 +102,12 @@
   const lvlPill = (l) => '<span class="pill ' + (/Reprovado/.test(l) ? 'bad' : /Pronto/.test(l) ? 'ok' : 'warn') + '">' + esc(l) + '</span>';
 
   /* ---------- abas ---------- */
-  const TABS = [['biblioteca', '📚 Biblioteca'], ['criar', '✨ Criar'], ['editor', '✏️ Editor'], ['poster', '🖼️ Capa (pôster)'], ['apostila', '📘 Apostila completa'], ['auditoria', '🔍 Auditoria'], ['exportar', '📤 Exportar'], ['ajuda', '❓ Ajuda']];
+  const TABS = [['biblioteca', '📚 Biblioteca'], ['criar', '✨ Criar'], ['editor', '✏️ Editor'], ['poster', '🖼️ Capa (pôster)'], ['apostila', '📘 Apostila completa'], ['auditoria', '🔍 Auditoria'], ['exportar', '📤 Exportar'], ['diario', '📒 Diário & Portfólio'], ['ajuda', '❓ Ajuda']];
   const NEED = ['editor', 'poster', 'apostila', 'auditoria', 'exportar'];
 
   function render() {
     $('#tabs').innerHTML = TABS.map((t) => '<button role="tab" aria-selected="' + (S.tab === t[0] ? 'true' : 'false') + '" data-a="tab" data-t="' + t[0] + '" class="' + (S.tab === t[0] ? 'on' : '') + '">' + t[1] + '</button>').join('');
-    const v = { biblioteca: vBib, criar: vCriar, editor: vEditor, poster: vPoster, apostila: vApostila, auditoria: vAud, exportar: vExp, ajuda: vAjuda }[S.tab];
+    const v = { biblioteca: vBib, criar: vCriar, editor: vEditor, poster: vPoster, apostila: vApostila, auditoria: vAud, exportar: vExp, diario: vDiario, ajuda: vAjuda }[S.tab];
     $('#main').innerHTML = NEED.includes(S.tab) && !S.draft
       ? '<div class="card empty"><h2>Nenhum material aberto</h2><p>Abra um material na <b>Biblioteca</b> ou crie um em <b>Criar</b>.</p><button class="b gold" data-a="tab" data-t="biblioteca">Ir para a Biblioteca</button></div>' : v();
   }
@@ -140,6 +141,8 @@
       '<div class="row"><div><label>Autor</label><input data-form="author" value="' + esc(f.author) + '" placeholder="Prof. Alê Barbosa"></div><div><label>Disciplina</label><input data-form="discipline" value="' + esc(f.discipline) + '" placeholder="Ex.: História"></div><div><label>Etapa de ensino</label><input data-form="level" value="' + esc(f.level) + '" placeholder="Ex.: 8º ano"></div><div><label>Tema</label><input data-form="topic" value="' + esc(f.topic) + '" placeholder="Ex.: Revolução Francesa"></div><div><label>Duração</label><input data-form="duration" value="' + esc(f.duration) + '"></div></div>' +
       '<div class="row"><div><label>Tipo de conhecimento</label><select data-form="type">' + opt('auto', 'Detectar pela disciplina', f.type === 'auto') + Object.keys(C.EPISTEMIC).map((k) => opt(k, C.EPISTEMIC[k].label, f.type === k)).join('') + '</select></div>' +
       '<div><label>O que você quer incluir?</label><select data-form="contentProfile">' + Object.keys(C.CONTENT_PROFILES).map((k) => opt(k, C.CONTENT_PROFILES[k], f.contentProfile === k)).join('') + '</select></div>' +
+      '<div><label>Registro de linguagem</label><select data-form="registro">' + Object.keys(C.REGISTROS).map((k) => opt(k, C.REGISTROS[k], f.registro === k)).join('') + '</select></div>' +
+      '<div><label>Destinatário</label><select data-form="destinatario">' + Object.keys(C.DESTINATARIOS).map((k) => opt(k, C.DESTINATARIOS[k], f.destinatario === k)).join('') + '</select></div>' +
       '<div><label>Salvar no projeto</label><select data-form="target">' + opt('', '(criar projeto novo)', !f.target) + lib.projects.filter((p) => !p.archived).map((p) => opt(p.id, p.name, f.target === p.id)).join('') + '</select></div></div>' +
       '<label>Objetivos desejados (opcional)</label><textarea data-form="objectives" rows="2">' + esc(f.objectives) + '</textarea></div>' +
       '<div class="card steps"><h3>Caminho sem custo (recomendado)</h3>' +
@@ -210,7 +213,17 @@
   /* ---------- Auditoria ---------- */
   function vAud() {
     const d = S.draft, a = C.audit(d), tr = d.meta.teacherReview;
+    let v2Html = '';
+    if (d._v2 && window.MathLabAuditV2) {
+      const ach = window.MathLabAuditV2.auditar(d._v2, { final: !!(tr && tr.done) });
+      const nb = ach.filter((x) => x.nivel === 'bloqueante').length;
+      const np = ach.filter((x) => x.nivel === 'pendencia').length;
+      v2Html = '<div class="card" style="border-left:5px solid ' + (nb ? 'var(--bad)' : 'var(--ok)') + '"><h3>Auditoria v2 (R01–R18 + Aritmética Racional Exata)</h3>' +
+        '<p class="muted">' + nb + ' bloqueante(s) · ' + np + ' pendência(s) · ' + (ach.length - nb - np) + ' aviso(s)</p>' +
+        (ach.length ? ach.map((x) => '<div class="find ' + (x.nivel === 'bloqueante' ? 'hard' : x.nivel === 'pendencia' ? 'warn' : 'info') + '">' + (x.nivel === 'bloqueante' ? '⛔' : x.nivel === 'pendencia' ? '⏳' : 'ℹ️') + ' <b>' + esc(x.regra) + '</b> (' + esc(x.onde) + '): ' + esc(x.msg) + '</div>').join('') : '<div class="find">✅ Nenhum achado na auditoria v2.</div>') + '</div>';
+    }
     return '<div class="card"><h2>Auditoria de qualidade</h2><div style="display:flex;gap:24px;align-items:center;flex-wrap:wrap"><div><div class="score">' + a.score + '</div><span class="muted">de 100 · ' + a.words + ' palavras</span></div><div>' + lvlPill(a.level) + '<p class="muted" style="max-width:520px">' + esc(a.note) + '</p></div></div></div>' +
+      v2Html +
       (a.hard.length ? '<div class="card" style="border-color:var(--bad)"><h3 style="color:var(--bad)">Falhas graves (' + a.hard.length + ')</h3>' + a.hard.map((x) => '<div class="find hard">⛔ <b>' + esc(x.cat) + ':</b> ' + esc(x.msg) + '</div>').join('') + '</div>' : '') +
       '<div class="card"><h3>10 categorias</h3>' + a.categories.map((c) => '<div class="cat"><span>' + esc(c.name) + '</span><div class="bar"><i style="width:' + c.score * 10 + '%;background:' + (c.score >= 8 ? 'var(--ok)' : c.score >= 5 ? 'var(--warn)' : 'var(--bad)') + '"></i></div><b>' + c.score + '</b></div>' + c.findings.map((f) => '<div class="find ' + f.sev + '">' + (f.sev === 'hard' ? '⛔' : f.sev === 'warn' ? '⚠️' : 'ℹ️') + ' ' + esc(f.msg) + '</div>').join('')).join('') + '</div>' +
       '<div class="card"><h3>Revisão do professor</h3><p class="muted">A auditoria automática não confirma se o conteúdo está certo. Só você faz isso.</p><label><input type="checkbox" style="width:auto" data-a="review" ' + (tr && tr.done ? 'checked' : '') + '> Revisei o conteúdo e assumo a validação final' + (tr && tr.at ? ' (em ' + fmt(tr.at) + ')' : '') + '</label><p class="muted">Salve uma nova versão para registrar a revisão.</p></div>';
@@ -235,6 +248,49 @@
     return '<div class="card"><h2>Exportar</h2><p class="muted">Exporta o que está no Editor agora (mesmo sem salvar).</p><div class="btns"><button class="b gold" data-a="dlbook">📘 Apostila completa (capa + miolo)</button><button class="b" data-a="printbook">🖨️ Imprimir apostila / salvar PDF</button><button class="b ghost" data-a="dlhtml">📄 Material em HTML simples</button><button class="b ghost" data-a="printall">🖨️ Imprimir material simples</button><button class="b ghost" data-a="dlposter">🖼️ Só o pôster (HTML)</button><button class="b ghost" data-a="dlmd">Markdown</button><button class="b ghost" data-a="dljson">JSON (para reimportar)</button></div>' +
       (svgs.length ? '<h3>Figuras SVG</h3><div class="btns">' + svgs.map((x) => '<button class="b ghost sm" data-a="dlsvg" data-i="' + x[1] + '">' + esc(x[0].title) + '.svg</button>').join('') + '</div>' : '') +
       '<p class="muted">Para PDF: use “Imprimir / salvar PDF” e escolha “Salvar como PDF” no navegador. Word e PowerPoint ainda não estão nesta versão.</p></div>';
+  }
+
+  /* ---------- Diário & Portfólio Docente ---------- */
+  function saveDiario() { try { localStorage.setItem('mathlab.diario.v1', JSON.stringify(S.diario)); } catch (e) { /* ignora */ } }
+  function demoDiario() {
+    return {
+      schema_versao: 'diario.1', ano_letivo: new Date().getFullYear(), professor: C.DEFAULT_AUTHOR, escola: 'Escola MathLab', area: 'Matemática',
+      periodos: [{ id: 'b1', nome: '1º bimestre', inicio: '2026-02-01', fim: '2026-04-30' }, { id: 'b2', nome: '2º bimestre', inicio: '2026-05-01', fim: '2026-07-15' }],
+      turmas: [{ id: '6a', nome: '6º A', etapa: 'ef2', habilidades_previstas: ['EF06MA08', 'EF06MA11'] }],
+      habilidades: [{ codigo: 'EF06MA08', descricao: 'Frações e suas representações', verificado: false }, { codigo: 'EF06MA11', descricao: 'Operações com números decimais', verificado: false }],
+      entradas: [
+        { id: 'e1', data: '2026-02-24', turma_id: '6a', periodo_id: 'b1', tipo: 'aula', tema: 'Frações: parte de um todo', habilidades: ['EF06MA08'], resumo: 'Construção de barras de papel para comparar frações.', destaque: true },
+        { id: 'e2', data: '2026-04-14', turma_id: '6a', periodo_id: 'b1', tipo: 'retomada', tema: 'Retomada dos erros mais frequentes', habilidades: ['EF06MA08'], resumo: 'Correção coletiva com desenho antes do cálculo.', destaque: true, reflexao: 'Desenhar antes de calcular reduziu a soma de denominadores.' },
+      ],
+      avaliacoes: [
+        { id: 'av1', data: '2026-03-24', turma_id: '6a', instrumento: 'prova', n_participantes: 28, itens: [{ item: 'Q1 — fração de fração', habilidade: 'EF06MA08', acertos: 12, n: 28, erros_tipicos: [{ descricao: 'Somou numeradores e denominadores', contagem: 9 }] }], intervencao: 'Retomada com barras de papel (14/04).' },
+      ],
+    };
+  }
+  function vDiario() {
+    const P = window.MathLabPortfolio;
+    if (!S.diario) {
+      return '<div class="card empty"><h2>Diário de Aula & Portfólio Docente</h2><p>Registre suas aulas e avaliações e gere um portfólio em A4 com cobertura curricular por habilidade, evolução e privacidade garantida.</p>' +
+        '<div class="btns" style="justify-content:center"><button class="b gold" data-a="demodiario">Carregar exemplo de diário</button>' +
+        '<label class="b ghost" style="display:inline-block;margin:0;cursor:pointer">Importar diario.json<input type="file" accept=".json,application/json" data-a="importdiario" style="display:none"></label></div></div>';
+    }
+    const d = S.diario, cfg = P.CFG_PADRAO(d), ach = P.verificar(d, cfg);
+    const nb = ach.filter((x) => x.nivel === 'bloqueante').length;
+    const htmlPort = nb ? '' : P.montarHtml(d, cfg);
+    return '<div class="card"><div class="btns" style="justify-content:space-between"><h2 style="margin:0">Diário & Portfólio — ' + esc(d.professor || C.DEFAULT_AUTHOR) + '</h2>' +
+      '<div class="btns"><button class="b ghost sm" data-a="dldiario">Baixar diario.json</button><label class="b ghost sm" style="display:inline-block;margin:0;cursor:pointer">Importar JSON<input type="file" accept=".json,application/json" data-a="importdiario" style="display:none"></label></div></div>' +
+      '<p class="muted">' + d.turmas.length + ' turma(s) · ' + d.entradas.length + ' registro(s) · ' + (d.avaliacoes || []).length + ' avaliação(ões)</p>' +
+      (ach.length ? '<div style="margin:8px 0">' + ach.map((x) => '<div class="find ' + (x.nivel === 'bloqueante' ? 'hard' : 'warn') + '">' + (x.nivel === 'bloqueante' ? '⛔' : '⚠️') + ' <b>' + esc(x.regra) + '</b>: ' + esc(x.msg) + '</div>').join('') + '</div>' : '') +
+      '<div class="btns"><button class="b gold" data-a="dlportfolio"' + (nb ? ' disabled' : '') + '>📘 Baixar Portfólio (HTML)</button><button class="b" data-a="printportfolio"' + (nb ? ' disabled' : '') + '>🖨️ Imprimir / salvar PDF</button></div></div>' +
+      '<div class="card"><h3>Novo registro no diário</h3><div class="row"><div><label>Data</label><input id="dr-data" type="date" value="' + new Date().toISOString().slice(0, 10) + '"></div>' +
+      '<div><label>Turma</label><select id="dr-turma">' + d.turmas.map((t) => '<option value="' + esc(t.id) + '">' + esc(t.nome) + '</option>').join('') + '</select></div>' +
+      '<div><label>Tipo</label><select id="dr-tipo"><option value="aula">Aula</option><option value="retomada">Retomada</option><option value="avaliacao">Avaliação</option><option value="projeto">Projeto</option></select></div>' +
+      '<div><label>Habilidades (vírgula)</label><input id="dr-hab" placeholder="Ex.: EF06MA08"></div></div>' +
+      '<label>Tema da aula</label><input id="dr-tema" placeholder="Ex.: Frações equivalentes na reta numérica">' +
+      '<label>Resumo / evidência</label><textarea id="dr-resumo" rows="2"></textarea>' +
+      '<label>Reflexão docente (opcional)</label><textarea id="dr-refl" rows="2"></textarea>' +
+      '<div class="btns"><button class="b gold" data-a="adddiario">+ Adicionar ao diário</button></div></div>' +
+      (htmlPort ? '<div class="card"><h3>Prévia do Portfólio Docente (A4)</h3><iframe title="Prévia do portfólio" style="width:100%;height:72vh;border:0;border-radius:10px;background:#eef1f6" srcdoc="' + esc(htmlPort) + '"></iframe></div>' : '');
   }
 
   /* ---------- Ajuda ---------- */
@@ -323,6 +379,25 @@
     dljson: () => dl(slug(S.draft.title) + '.json', 'application/json', JSON.stringify(C.normalize(S.draft), null, 2)),
     dlsvg: (el) => { const b = S.draft.blocks[+el.dataset.i]; dl(slug(b.title) + '.svg', 'image/svg+xml', C.sanitizeSvg(b.svg)); },
     review: (el) => { S.draft.meta.teacherReview = el.checked ? { done: true, at: new Date().toISOString() } : { done: false }; S.dirty = true; render(); },
+    demodiario: () => { S.diario = demoDiario(); saveDiario(); render(); toast('Exemplo de diário carregado.'); },
+    importdiario: (el) => {
+      const f = el.files[0]; if (!f) return;
+      const rd = new FileReader(); rd.onload = () => {
+        try { const j = JSON.parse(rd.result); if (!Array.isArray(j.entradas)) throw new Error('JSON sem "entradas"'); S.diario = j; saveDiario(); render(); toast('Diário importado.'); }
+        catch (e) { toast('Diário inválido: ' + e.message, true); }
+      }; rd.readAsText(f);
+    },
+    dldiario: () => S.diario && dl('diario-' + (S.diario.ano_letivo || '2026') + '.json', 'application/json', JSON.stringify(S.diario, null, 2)),
+    adddiario: () => {
+      if (!S.diario) return;
+      const tema = $('#dr-tema').value.trim(); if (!tema) { toast('Informe o tema da aula.', true); return; }
+      const habs = $('#dr-hab').value.split(/[,;\s]+/).map((s) => s.trim()).filter(Boolean);
+      habs.forEach((h) => { if (!S.diario.habilidades.some((x) => x.codigo === h)) S.diario.habilidades.push({ codigo: h, descricao: 'Habilidade ' + h, verificado: false }); });
+      S.diario.entradas.push({ id: C.uid('e'), data: $('#dr-data').value || new Date().toISOString().slice(0, 10), turma_id: $('#dr-turma').value, tipo: $('#dr-tipo').value, tema, habilidades: habs, resumo: $('#dr-resumo').value.trim(), reflexao: $('#dr-refl').value.trim(), destaque: !!$('#dr-resumo').value.trim() });
+      saveDiario(); render(); toast('Registro adicionado ao diário.');
+    },
+    dlportfolio: () => { const P = window.MathLabPortfolio; if (S.diario && P) dl('portfolio-docente.html', 'text/html', P.montarHtml(S.diario, P.CFG_PADRAO(S.diario))); },
+    printportfolio: () => { const P = window.MathLabPortfolio; if (S.diario && P) printHTML(P.montarHtml(S.diario, P.CFG_PADRAO(S.diario))); },
   };
 
   document.addEventListener('click', (e) => { const el = e.target.closest('[data-a]'); if (!el || el.type === 'checkbox' || el.type === 'file') return; if (A[el.dataset.a]) A[el.dataset.a](el, e); });

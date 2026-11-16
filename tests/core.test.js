@@ -108,8 +108,8 @@ test('"R$" (reais) não vira fórmula nem gera aviso falso', () => {
   assert.ok(C.audit(m).soft.some((x) => /\$/.test(x.msg)), 'deve avisar fórmula realmente desbalanceada');
 });
 
-test('v1.5: versão do núcleo é 1.5.x e autor padrão é Prof. Alê Barbosa', () => {
-  assert.match(C.VERSION, /^1\.5\./);
+test('v2.0: versão do núcleo é 2.0.x e autor padrão é Prof. Alê Barbosa', () => {
+  assert.match(C.VERSION, /^2\.0\./);
   assert.strictEqual(C.DEFAULT_AUTHOR, 'Prof. Alê Barbosa');
 });
 
@@ -243,4 +243,28 @@ test('v1.5: impressão oculta .mlnav e material legado v1.3 mantém estilo lúdi
   assert.ok(!/avatar-prof-ale-/.test(C.renderCleanCover(m)), 'Capa Clean usa avatar cartoon/HQ, não foto real');
   assert.ok(!/avatar-prof-ale-/.test(C.renderPoster(m.poster)), 'Folha de Rosto usa avatar cartoon/HQ, não foto real');
   assert.match(h, /class="mlauthor-box mlmove"><img[^>]*avatar-prof-ale-/, 'Foto real aparece somente na seção Sobre o Autor');
+});
+
+test('v2.0: racional.js, auditar-v2.js, importFromText v2 e portfolio.js funcionam integrados', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const Rac = require('../js/racional.js');
+  const AudV2 = require('../js/auditar-v2.js');
+  const Port = require('../js/portfolio.js');
+
+  assert.strictEqual(Rac.confere('2/3 * 3/4', '1/2').ok, true);
+  assert.strictEqual(Rac.confere('480 * 25%', '120').ok, true);
+
+  const ex6 = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'schema', 'exemplos', 'exemplo-6ano-fracoes.json'), 'utf8'));
+  const ach6 = AudV2.auditar(ex6);
+  assert.strictEqual(ach6.filter((x) => x.nivel === 'bloqueante').length, 0);
+
+  const imp = C.importFromText(JSON.stringify(ex6));
+  assert.ok(imp.ok && imp.material._v2);
+  assert.match(C.toApostila(imp.material), /Detetives da Matemática/);
+
+  const diario = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'schema', 'exemplos', 'exemplo-diario.json'), 'utf8'));
+  const cfg = Port.CFG_PADRAO(diario);
+  assert.strictEqual(Port.verificar(diario, cfg).filter((x) => x.nivel === 'bloqueante').length, 0);
+  assert.match(Port.montarHtml(diario, cfg), /Cobertura curricular/);
 });

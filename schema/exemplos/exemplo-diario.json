@@ -1,0 +1,156 @@
+{
+  "schema_versao": "diario.1",
+  "nota": "DADOS FICTÍCIOS para demonstração. Turmas, datas, contagens e códigos de habilidade são ilustrativos; os códigos NÃO foram conferidos no documento oficial.",
+  "professor": { "nome": "Prof. Exemplo", "escola": "Escola Exemplo (fictícia)" },
+  "ano_letivo": 2026,
+  "turmas": [
+    {
+      "id": "t6a", "nome": "6º A", "etapa": "ef2", "componente": "Matemática",
+      "habilidades_previstas": [
+        { "periodo_id": "b1", "codigos": ["EF06MA11", "EF06MA08"] },
+        { "periodo_id": "b2", "codigos": ["EF06MA08", "EF06MA03", "EF06MA11"] }
+      ]
+    },
+    {
+      "id": "t7b", "nome": "7º B", "etapa": "ef2", "componente": "Matemática",
+      "habilidades_previstas": [
+        { "periodo_id": "b1", "codigos": ["Equações do 1º grau (descritor local)"] }
+      ]
+    }
+  ],
+  "periodos": [
+    { "id": "b1", "nome": "1º bimestre", "inicio": "2026-02-09", "fim": "2026-04-17" },
+    { "id": "b2", "nome": "2º bimestre", "inicio": "2026-04-20", "fim": "2026-06-26" }
+  ],
+  "habilidades": [
+    { "codigo": "EF06MA03", "sistema": "BNCC", "descricao": "Problemas com números naturais e estratégias variadas (descrição a conferir)", "verificado": false },
+    { "codigo": "EF06MA08", "sistema": "BNCC", "descricao": "Frações (descrição a conferir)", "verificado": false },
+    { "codigo": "EF06MA11", "sistema": "BNCC", "descricao": "Problemas com decimais e as quatro operações (descrição a conferir)", "verificado": false },
+    { "codigo": "Equações do 1º grau (descritor local)", "sistema": "outro", "descricao": "Descritor do planejamento da escola", "verificado": false }
+  ],
+  "entradas": [
+    {
+      "id": "e01", "data": "2026-02-10", "turma_id": "t6a", "periodo_id": "b1", "tipo": "aula",
+      "tema": "Números decimais: alinhar as vírgulas",
+      "resumo": "Investigamos por que as vírgulas se alinham na soma e na subtração, usando valores de compras do dia a dia.",
+      "habilidades": ["EF06MA11"],
+      "evidencias": [
+        { "id": "ev01", "tipo": "foto", "arquivo": "idb:e01-1", "descricao": "Página de caderno com somas de decimais armadas com as vírgulas alinhadas e coloridas.", "conteudo": "caderno", "contem_rosto": false }
+      ],
+      "destaque": true
+    },
+    {
+      "id": "e02", "data": "2026-02-24", "turma_id": "t6a", "periodo_id": "b1", "tipo": "aula",
+      "tema": "Frações: parte de um todo",
+      "resumo": "Construção de barras de papel para comparar frações e escrever o que cada parte representa.",
+      "habilidades": ["EF06MA08"],
+      "evidencias": [
+        { "id": "ev02", "tipo": "foto", "arquivo": "idb:e02-1", "descricao": "Mural com barras de papel coloridas divididas em partes iguais, com as frações escritas ao lado.", "conteudo": "mural", "contem_rosto": false }
+      ],
+      "destaque": true
+    },
+    {
+      "id": "e03", "data": "2026-03-10", "turma_id": "t6a", "periodo_id": "b1", "tipo": "aula",
+      "tema": "Problemas com decimais: Detetives da Matemática",
+      "resumo": "Resolução em duplas de problemas de compras e troco, explicando em voz alta a escolha de cada operação.",
+      "habilidades": ["EF06MA11", "EF06MA03"],
+      "material_ref": "detetives-matematica-2026",
+      "evidencias": [
+        { "id": "ev03", "tipo": "foto", "arquivo": "idb:e03-1", "descricao": "Quadro com o esquema de pistas de um problema de troco e as operações escolhidas pela turma.", "conteudo": "quadro", "contem_rosto": false }
+      ]
+    },
+    {
+      "id": "e04", "data": "2026-03-24", "turma_id": "t6a", "periodo_id": "b1", "tipo": "avaliacao",
+      "tema": "Avaliação do bimestre: decimais e frações",
+      "resumo": "Prova com dois problemas contextualizados e análise dos erros por item.",
+      "habilidades": ["EF06MA11", "EF06MA08"],
+      "avaliacao_id": "a1"
+    },
+    {
+      "id": "e05", "data": "2026-04-14", "turma_id": "t6a", "periodo_id": "b1", "tipo": "retomada",
+      "tema": "Retomada dos erros mais frequentes da avaliação",
+      "resumo": "Correção coletiva com desenho de barras. A turma explicou por que escolheu cada operação antes de calcular.",
+      "habilidades": ["EF06MA08"],
+      "reflexao": "Desenhar antes de calcular reduziu a soma de numeradores e denominadores. Vale começar mais cedo na próxima unidade.",
+      "destaque": true,
+      "evidencias": [
+        { "id": "ev05", "tipo": "foto", "arquivo": "idb:e05-1", "descricao": "Caderno com o desenho de duas barras de frações e a conta de multiplicação ao lado.", "conteudo": "caderno", "contem_rosto": false }
+      ]
+    },
+    {
+      "id": "e06", "data": "2026-04-28", "turma_id": "t6a", "periodo_id": "b2", "tipo": "aula",
+      "tema": "Fração de fração: desenho antes da conta",
+      "resumo": "Trabalho em grupos com barras de papel para obter fração de fração e só depois escrever a multiplicação.",
+      "habilidades": ["EF06MA08"],
+      "destaque": true,
+      "evidencias": [
+        { "id": "ev06", "tipo": "foto", "arquivo": "idb:e06-1", "descricao": "Grupo trabalhando com barras de papel sobre a mesa; os rostos estão borrados.", "conteudo": "pessoas", "contem_rosto": true, "rostos_borrados": true, "autorizacao_imagem": "registrada" }
+      ]
+    },
+    {
+      "id": "e07", "data": "2026-05-12", "turma_id": "t6a", "periodo_id": "b2", "tipo": "aula",
+      "tema": "Sequências e regras de formação",
+      "resumo": "Descobrir a regra de sequências numéricas e aplicá-la ao termo anterior.",
+      "habilidades": ["EF06MA03"]
+    },
+    {
+      "id": "e08", "data": "2026-06-09", "turma_id": "t6a", "periodo_id": "b2", "tipo": "avaliacao",
+      "tema": "Avaliação do 2º bimestre",
+      "resumo": "Prova com problemas de fração de fração e de sequências.",
+      "habilidades": ["EF06MA08", "EF06MA03"],
+      "avaliacao_id": "a2"
+    },
+    {
+      "id": "e09", "data": "2026-03-03", "turma_id": "t7b", "periodo_id": "b1", "tipo": "aula",
+      "tema": "Equações do 1º grau: a balança",
+      "resumo": "Equilibrar balanças desenhadas para descobrir valores desconhecidos.",
+      "habilidades": ["Equações do 1º grau (descritor local)"],
+      "destaque": true,
+      "evidencias": [
+        { "id": "ev09", "tipo": "foto", "arquivo": "idb:e09-1", "descricao": "Quadro com o desenho de uma balança em equilíbrio e a equação correspondente escrita abaixo.", "conteudo": "quadro", "contem_rosto": false }
+      ]
+    }
+  ],
+  "avaliacoes": [
+    {
+      "id": "a1", "data": "2026-03-24", "turma_id": "t6a", "instrumento": "prova", "n_participantes": 28,
+      "itens": [
+        {
+          "item": "Q1 — restante dividido entre turmas (decimais)", "habilidade": "EF06MA11", "acertos": 19, "n": 28,
+          "erros_tipicos": [
+            { "descricao": "Dividiu o total sem descontar o que foi usado", "contagem": 5 },
+            { "descricao": "Parou antes de dividir", "contagem": 4 }
+          ]
+        },
+        {
+          "item": "Q2 — fração de fração", "habilidade": "EF06MA08", "acertos": 12, "n": 28,
+          "erros_tipicos": [
+            { "descricao": "Somou numeradores e denominadores", "contagem": 9 },
+            { "descricao": "Usou só uma das frações", "contagem": 7 }
+          ]
+        }
+      ],
+      "intervencao": "Retomada com desenho de barras e correção coletiva em que cada estudante explica a escolha da operação (aula de 14/04)."
+    },
+    {
+      "id": "a2", "data": "2026-06-09", "turma_id": "t6a", "instrumento": "prova", "n_participantes": 27,
+      "itens": [
+        {
+          "item": "Q1 — fração de fração", "habilidade": "EF06MA08", "acertos": 21, "n": 27,
+          "erros_tipicos": [
+            { "descricao": "Usou só uma das frações", "contagem": 4 },
+            { "descricao": "Somou numeradores e denominadores", "contagem": 2 }
+          ]
+        },
+        {
+          "item": "Q2 — termo de uma sequência", "habilidade": "EF06MA03", "acertos": 18, "n": 27,
+          "erros_tipicos": [
+            { "descricao": "Aplicou a regra ao termo errado", "contagem": 6 },
+            { "descricao": "Erro de cálculo", "contagem": 3 }
+          ]
+        }
+      ],
+      "intervencao": "Atividade de sequências com tabela de termos para o próximo período."
+    }
+  ]
+}

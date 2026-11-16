@@ -1,0 +1,304 @@
+{
+  "schema_versao": "2.0",
+  "meta": {
+    "titulo": "Detetives da Matemática — trecho de exemplo (2 questões)",
+    "subtitulo": "Recorte da apostila do 6º ano, reescrito no formato v2",
+    "autoria": { "nome": "Prof. Alê Barbosa", "vinculo": "MathLab Educação" },
+    "disciplina": "Matemática",
+    "area": "Números e operações",
+    "tipo_conhecimento": "formal",
+    "duracao_minutos": 50,
+    "idioma": "pt-BR",
+    "versao_material": "2.0.0-exemplo",
+    "data_criacao": "2026-11-16"
+  },
+  "publico": {
+    "perfil": "estudante",
+    "nivel": "ef2",
+    "serie_ou_ano": "6º ano",
+    "faixa_etaria": { "min": 11, "max": 12 },
+    "conhecimentos_previos": ["quatro operações com naturais", "ideia de fração como parte de um todo"],
+    "registro": "escolar",
+    "diretrizes_linguagem": [
+      "Frases curtas e verbos de ação.",
+      "Todo termo técnico novo aparece no glossário.",
+      "Sempre mostrar a situação (desenho) antes da conta."
+    ],
+    "glossario_obrigatorio": true
+  },
+  "referencial_pedagogico": {
+    "nome": "Psicologia Histórico-Cultural",
+    "criterios": [
+      { "id": "hc-situacao", "descricao": "Parte de uma situação-problema que o estudante reconhece." },
+      { "id": "hc-mediacao", "descricao": "Usa signos e representações (desenho, esquema) como mediação antes da regra." },
+      { "id": "hc-conceito", "descricao": "Constrói o porquê do procedimento, e não só a regra." }
+    ]
+  },
+  "objetivos": [
+    { "id": "ob1", "texto": "Resolver problemas com números decimais usando as quatro operações e explicar cada etapa." },
+    { "id": "ob2", "texto": "Interpretar \"fração de fração\" como multiplicação e justificar com um desenho." }
+  ],
+
+  "referencias": [
+    {
+      "id": "ref-bncc",
+      "tipo": "documento_oficial",
+      "titulo": "Base Nacional Comum Curricular",
+      "autores": ["Brasil. Ministério da Educação"],
+      "ano": 2018,
+      "url": "http://basenacionalcomum.mec.gov.br/",
+      "observacao": "Exemplo de referência AINDA NÃO verificada: URL, edição e códigos de habilidade precisam ser conferidos no documento oficial.",
+      "verificacao": { "estado": "nao_verificada" }
+    }
+  ],
+
+  "afirmacoes": [
+    {
+      "id": "af-alinhar",
+      "texto": "Ao somar ou subtrair decimais, alinhamos as vírgulas para que cada algarismo se combine com outro de mesmo valor posicional.",
+      "tipo": "procedimento",
+      "sustentacao": {
+        "modo": "demonstracao",
+        "demonstracao": "No sistema decimal, o valor de cada algarismo depende da posição. Só podemos somar décimos com décimos e centésimos com centésimos. Alinhar as vírgulas coloca cada posição na mesma coluna."
+      },
+      "estado": "demonstrada"
+    },
+    {
+      "id": "af-q01",
+      "texto": "Do total de 18,6 kg, foram usados 11,55 kg. Sobram 7,05 kg, e cada uma das 5 turmas recebe 1,41 kg.",
+      "tipo": "calculo",
+      "sustentacao": { "modo": "calculo", "calculo_ids": ["c-q01-usado", "c-q01-resto", "c-q01-por-turma"] },
+      "estado": "calculada"
+    },
+    {
+      "id": "af-fracao-visual",
+      "texto": "Tomar 3/4 de uma parte que vale 2/3 do todo é o mesmo que multiplicar 2/3 × 3/4, e dá 6 de 12 pedaços do todo.",
+      "tipo": "demonstracao",
+      "sustentacao": {
+        "modo": "demonstracao",
+        "demonstracao": "Divida o todo em 3 partes iguais e pegue 2. Divida cada parte pegada em 4 pedaços e pinte 3 de cada. Foram 2 × 3 = 6 pedaços pintados. O todo inteiro, dividido do mesmo jeito, tem 3 × 4 = 12 pedaços. Logo, 6/12 = 1/2."
+      },
+      "estado": "demonstrada"
+    },
+    {
+      "id": "af-q02",
+      "texto": "A fração do terreno inteiro que recebeu sementes é 1/2.",
+      "tipo": "calculo",
+      "sustentacao": { "modo": "calculo", "calculo_ids": ["c-q02"] },
+      "estado": "calculada"
+    },
+    {
+      "id": "af-verbalizar",
+      "texto": "Pedir que o estudante explique por que escolheu uma operação ajuda o professor a ver se o erro está na interpretação, no conceito ou no procedimento.",
+      "tipo": "opiniao_autoral",
+      "sustentacao": { "modo": "autoral_declarado" },
+      "estado": "autoral_declarada",
+      "observacao": "Juízo pedagógico do autor. Para afirmar como achado de pesquisa, precisa de referência com localizador."
+    },
+    {
+      "id": "af-bncc",
+      "texto": "Os problemas trabalham operações com números racionais, previstas para o 6º ano na BNCC.",
+      "tipo": "alinhamento_curricular",
+      "sustentacao": {
+        "modo": "referencia",
+        "refs": [{ "ref_id": "ref-bncc", "localizador": "Matemática, 6º ano, unidade temática Números (conferir códigos de habilidade)" }]
+      },
+      "estado": "pendente"
+    }
+  ],
+
+  "calculos": [
+    {
+      "id": "c-q01-usado",
+      "descricao": "Arroz usado nos dois dias",
+      "expressao": "4.75 + 6.8",
+      "resultado_esperado": "11.55",
+      "unidade": "kg"
+    },
+    {
+      "id": "c-q01-resto",
+      "descricao": "Arroz que sobrou",
+      "expressao": "18.6 - 11.55",
+      "resultado_esperado": "7.05",
+      "unidade": "kg"
+    },
+    {
+      "id": "c-q01-por-turma",
+      "descricao": "Parte de cada turma",
+      "expressao": "7.05 / 5",
+      "resultado_esperado": "1.41",
+      "unidade": "kg",
+      "passos": [{ "expressao": "1.41 * 5", "resultado": "7.05" }]
+    },
+    { "id": "c-q01-dist-a", "descricao": "Erro: dividir o total sem descontar o uso", "expressao": "18.6 / 5", "resultado_esperado": "3.72", "unidade": "kg" },
+    { "id": "c-q01-dist-c", "descricao": "Erro: dividir o que foi usado, não o que sobrou", "expressao": "(4.75 + 6.8) / 5", "resultado_esperado": "2.31", "unidade": "kg" },
+    { "id": "c-q01-dist-d", "descricao": "Erro: parar antes de dividir", "expressao": "18.6 - 4.75 - 6.8", "resultado_esperado": "7.05", "unidade": "kg" },
+    {
+      "id": "c-q02",
+      "descricao": "Três quartos de dois terços",
+      "expressao": "2/3 * 3/4",
+      "resultado_esperado": "1/2",
+      "passos": [
+        { "expressao": "(2 * 3) / (3 * 4)", "resultado": "6/12" },
+        { "expressao": "6/12", "resultado": "1/2" }
+      ]
+    },
+    { "id": "c-q02-dist-b", "descricao": "Erro: somar numeradores e denominadores", "expressao": "(2 + 3) / (3 + 4)", "resultado_esperado": "5/7" }
+  ],
+
+  "figuras": [
+    {
+      "id": "fig-barras-fracao",
+      "tipo": "svg",
+      "alt": "Barra dividida em 3 colunas iguais. As 2 primeiras colunas representam o terreno preparado e cada uma está dividida em 4 pedaços, com 3 pintados de verde. A terceira coluna, não preparada, também está dividida em 4 e fica sem cor. Ao todo, 6 dos 12 pedaços estão pintados.",
+      "svg": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 330 130' role='img'><title>Fração de fração: 3/4 de 2/3 = 6/12</title><g stroke='#1d3557' stroke-width='1.5'><rect x='10' y='10' width='100' height='20' fill='#7bc47f'/><rect x='10' y='30' width='100' height='20' fill='#7bc47f'/><rect x='10' y='50' width='100' height='20' fill='#7bc47f'/><rect x='10' y='70' width='100' height='20' fill='#e8f5e9'/><rect x='120' y='10' width='100' height='20' fill='#7bc47f'/><rect x='120' y='30' width='100' height='20' fill='#7bc47f'/><rect x='120' y='50' width='100' height='20' fill='#7bc47f'/><rect x='120' y='70' width='100' height='20' fill='#e8f5e9'/><rect x='230' y='10' width='90' height='20' fill='#f1f1f1' stroke-dasharray='4 3'/><rect x='230' y='30' width='90' height='20' fill='#f1f1f1' stroke-dasharray='4 3'/><rect x='230' y='50' width='90' height='20' fill='#f1f1f1' stroke-dasharray='4 3'/><rect x='230' y='70' width='90' height='20' fill='#f1f1f1' stroke-dasharray='4 3'/></g><text x='115' y='108' text-anchor='middle' font-size='11' fill='#1d3557'>preparado: 2/3 do terreno</text><text x='275' y='108' text-anchor='middle' font-size='11' fill='#1d3557'>não preparado</text><text x='165' y='124' text-anchor='middle' font-size='11' fill='#1d3557'>verde = 6 de 12 pedaços = 1/2</text></svg>"
+    }
+  ],
+
+  "questoes": [
+    {
+      "id": "q01",
+      "enunciado": "Uma escola recebeu 18,6 kg de arroz. Utilizou 4,75 kg na segunda-feira e 6,8 kg na terça-feira. O restante será dividido igualmente entre 5 turmas. Quantos quilogramas cada turma receberá?",
+      "formato": "multipla_escolha",
+      "origem": "material_do_professor",
+      "nota_origem": "Enunciado e gabarito vêm do simulado do professor. As alternativas A, C e D foram reconstruídas a partir de erros típicos, só para o exemplo, e devem ser trocadas pelas originais.",
+      "alternativas": [
+        { "letra": "A", "texto": "3,72 kg", "erro_tipico": "Dividiu o total por 5 sem descontar o que foi usado.", "calculo_id": "c-q01-dist-a" },
+        { "letra": "B", "texto": "1,41 kg" },
+        { "letra": "C", "texto": "2,31 kg", "erro_tipico": "Dividiu por 5 o que foi usado, em vez do que sobrou.", "calculo_id": "c-q01-dist-c" },
+        { "letra": "D", "texto": "7,05 kg", "erro_tipico": "Parou depois de calcular o que sobrou, sem dividir entre as turmas.", "calculo_id": "c-q01-dist-d" }
+      ],
+      "gabarito": "B",
+      "resolucao": [
+        { "titulo": "Pista 1: quanto arroz foi usado?", "texto": "4,75 + 6,8 = 11,55 kg", "calculo_id": "c-q01-usado" },
+        { "titulo": "Pista 2: quanto sobrou?", "texto": "18,6 − 11,55 = 7,05 kg", "calculo_id": "c-q01-resto" },
+        { "titulo": "Pista 3: como dividir igualmente?", "texto": "7,05 ÷ 5 = 1,41 kg. Confira: 1,41 × 5 = 7,05.", "calculo_id": "c-q01-por-turma" }
+      ]
+    },
+    {
+      "id": "q02",
+      "enunciado": "Dois terços do terreno foram preparados. Da parte preparada, três quartos receberam sementes. Que fração do terreno inteiro recebeu sementes?",
+      "formato": "multipla_escolha",
+      "origem": "material_do_professor",
+      "nota_origem": "Enunciado e gabarito vêm do simulado do professor. As alternativas B, C e D foram reconstruídas a partir de erros típicos, só para o exemplo.",
+      "alternativas": [
+        { "letra": "A", "texto": "1/2" },
+        { "letra": "B", "texto": "5/7", "erro_tipico": "Somou numeradores e denominadores de 2/3 e 3/4.", "calculo_id": "c-q02-dist-b" },
+        { "letra": "C", "texto": "3/4", "erro_tipico": "Usou só a fração das sementes, esquecendo que ela vale para a parte preparada." },
+        { "letra": "D", "texto": "2/3", "erro_tipico": "Usou só a fração da parte preparada." }
+      ],
+      "gabarito": "A",
+      "resolucao": [
+        { "titulo": "Veja a situação", "texto": "Desenhe o terreno em 3 partes iguais e pegue 2." },
+        { "titulo": "Multiplique", "texto": "2/3 × 3/4 = 6/12 = 1/2.", "calculo_id": "c-q02" }
+      ]
+    }
+  ],
+
+  "blocos": [
+    {
+      "id": "b-abertura",
+      "tipo": "abertura",
+      "titulo": "Bem-vindos, detetives!",
+      "destinatario": "estudante",
+      "camada": "intuicao",
+      "funcao": "situacao_problema",
+      "texto": "Hoje vamos investigar mistérios com números. Cada problema esconde pistas. Seu trabalho é achar as pistas, escolher a conta e conferir se a resposta faz sentido.",
+      "criterios_referencial": ["hc-situacao"]
+    },
+    {
+      "id": "b-decimais",
+      "tipo": "conceito",
+      "titulo": "Ferramenta 1: números decimais",
+      "destinatario": "estudante",
+      "camada": "formalizacao",
+      "funcao": "conceito_cientifico",
+      "texto": "Na soma e na subtração, alinhe as vírgulas. Assim, décimos ficam com décimos e centésimos ficam com centésimos. Só dá para juntar o que tem o mesmo valor.",
+      "afirmacoes": ["af-alinhar"],
+      "criterios_referencial": ["hc-conceito"]
+    },
+    {
+      "id": "b-q01",
+      "tipo": "questao",
+      "titulo": "Questão 01: o mistério do arroz desaparecido",
+      "destinatario": "estudante",
+      "funcao": "aplicacao",
+      "questao_ids": ["q01"],
+      "afirmacoes": ["af-q01"],
+      "callout": { "tipo": "dica", "texto": "Palavras como \"restante\" ajudam, mas não decidem a conta. Entenda a situação e só depois calcule." }
+    },
+    {
+      "id": "b-fracao",
+      "tipo": "conceito",
+      "titulo": "Fração de fração: veja antes de calcular",
+      "destinatario": "estudante",
+      "camada": "intuicao",
+      "funcao": "mediacao",
+      "texto": "Imagine o terreno como uma barra com 3 partes iguais. Duas partes foram preparadas. Agora divida cada parte preparada em 4 pedaços e pinte 3. Conte os pedaços pintados e compare com o total de pedaços.",
+      "figura_ids": ["fig-barras-fracao"],
+      "afirmacoes": ["af-fracao-visual"],
+      "criterios_referencial": ["hc-mediacao", "hc-conceito"]
+    },
+    {
+      "id": "b-q02",
+      "tipo": "questao",
+      "titulo": "Questão 02: a horta dos mistérios",
+      "destinatario": "estudante",
+      "funcao": "aplicacao",
+      "questao_ids": ["q02"],
+      "afirmacoes": ["af-q02"]
+    },
+    {
+      "id": "b-erros",
+      "tipo": "erros_comuns",
+      "titulo": "Onde os detetives costumam errar?",
+      "destinatario": "estudante",
+      "funcao": "avaliacao_formativa",
+      "texto": "Cuidado com a soma de frações feita de qualquer jeito. Somar os de cima e os de baixo dá 5/7 para 2/3 e 3/4, e isso está errado. Antes de calcular, desenhe a situação."
+    },
+    {
+      "id": "b-professor",
+      "tipo": "avaliacao",
+      "titulo": "Orientação ao professor",
+      "destinatario": "professor",
+      "funcao": "avaliacao_formativa",
+      "texto": "Na correção, peça que cada estudante explique por que escolheu a operação. Use as respostas para separar três tipos de erro: de interpretação, de conceito e de procedimento.",
+      "afirmacoes": ["af-verbalizar"]
+    },
+    {
+      "id": "b-alinhamento",
+      "tipo": "transparencia",
+      "titulo": "Alinhamento curricular (a conferir)",
+      "destinatario": "professor",
+      "texto": "O alinhamento abaixo ainda não foi conferido no documento oficial. Confira antes de usar.",
+      "afirmacoes": ["af-bncc"]
+    }
+  ],
+
+  "glossario": [
+    { "termo": "fração de fração", "definicao": "Uma parte de uma parte. Você pega uma fração do valor que já é uma fração do todo." },
+    { "termo": "decimal", "definicao": "Número escrito com vírgula, como 4,75. Os algarismos depois da vírgula são partes de um inteiro." }
+  ],
+
+  "transparencia": {
+    "fontes_consultadas": false,
+    "limites": [
+      "Nenhuma fonte externa foi consultada para este exemplo.",
+      "O alinhamento com a BNCC está pendente de conferência.",
+      "As alternativas distratoras são ilustrativas e não vêm do simulado original."
+    ],
+    "decisoes_interpretativas": [
+      "Questão 06 da apostila original e outras ficaram fora deste recorte."
+    ],
+    "ia_usada": { "usada": true, "ferramenta": "Claude", "papel": "Reescrita do recorte da apostila no formato v2." }
+  },
+
+  "revisao_humana": {
+    "aprovado": false,
+    "observacoes": "Exemplo ilustrativo. Não revisado pelo professor."
+  },
+
+  "changelog": [
+    { "versao": "2.0.0-exemplo", "data": "2026-11-16", "resumo": "Recorte da apostila Detetives da Matemática no formato v2." }
+  ]
+}

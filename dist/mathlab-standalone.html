@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>MathLab Aulas Visuais v1.5 — Prof. Alê Barbosa</title>
+<title>MathLab Aulas Visuais v2.0 — Prof. Alê Barbosa</title>
 <meta name="description" content="Ferramenta de autoria docente: crie, edite, audite e exporte aulas e apostilas visuais de qualquer disciplina.">
 <link rel="icon" type="image/jpeg" href="assets/logo-mathlab-selo.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -71,12 +71,567 @@ details{margin:6px 0}summary{cursor:pointer;color:var(--navy2);font-weight:600}
 </head>
 <body>
 <header class="top">
-  <div class="brand"><img class="logo-img" src="assets/logo-mathlab-selo.jpg" alt="MathLab Educação"><div><strong>MathLab</strong> <span class="gold">Aulas Visuais</span> <span class="gold">v1.5</span><small>Psicologia Histórico-Cultural · Prof. Alê Barbosa</small></div></div>
+  <div class="brand"><img class="logo-img" src="assets/logo-mathlab-selo.jpg" alt="MathLab Educação"><div><strong>MathLab</strong> <span class="gold">Aulas Visuais</span> <span class="gold">v2.0</span><small>Psicologia Histórico-Cultural · Prof. Alê Barbosa</small></div></div>
   <nav id="tabs" role="tablist" aria-label="Seções"></nav>
 </header>
 <main id="main" tabindex="-1"></main>
 <div id="toast" role="status" aria-live="polite"></div>
 <footer class="foot">MathLab Aulas Visuais <span id="ver"></span> · Seus dados ficam só neste navegador · O professor valida o material antes de usar</footer>
+<script>
+/* Gerado automaticamente a partir de tools/*.mjs */
+(function (root, factory) {
+  if (typeof module === 'object' && module.exports) module.exports = factory();
+  else root.MathLabRacional = factory();
+})(typeof self !== 'undefined' ? self : this, function () {
+  'use strict';
+// Aritmética racional EXATA (BigInt) para conferir cálculos de materiais didáticos.
+// Sem dependências. Sintaxe aceita: números (ponto ou vírgula decimal), + - * / ^ ( ), × ÷ − · e % pós-fixo.
+// Exemplos: "4.75 + 6.8", "2/3 * 3/4", "480 * 25%", "(2+3)/(3+4)", "2^10".
+
+const abs = (a) => (a < 0n ? -a : a);
+const mdc = (a, b) => {
+  a = abs(a);
+  b = abs(b);
+  while (b) [a, b] = [b, a % b];
+  return a;
+};
+
+class Racional {
+  constructor(n, d = 1n) {
+    if (d === 0n) throw new Error("divisão por zero");
+    if (d < 0n) {
+      n = -n;
+      d = -d;
+    }
+    const g = mdc(n, d) || 1n;
+    this.n = n / g;
+    this.d = d / g;
+  }
+  mais(o) { return new Racional(this.n * o.d + o.n * this.d, this.d * o.d); }
+  menos(o) { return new Racional(this.n * o.d - o.n * this.d, this.d * o.d); }
+  vezes(o) { return new Racional(this.n * o.n, this.d * o.d); }
+  dividido(o) {
+    if (o.n === 0n) throw new Error("divisão por zero");
+    return new Racional(this.n * o.d, this.d * o.n);
+  }
+  potencia(o) {
+    if (o.d !== 1n) throw new Error("expoente precisa ser inteiro");
+    let e = o.n;
+    if (abs(e) > 1000n) throw new Error("expoente grande demais");
+    let base = e < 0n ? new Racional(this.d, this.n) : this;
+    e = abs(e);
+    let r = new Racional(1n);
+    for (let i = 0n; i < e; i++) r = r.vezes(base);
+    return r;
+  }
+  igual(o) { return this.n === o.n && this.d === o.d; }
+  toString() { return this.d === 1n ? `${this.n}` : `${this.n}/${this.d}`; }
+}
+
+function tokenizar(texto) {
+  const s = texto
+    .replace(/[×·]/g, "*")
+    .replace(/÷/g, "/")
+    .replace(/[−–]/g, "-")
+    .replace(/(\d),(\d)/g, "$1.$2")
+    .replace(/\s+/g, "");
+  const tokens = [];
+  const re = /\d+(?:\.\d+)?|[-+*/^()%]/gy;
+  let m;
+  let fim = 0;
+  while ((m = re.exec(s)) !== null) {
+    tokens.push(m[0]);
+    fim = re.lastIndex;
+  }
+  if (fim !== s.length) throw new Error(`caractere inválido em "${texto}" (posição ${fim})`);
+  return tokens;
+}
+
+function numero(t) {
+  const [i, f = ""] = t.split(".");
+  return new Racional(BigInt(i + f), 10n ** BigInt(f.length));
+}
+
+function avaliar(texto) {
+  const tk = tokenizar(String(texto));
+  let p = 0;
+  const ver = () => tk[p];
+  const prox = () => tk[p++];
+
+  function expr() {
+    let v = termo();
+    while (ver() === "+" || ver() === "-") v = prox() === "+" ? v.mais(termo()) : v.menos(termo());
+    return v;
+  }
+  function termo() {
+    let v = unario();
+    while (ver() === "*" || ver() === "/") v = prox() === "*" ? v.vezes(unario()) : v.dividido(unario());
+    return v;
+  }
+  function unario() {
+    if (ver() === "-") { prox(); return unario().vezes(new Racional(-1n)); }
+    if (ver() === "+") { prox(); return unario(); }
+    return potencia();
+  }
+  function potencia() {
+    let b = pos();
+    if (ver() === "^") { prox(); b = b.potencia(unario()); }
+    return b;
+  }
+  function pos() {
+    let v = primario();
+    while (ver() === "%") { prox(); v = v.dividido(new Racional(100n)); }
+    return v;
+  }
+  function primario() {
+    const t = prox();
+    if (t === undefined) throw new Error(`expressão incompleta: "${texto}"`);
+    if (t === "(") {
+      const v = expr();
+      if (prox() !== ")") throw new Error(`parêntese não fechado em "${texto}"`);
+      return v;
+    }
+    if (/^\d/.test(t)) return numero(t);
+    throw new Error(`símbolo inesperado "${t}" em "${texto}"`);
+  }
+
+  const r = expr();
+  if (p !== tk.length) throw new Error(`sobrou "${tk.slice(p).join("")}" em "${texto}"`);
+  return r;
+}
+
+function confere(expressao, esperado) {
+  const a = avaliar(expressao);
+  const b = avaliar(esperado);
+  return { ok: a.igual(b), obtido: a.toString(), esperado: b.toString() };
+}
+
+  return { Racional, avaliar, confere };
+});
+
+</script>
+<script>
+/* Gerado automaticamente a partir de tools/*.mjs */
+(function (root, factory) {
+  if (typeof module === 'object' && module.exports) module.exports = factory(require('./racional.js'));
+  else root.MathLabAuditV2 = factory(root.MathLabRacional);
+})(typeof self !== 'undefined' ? self : this, function (dep) {
+  'use strict';
+// Auditoria estrutural do material v2 (integridade, cálculos exatos, honestidade de estados).
+// Uso:  node tools/auditar-v2.mjs material.json [outro.json ...] [--final] [--json]
+//   --final : trata pendências de verificação e a falta de aprovação humana como BLOQUEANTES.
+// Não valida o esquema JSON (use ajv ou jsonschema, ver README). Não aprova nada: só o professor aprova.
+const { confere } = dep;
+
+// Valores INICIAIS, a calibrar com materiais reais (docs/04).
+const LIMITE_PALAVRAS_POR_FRASE = { ludico: 14, acessivel: 18, escolar: 20, tecnico: 26, academico: 32 };
+const NIVEIS_BASICOS = ["ef1", "ef2", "em"];
+const NIVEIS_SUPERIORES = ["graduacao", "pos_lato", "pos_stricto"];
+const RANK_REF = { nao_verificada: 0, nao_encontrada: -1, divergente: -1, localizada: 1, confirmada: 2 };
+
+function auditar(m, { final = false } = {}) {
+  const achados = [];
+  const add = (nivel, regra, onde, msg) => achados.push({ nivel, regra, onde, msg });
+  const bloq = (r, o, m2) => add("bloqueante", r, o, m2);
+  const aviso = (r, o, m2) => add("aviso", r, o, m2);
+  const pend = (r, o, m2) => add(final ? "bloqueante" : "pendencia", r, o, m2);
+
+  const por = (arr = []) => new Map(arr.map((x) => [x.id, x]));
+  const refs = por(m.referencias), afs = por(m.afirmacoes), calcs = por(m.calculos);
+  const figs = por(m.figuras), qs = por(m.questoes);
+
+  // R18 ids duplicados
+  for (const [nome, arr] of Object.entries({ referencias: m.referencias, afirmacoes: m.afirmacoes, calculos: m.calculos, figuras: m.figuras, questoes: m.questoes, blocos: m.blocos })) {
+    const vistos = new Set();
+    for (const x of arr ?? []) {
+      if (vistos.has(x.id)) bloq("R18", `${nome}.${x.id}`, "id duplicado.");
+      vistos.add(x.id);
+    }
+  }
+
+  // R06 cálculos exatos
+  const calcOk = new Map();
+  for (const c of m.calculos ?? []) {
+    let ok = true;
+    try {
+      const r = confere(c.expressao, c.resultado_esperado);
+      if (!r.ok) { ok = false; bloq("R06", `calculos.${c.id}`, `"${c.expressao}" dá ${r.obtido}, mas o esperado é ${r.esperado}.`); }
+      for (const [i, p] of (c.passos ?? []).entries()) {
+        const rp = confere(p.expressao, p.resultado);
+        if (!rp.ok) { ok = false; bloq("R06", `calculos.${c.id}.passos[${i}]`, `"${p.expressao}" dá ${rp.obtido}, mas o passo diz ${rp.esperado}.`); }
+      }
+    } catch (e) {
+      ok = false;
+      bloq("R06", `calculos.${c.id}`, `não consegui avaliar: ${e.message}`);
+    }
+    calcOk.set(c.id, ok);
+  }
+
+  // Afirmações: R01, R05, R07, R08, R09, R10
+  const citadas = new Set();
+  for (const a of m.afirmacoes ?? []) {
+    const onde = `afirmacoes.${a.id}`;
+    const s = a.sustentacao ?? {};
+    const modo = s.modo;
+    for (const r of s.refs ?? []) {
+      citadas.add(r.ref_id);
+      const ref = refs.get(r.ref_id);
+      if (!ref) bloq("R01", onde, `cita a referência inexistente "${r.ref_id}".`);
+      else {
+        if (!String(r.localizador ?? "").trim()) bloq("R01", onde, `referência "${r.ref_id}" sem localizador.`);
+        const e = ref.verificacao?.estado;
+        if (e === "divergente" || e === "nao_encontrada") bloq("R07", onde, `usa a referência "${r.ref_id}" em estado "${e}".`);
+      }
+    }
+    for (const id of s.calculo_ids ?? []) {
+      if (!calcs.has(id)) bloq("R05", onde, `cita o cálculo inexistente "${id}".`);
+      else if (calcOk.get(id) === false) bloq("R06", onde, `depende do cálculo "${id}", que NÃO confere.`);
+    }
+
+    // R08 coerência estado × modo (a ferramenta nunca deixa o estado prometer mais do que o modo entrega)
+    const rotulos = {
+      calculada: ["calculo"], demonstrada: ["demonstracao"], adotada: ["definicao_adotada"],
+      autoral_declarada: ["autoral_declarado", "material_do_professor"],
+      localizada: ["referencia", "fonte_primaria"], confirmada: ["referencia", "fonte_primaria"],
+    };
+    if (rotulos[a.estado] && !rotulos[a.estado].includes(modo)) bloq("R08", onde, `estado "${a.estado}" não combina com o modo "${modo}".`);
+    if (["referencia", "fonte_primaria"].includes(modo)) {
+      const ranks = (s.refs ?? []).map((r) => RANK_REF[refs.get(r.ref_id)?.verificacao?.estado] ?? -1);
+      const menor = ranks.length ? Math.min(...ranks) : -1;
+      if (a.estado === "confirmada" && menor < 2) bloq("R08", onde, `marcada "confirmada", mas há referência que não está "confirmada".`);
+      if (a.estado === "localizada" && menor < 1) bloq("R08", onde, `marcada "localizada", mas há referência que não foi localizada.`);
+      if (a.estado === "pendente" || (menor < 2 && a.estado !== "reprovada")) {
+        pend("R10", onde, menor < 1 ? "sustentação por referência ainda não verificada." : "referência localizada, mas o trecho ainda não foi conferido por um humano.");
+      }
+    }
+    if (a.estado === "pendente" && !["referencia", "fonte_primaria"].includes(modo)) pend("R10", onde, "afirmação pendente.");
+    if (a.estado === "reprovada") bloq("R10", onde, "afirmação reprovada ainda presente no material.");
+
+    // R09 fato empírico só com palavra do autor
+    if (["fato", "resultado_empirico"].includes(a.tipo) && ["autoral_declarado", "material_do_professor"].includes(modo)) {
+      pend("R09", onde, `afirmação do tipo "${a.tipo}" sustentada só por declaração autoral. Precisa de referência com localizador.`);
+    }
+  }
+
+  // R02 referência decorativa
+  for (const f of m.figuras ?? []) if (f.fonte_ref) citadas.add(f.fonte_ref);
+  for (const r of m.referencias ?? []) {
+    if (!citadas.has(r.id)) bloq("R02", `referencias.${r.id}`, "referência decorativa: nenhuma afirmação (nem figura) a utiliza.");
+    const e = r.verificacao?.estado;
+    if (e === "nao_verificada") pend("R10", `referencias.${r.id}`, "referência não verificada.");
+  }
+
+  // Blocos: R03, R04, R17, conteúdo sem afirmações
+  const usadas = new Set(), figsUsadas = new Set();
+  for (const b of m.blocos ?? []) {
+    const onde = `blocos.${b.id}`;
+    for (const id of b.afirmacoes ?? []) { usadas.add(id); if (!afs.has(id)) bloq("R04", onde, `cita afirmação inexistente "${id}".`); }
+    for (const id of b.figura_ids ?? []) { figsUsadas.add(id); if (!figs.has(id)) bloq("R04", onde, `cita figura inexistente "${id}".`); }
+    for (const id of b.questao_ids ?? []) if (!qs.has(id)) bloq("R04", onde, `cita questão inexistente "${id}".`);
+    if (["conceito", "exemplo", "aprofundamento"].includes(b.tipo) && !(b.afirmacoes?.length)) aviso("R03b", onde, "bloco de conteúdo sem afirmações rastreáveis.");
+  }
+  for (const t of m.glossario ?? []) if (t.afirmacao_id) usadas.add(t.afirmacao_id);
+  for (const a of m.afirmacoes ?? []) if (!usadas.has(a.id)) bloq("R03", `afirmacoes.${a.id}`, "afirmação órfã: nenhum bloco a carrega.");
+  for (const f of m.figuras ?? []) if (!figsUsadas.has(f.id)) aviso("R17", `figuras.${f.id}`, "figura não usada por nenhum bloco.");
+
+  // R11 questões
+  for (const q of m.questoes ?? []) {
+    const onde = `questoes.${q.id}`;
+    if (q.formato === "multipla_escolha") {
+      const letras = (q.alternativas ?? []).map((a) => a.letra);
+      if (new Set(letras).size !== letras.length) bloq("R11", onde, "letras de alternativas repetidas.");
+      if (!letras.includes(q.gabarito)) bloq("R11", onde, `gabarito "${q.gabarito}" não está entre as alternativas.`);
+      for (const a of q.alternativas ?? []) {
+        if (a.calculo_id && !calcs.has(a.calculo_id)) bloq("R11", onde, `alternativa ${a.letra} cita cálculo inexistente.`);
+        if (a.letra !== q.gabarito && !a.erro_tipico) aviso("R11", onde, `alternativa incorreta ${a.letra} sem "erro_tipico" (distratores devem ter uma causa pedagógica).`);
+      }
+    }
+    for (const p of q.resolucao ?? []) if (p.calculo_id && !calcs.has(p.calculo_id)) bloq("R11", onde, `resolução cita cálculo inexistente "${p.calculo_id}".`);
+    if (q.origem === "gerada_ia_a_revisar") pend("R11", onde, "questão gerada por IA ainda a revisar.");
+  }
+
+  // R12 glossário obrigatório
+  if (m.publico?.glossario_obrigatorio && !(m.glossario?.length)) bloq("R12", "glossario", "público exige glossário, mas ele está vazio.");
+
+  // R13 / R14 registro de linguagem
+  const reg = m.publico?.registro;
+  const alvo = m.publico?.perfil ?? "estudante";
+  const sentencas = (m.blocos ?? [])
+    .filter((b) => (b.destinatario ?? "estudante") === alvo)
+    .flatMap((b) => String(b.texto ?? "").replace(/\*\*|[#>`_]/g, "").split(/(?<=[.!?])\s+/))
+    .map((s) => s.trim()).filter(Boolean);
+  if (sentencas.length) {
+    const media = sentencas.reduce((t, s) => t + s.split(/\s+/).length, 0) / sentencas.length;
+    const lim = LIMITE_PALAVRAS_POR_FRASE[reg];
+    if (lim && media > lim) aviso("R13", "publico.registro", `média de ${media.toFixed(1)} palavras por frase excede ${lim} para o registro "${reg}" (valor inicial, a calibrar).`);
+  }
+  const nivel = m.publico?.nivel;
+  if (NIVEIS_SUPERIORES.includes(nivel) && ["ludico", "acessivel"].includes(reg)) aviso("R14", "publico", `nível "${nivel}" com registro "${reg}": confirme se é intencional (ex.: divulgação).`);
+  if (NIVEIS_BASICOS.includes(nivel) && ["tecnico", "academico"].includes(reg)) aviso("R14", "publico", `nível "${nivel}" com registro "${reg}": confirme se é intencional.`);
+
+  // R15 transparência coerente com as referências
+  const temVerificada = (m.referencias ?? []).some((r) => ["localizada", "confirmada"].includes(r.verificacao?.estado));
+  if (m.transparencia?.fontes_consultadas === false && temVerificada) bloq("R15", "transparencia", `diz que nenhuma fonte foi consultada, mas há referência "localizada/confirmada".`);
+  if (m.transparencia?.fontes_consultadas === true && !(m.referencias?.length)) bloq("R15", "transparencia", "diz que fontes foram consultadas, mas não há nenhuma referência listada.");
+
+  // R16 revisão humana
+  if (!m.revisao_humana?.aprovado) pend("R16", "revisao_humana", "material ainda não aprovado por um professor.");
+
+  return achados;
+}
+
+
+  return { auditar };
+});
+
+</script>
+<script>
+/* Gerado automaticamente a partir de tools/*.mjs */
+(function (root, factory) {
+  if (typeof module === 'object' && module.exports) module.exports = factory();
+  else root.MathLabPortfolio = factory();
+})(typeof self !== 'undefined' ? self : this, function () {
+  'use strict';
+// Gera o portfólio (HTML em A4) a partir do diário, com checagens de privacidade e honestidade.
+// Uso: node tools/portfolio.mjs diario.json [portfolio.json] [--saida portfolio.html] [--vigiar nomes.txt]
+//   --vigiar: arquivo local com um nome de aluno por linha. Se algum aparecer em qualquer texto, NADA é gerado.
+// Não valida o esquema JSON (use jsonschema/ajv). Não gera arquivo se houver achado bloqueante.
+
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const pct = (a, n) => (n ? Math.round((100 * a) / n) : 0);
+const dataBR = (iso) => String(iso).split("-").reverse().join("/");
+const semAcento = (s) => String(s).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+const ETAPA = { ef1: "Ensino Fundamental I", ef2: "Ensino Fundamental II", em: "Ensino Médio", tecnico: "Ensino Técnico", graduacao: "Graduação", pos: "Pós-graduação", outro: "" };
+const TIPO = { aula: "Aula", avaliacao: "Avaliação", retomada: "Retomada", projeto: "Projeto", atividade_extra: "Atividade extra", outro: "Outro" };
+
+const CFG_PADRAO = (d) => ({
+  schema_versao: "portfolio.1", titulo: `Portfólio docente ${d.ano_letivo}`, destinatario: "direcao",
+  periodos_ids: d.periodos.map((p) => p.id), privacidade: { exigir_rostos_borrados: true },
+  secoes: ["matriz_cobertura", "linha_do_periodo", "destaques", "avaliacoes", "evolucao", "reflexao"],
+});
+
+function contexto(d, cfg) {
+  const periodos = d.periodos.filter((p) => cfg.periodos_ids.includes(p.id));
+  const periodoDe = (data) => d.periodos.find((p) => data >= p.inicio && data <= p.fim)?.id;
+  const pid = (e) => e.periodo_id ?? periodoDe(e.data);
+  const turmas = d.turmas.filter((t) => !cfg.turmas_ids?.length || cfg.turmas_ids.includes(t.id));
+  const idsPer = new Set(periodos.map((p) => p.id));
+  const entradas = d.entradas.filter((e) => idsPer.has(pid(e)) && turmas.some((t) => t.id === e.turma_id)).sort((a, b) => a.data.localeCompare(b.data));
+  const avals = (d.avaliacoes ?? []).filter((a) => idsPer.has(periodoDe(a.data)) && turmas.some((t) => t.id === a.turma_id)).sort((a, b) => a.data.localeCompare(b.data));
+  return { periodos, periodoDe, pid, turmas, entradas, avals, idsPer, catalogo: new Map(d.habilidades.map((h) => [h.codigo, h])) };
+}
+
+function verificar(d, cfg, vigiar = []) {
+  const out = [];
+  const add = (nivel, regra, onde, msg) => out.push({ nivel, regra, onde, msg });
+  const c = contexto(d, cfg);
+  const incluidas = new Set(c.entradas.map((e) => e.id));
+  const exigir = cfg.privacidade?.exigir_rostos_borrados !== false;
+
+  // P05 ids e referências
+  for (const [nome, arr] of Object.entries({ turmas: d.turmas, periodos: d.periodos, entradas: d.entradas, avaliacoes: d.avaliacoes ?? [] })) {
+    const vistos = new Set();
+    for (const x of arr) { if (vistos.has(x.id)) add("bloqueante", "P05", `${nome}.${x.id}`, "id duplicado."); vistos.add(x.id); }
+  }
+  const turmaIds = new Set(d.turmas.map((t) => t.id)), perIds = new Set(d.periodos.map((p) => p.id)), avIds = new Set((d.avaliacoes ?? []).map((a) => a.id));
+  for (const e of d.entradas) {
+    if (!turmaIds.has(e.turma_id)) add("bloqueante", "P05", `entradas.${e.id}`, `turma "${e.turma_id}" não existe.`);
+    if (e.periodo_id && !perIds.has(e.periodo_id)) add("bloqueante", "P05", `entradas.${e.id}`, `período "${e.periodo_id}" não existe.`);
+    if (e.avaliacao_id && !avIds.has(e.avaliacao_id)) add("bloqueante", "P05", `entradas.${e.id}`, `avaliação "${e.avaliacao_id}" não existe.`);
+    const per = d.periodos.find((p) => p.id === e.periodo_id);
+    if (per && (e.data < per.inicio || e.data > per.fim)) add("aviso", "P08", `entradas.${e.id}`, `data ${dataBR(e.data)} fora do ${per.nome}.`);
+  }
+
+  // P03 / P02 habilidades
+  const usados = new Map();
+  const usa = (cod, onde) => { if (!usados.has(cod)) usados.set(cod, onde); };
+  for (const e of d.entradas) for (const h of e.habilidades ?? []) usa(h, `entradas.${e.id}`);
+  for (const a of d.avaliacoes ?? []) for (const i of a.itens) usa(i.habilidade, `avaliacoes.${a.id}`);
+  for (const t of d.turmas) for (const p of t.habilidades_previstas ?? []) for (const h of p.codigos) usa(h, `turmas.${t.id}`);
+  for (const [cod, onde] of usados) {
+    const h = c.catalogo.get(cod);
+    if (!h) add("bloqueante", "P03", onde, `código "${cod}" não está no catálogo de habilidades.`);
+    else if (!h.verificado) add("aviso", "P02", `habilidades.${cod}`, "código ainda não conferido no documento oficial (aparece como \"a conferir\").");
+  }
+
+  // P01 rostos, P04, P06, P10 por entrada
+  for (const e of d.entradas) {
+    const dentro = incluidas.has(e.id);
+    for (const ev of e.evidencias ?? []) {
+      if (ev.tipo === "foto" && ev.contem_rosto) {
+        const ok = ev.rostos_borrados === true || (!exigir && ev.autorizacao_imagem === "registrada");
+        if (!ok) add(dentro && e.destaque ? "bloqueante" : "aviso", "P01", `entradas.${e.id}.${ev.id}`, `foto com rosto sem tratamento (${exigir ? "exige rostos borrados" : "exige borrar ou autorização registrada"}).`);
+      }
+    }
+    if (dentro && e.tipo === "aula" && !(e.habilidades?.length)) add("aviso", "P04", `entradas.${e.id}`, "aula sem habilidade: não entra na matriz de cobertura.");
+    if (dentro && e.redacao_ia?.usada && !e.redacao_ia.revisada_pelo_professor) add("bloqueante", "P06", `entradas.${e.id}`, "texto redigido com IA ainda não revisado pelo professor.");
+    if (dentro && e.destaque && !(e.evidencias?.length)) add("aviso", "P10", `entradas.${e.id}`, "entrada em destaque sem evidência.");
+  }
+
+  // P07 contagens
+  for (const a of d.avaliacoes ?? []) {
+    for (const [i, it] of a.itens.entries()) {
+      const onde = `avaliacoes.${a.id}.itens[${i}]`;
+      if (it.n > a.n_participantes) add("bloqueante", "P07", onde, `n (${it.n}) maior que n_participantes (${a.n_participantes}).`);
+      if (it.acertos > it.n) add("bloqueante", "P07", onde, `acertos (${it.acertos}) maior que n (${it.n}).`);
+      const soma = (it.erros_tipicos ?? []).reduce((t, x) => t + x.contagem, 0);
+      if (soma > it.n - it.acertos) add("bloqueante", "P07", onde, `erros típicos somam ${soma}, mas só há ${it.n - it.acertos} resposta(s) incorreta(s).`);
+    }
+  }
+
+  // P09 nomes vigiados (varre todos os textos; não imprime o contexto)
+  const termos = vigiar.map(semAcento).filter(Boolean);
+  if (termos.length) {
+    const andar = (o, caminho) => {
+      if (typeof o === "string") { const s = semAcento(o); for (const t of termos) if (s.includes(t)) add("bloqueante", "P09", caminho, "contém um nome da lista de vigilância."); }
+      else if (Array.isArray(o)) o.forEach((x, i) => andar(x, `${caminho}[${i}]`));
+      else if (o && typeof o === "object") for (const [k, v] of Object.entries(o)) andar(v, caminho ? `${caminho}.${k}` : k);
+    };
+    andar(d, ""); andar(cfg, "portfolio");
+  }
+  return out;
+}
+
+function matriz(d, cfg) {
+  const c = contexto(d, cfg);
+  return c.turmas.map((t) => {
+    const prev = new Map(c.periodos.map((p) => [p.id, new Set((t.habilidades_previstas ?? []).find((x) => x.periodo_id === p.id)?.codigos ?? [])]));
+    const temPrev = [...prev.values()].some((s) => s.size);
+    const eT = c.entradas.filter((e) => e.turma_id === t.id), aT = c.avals.filter((a) => a.turma_id === t.id);
+    const codigos = [];
+    const mais = (x) => { if (!codigos.includes(x)) codigos.push(x); };
+    for (const p of c.periodos) prev.get(p.id).forEach(mais);
+    for (const e of eT) (e.habilidades ?? []).forEach(mais);
+    for (const a of aT) a.itens.forEach((i) => mais(i.habilidade));
+    const linhas = codigos.map((cod) => ({
+      codigo: cod, hab: c.catalogo.get(cod),
+      celulas: c.periodos.map((p) => {
+        const n = eT.filter((e) => c.pid(e) === p.id && (e.habilidades ?? []).includes(cod)).length;
+        const av = aT.some((a) => c.periodoDe(a.data) === p.id && a.itens.some((i) => i.habilidade === cod));
+        const prevista = prev.get(p.id).has(cod);
+        const estado = n > 0 || av ? (temPrev && !prevista ? "extra" : "ok") : prevista ? "lacuna" : "vazio";
+        return { n, av, estado };
+      }),
+    }));
+    return { turma: t, periodos: c.periodos, linhas, temPrev };
+  });
+}
+
+function evolucao(d, cfg, turmaId) {
+  const c = contexto(d, cfg);
+  const mapa = new Map();
+  for (const a of c.avals.filter((x) => x.turma_id === turmaId)) {
+    const porHab = new Map();
+    for (const it of a.itens) { const r = porHab.get(it.habilidade) ?? { acertos: 0, n: 0 }; r.acertos += it.acertos; r.n += it.n; porHab.set(it.habilidade, r); }
+    for (const [h, r] of porHab) { if (!mapa.has(h)) mapa.set(h, []); mapa.get(h).push({ data: a.data, ...r }); }
+  }
+  return mapa;
+}
+
+const CSS = `
+@page{size:A4;margin:15mm}
+*{box-sizing:border-box}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#1b2430;font-size:11pt;line-height:1.45;margin:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.pg{page-break-after:always;padding:0}
+.pg:last-child{page-break-after:auto}
+h1{font-size:26pt;color:#1d3557;margin:0 0 4px}
+h2{font-size:15pt;color:#1d3557;border-bottom:2px solid #2a9d8f;padding-bottom:4px;margin:0 0 10px}
+h3{font-size:12pt;color:#1d3557;margin:14px 0 6px;break-after:avoid;page-break-after:avoid}
+.bloco{break-inside:avoid;page-break-inside:avoid}
+tr{break-inside:avoid;page-break-inside:avoid}
+.capa{display:flex;flex-direction:column;justify-content:center;min-height:255mm;border-left:10px solid #2a9d8f;padding-left:18px}
+.sub{font-size:13pt;color:#4a5a6a;margin-bottom:22px}
+.meta{color:#4a5a6a;font-size:10.5pt}
+table{border-collapse:collapse;width:100%;font-size:9.5pt;margin:6px 0}
+th,td{border:1px solid #c9d3dc;padding:4px 6px;text-align:left;vertical-align:top}
+th{background:#eef3f7}
+td.c{text-align:center}
+.ok{background:#e3f4ea}.lacuna{background:#fde8e8;color:#8a2b2b}.extra{background:#eef0ff}.vazio{color:#9aa5b0;text-align:center}
+.aconf{font-size:8pt;background:#fff3cd;border:1px solid #e6c65c;border-radius:3px;padding:0 3px;margin-left:4px;white-space:nowrap}
+.card{border:1px solid #c9d3dc;border-radius:6px;padding:8px 10px;margin:8px 0;break-inside:avoid;page-break-inside:avoid}
+.card .t{font-weight:700;color:#1d3557}
+.ev{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.ph{flex:1 1 150px;min-height:70px;border:1.5px dashed #9aa5b0;border-radius:4px;padding:6px;font-size:9pt;color:#4a5a6a;background:#f8fafc}
+.ev img{max-width:100%;max-height:60mm;border-radius:4px}
+.nota{font-size:9pt;color:#4a5a6a;margin-top:4px}
+.refl{background:#f4f8fb;border-left:4px solid #2a9d8f;padding:6px 10px;margin:6px 0}
+ul{margin:4px 0 4px 18px;padding:0}
+.sobre{font-size:9.5pt;border:1px solid #c9d3dc;border-radius:6px;padding:8px 12px;background:#fafbfc}
+`;
+
+function montarHtml(d, cfg) {
+  const c = contexto(d, cfg);
+  const secoes = new Set(cfg.secoes ?? CFG_PADRAO(d).secoes);
+  const exigir = cfg.privacidade?.exigir_rostos_borrados !== false;
+  const badge = (h) => (h && !h.verificado ? `<span class="aconf">a conferir</span>` : "");
+  const codHtml = (cod) => `${esc(cod)}${badge(c.catalogo.get(cod))}`;
+  const periodoTxt = c.periodos.map((p) => p.nome).join(" e ");
+  const partes = [];
+
+  partes.push(`<section class="pg capa"><h1>${esc(cfg.titulo)}</h1>${cfg.subtitulo ? `<div class="sub">${esc(cfg.subtitulo)}</div>` : ""}
+    <div class="meta">${esc(d.professor?.nome ?? "")}${d.professor?.escola ? ` · ${esc(d.professor.escola)}` : ""}<br>Ano letivo ${esc(d.ano_letivo)} · ${esc(periodoTxt)}<br>${c.turmas.map((t) => esc(t.nome)).join(" · ")}</div></section>`);
+
+  const resumo = [];
+  if (cfg.apresentacao) resumo.push(`<h2>Apresentação</h2><p>${esc(cfg.apresentacao)}</p><p class="nota">Os dados abaixo vêm do diário de aula. As contagens de avaliações são agregadas por item, sem identificar estudantes.</p>`);
+
+  if (secoes.has("matriz_cobertura")) {
+    const blocos = matriz(d, cfg).map((m) => `<h3>${esc(m.turma.nome)} — ${esc(m.turma.componente)}${ETAPA[m.turma.etapa] ? ` (${esc(ETAPA[m.turma.etapa])})` : ""}</h3>
+      <table><tr><th>Habilidade</th>${m.periodos.map((p) => `<th>${esc(p.nome)}</th>`).join("")}</tr>
+      ${m.linhas.map((l) => `<tr><td>${codHtml(l.codigo)}${l.hab?.descricao ? `<br><span class="nota">${esc(l.hab.descricao)}</span>` : ""}</td>${l.celulas.map((x) => `<td class="c ${x.estado}">${x.estado === "lacuna" ? "lacuna" : x.estado === "vazio" ? "—" : `${x.n} reg.${x.av ? " · aval." : ""}${x.estado === "extra" ? " (não prevista)" : ""}`}</td>`).join("")}</tr>`).join("")}</table>`).join("");
+    resumo.push(`<h2>Cobertura curricular</h2>${blocos}
+      <p class="nota"><b>Como ler:</b> "reg." = registros no diário que trabalharam a habilidade; "aval." = houve avaliação dela no período; "lacuna" = prevista no planejamento e sem registro. Baseado nos registros: uma lacuna pode ser aula dada e não registrada.</p>`);
+  }
+
+  if (secoes.has("evolucao")) {
+    const linhas = c.turmas.map((t) => [t, [...evolucao(d, cfg, t.id)].filter(([, v]) => v.length >= 2)]).filter(([, ev]) => ev.length);
+    if (linhas.length) resumo.push(`<h2>Evolução por habilidade</h2>${linhas.map(([t, ev]) => `<div class="bloco"><h3>${esc(t.nome)}</h3><table><tr><th>Habilidade</th><th>Percentual de acerto nos itens, por avaliação</th></tr>${ev.map(([cod, v]) => `<tr><td>${codHtml(cod)}</td><td>${v.map((x) => `${pct(x.acertos, x.n)}% (${x.acertos}/${x.n}) em ${dataBR(x.data)}`).join(" → ")}</td></tr>`).join("")}</table></div>`).join("")}
+      <p class="nota">Compara itens de provas diferentes: indica tendência, não é medida rigorosa de aprendizagem. Contagens de respostas, sem identificar estudantes.</p>`);
+  }
+  if (resumo.length) partes.push(`<section class="pg">${resumo.join("\n")}</section>`);
+
+  for (const t of c.turmas) {
+    const eT = c.entradas.filter((e) => e.turma_id === t.id);
+    const aT = c.avals.filter((a) => a.turma_id === t.id);
+    let h = `<section class="pg"><h2>${esc(t.nome)} — ${esc(t.componente)}</h2>`;
+    if (secoes.has("linha_do_periodo")) {
+      h += `<h3>Linha do período</h3><table><tr><th>Data</th><th>Tipo</th><th>Tema</th><th>Habilidades</th></tr>${eT.map((e) => `<tr><td>${dataBR(e.data)}</td><td>${esc(TIPO[e.tipo])}</td><td>${esc(e.tema)}</td><td>${(e.habilidades ?? []).map(codHtml).join("<br>")}</td></tr>`).join("")}</table>`;
+    }
+    if (secoes.has("destaques")) {
+      const ds = eT.filter((e) => e.destaque);
+      if (ds.length) h += `<h3>Em destaque</h3>${ds.map((e) => `<div class="card"><div class="t">${dataBR(e.data)} · ${esc(e.tema)}</div>${e.resumo ? `<div>${esc(e.resumo)}</div>` : ""}
+        <div class="nota">${(e.habilidades ?? []).map(codHtml).join(" · ")}</div>
+        ${(e.evidencias ?? []).length ? `<div class="ev">${e.evidencias.map((ev) => ev.dataurl ? `<figure style="margin:0"><img src="${esc(ev.dataurl)}" alt="${esc(ev.descricao)}"><figcaption class="nota">${esc(ev.descricao)}</figcaption></figure>` : `<div class="ph"><b>${esc(ev.tipo === "foto" ? `Foto (${ev.conteudo})` : ev.tipo)}</b><br>${esc(ev.descricao)}${ev.contem_rosto ? `<br><i>${ev.rostos_borrados ? "rostos borrados" : exigir ? "" : "autorização registrada"}</i>` : ""}</div>`).join("")}</div>` : ""}
+        ${e.reflexao ? `<div class="refl"><b>Reflexão:</b> ${esc(e.reflexao)}</div>` : ""}</div>`).join("")}`;
+    }
+    if (secoes.has("avaliacoes") && aT.length) {
+      h += `<h3>Avaliações e o que mostraram</h3>${aT.map((a) => `<div class="card"><div class="t">${dataBR(a.data)} · ${esc(a.instrumento)} · ${a.n_participantes} participantes</div>
+        <table><tr><th>Item</th><th>Habilidade</th><th>Acerto</th><th>Erro mais frequente</th></tr>${a.itens.map((i) => { const top = [...(i.erros_tipicos ?? [])].sort((x, y) => y.contagem - x.contagem)[0]; return `<tr><td>${esc(i.item)}</td><td>${codHtml(i.habilidade)}</td><td class="c">${pct(i.acertos, i.n)}% (${i.acertos}/${i.n})</td><td>${top ? `${esc(top.descricao)} (${top.contagem})` : "—"}</td></tr>`; }).join("")}</table>
+        ${a.intervencao ? `<div class="refl"><b>O que foi feito depois:</b> ${esc(a.intervencao)}</div>` : ""}</div>`).join("")}`;
+    }
+    partes.push(h + "</section>");
+  }
+
+  let refl = "";
+  if (secoes.has("reflexao") && (cfg.reflexao_geral || cfg.proximos_passos?.length)) {
+    refl = `<h2>Reflexão e próximos passos</h2>${cfg.reflexao_geral ? `<div class="refl">${esc(cfg.reflexao_geral)}</div>` : ""}${cfg.proximos_passos?.length ? `<h3>Próximos passos</h3><ul>${cfg.proximos_passos.map((p) => `<li>${esc(p)}</li>`).join("")}</ul>` : ""}`;
+  }
+
+  const aConf = [...new Set([...c.entradas.flatMap((e) => e.habilidades ?? []), ...c.avals.flatMap((a) => a.itens.map((i) => i.habilidade))])].filter((x) => c.catalogo.get(x) && !c.catalogo.get(x).verificado);
+  partes.push(`<section class="pg">${refl}<h2>Sobre este portfólio</h2><div class="sobre"><ul>
+    <li>Gerado a partir do diário de aula do próprio professor; nada foi acrescentado por terceiros.</li>
+    <li>Não contém nomes de estudantes. As avaliações aparecem como contagens por item.</li>
+    <li>Fotos: ${exigir ? "só entram fotos sem rosto ou com rostos borrados." : "fotos com rosto só entram se borradas ou com autorização registrada."}</li>
+    <li>Habilidades ainda não conferidas no documento oficial: ${aConf.length ? aConf.map(esc).join("; ") : "nenhuma"}.</li>
+    <li>A matriz de cobertura reflete o que foi registrado, não necessariamente tudo o que foi trabalhado.</li></ul></div></section>`);
+
+  return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(cfg.titulo)}</title><style>${CSS}</style></head><body>${partes.join("\n")}</body></html>`;
+}
+
+
+  return { CFG_PADRAO, verificar, montarHtml };
+});
+
+</script>
 <script>
 /* MathLab Aulas Visuais — núcleo (sem dependências). Funciona no navegador e no Node (testes). */
 (function (root, factory) {
@@ -85,9 +640,24 @@ details{margin:6px 0}summary{cursor:pointer;color:var(--navy2);font-weight:600}
 })(typeof self !== 'undefined' ? self : this, function () {
   'use strict';
 
-  const VERSION = '1.5.0';
+  const VERSION = '2.0.0';
   const SCHEMA = 'mathlab.material/2';
   const DEFAULT_AUTHOR = 'Prof. Alê Barbosa';
+
+  const REGISTROS = {
+    escolar: 'Escolar (anos finais e ensino médio — termo técnico com apoio)',
+    ludico: 'Lúdico (crianças, anos iniciais — frases curtas e narrativa)',
+    acessivel: 'Acessível (público geral — sem jargão, glossário cotidiano)',
+    tecnico: 'Técnico (ensino técnico e graduação — notação formal)',
+    academico: 'Acadêmico (pós-graduação e pesquisa — demonstração e limites)',
+  };
+
+  const DESTINATARIOS = {
+    estudante: 'Estudante (caderno do aluno)',
+    professor: 'Professor (guia docente e mediação)',
+    publico_geral: 'Público geral (divulgação científica)',
+    pesquisador: 'Pesquisador (rigor formal)',
+  };
 
   const INTERIOR_STYLES = {
     editorial: 'Editorial Clean (respiro, pílula de página, abertura com guia e colofão)',
@@ -492,6 +1062,8 @@ details{margin:6px 0}summary{cursor:pointer;color:var(--navy2);font-weight:600}
     r = r || {};
     const t = r.type && r.type !== 'auto' ? r.type : detectType(r.discipline);
     const prof = CONTENT_PROFILES[r.contentProfile] ? r.contentProfile : 'completo';
+    const reg = REGISTROS[r.registro] ? r.registro : 'escolar';
+    const dest = DESTINATARIOS[r.destinatario] ? r.destinatario : 'estudante';
     const auth = String(r.author || DEFAULT_AUTHOR).trim();
     return [
       'Use o MathLab Aulas Visuais para criar um material didático.',
@@ -499,6 +1071,7 @@ details{margin:6px 0}summary{cursor:pointer;color:var(--navy2);font-weight:600}
       'Base pedagógica: Psicologia Histórico-Cultural (Vigotski, Luria, Leontiev — ZDP, mediação semiótica e formação de conceitos científicos; sem confundir ZDP com scaffolding de Wood, Bruner & Ross, 1976).',
       'Disciplina: ' + (r.discipline || '[informe]'),
       'Etapa de ensino: ' + (r.level || '[informe]'),
+      'Público e registro: ' + DESTINATARIOS[dest] + ' · Registro ' + REGISTROS[reg],
       'Tema: ' + (r.topic || '[informe]'),
       'Duração: ' + (r.duration || '1 aula de 50 minutos'),
       'Tipo de conhecimento: ' + EPISTEMIC[t].label,
@@ -561,6 +1134,7 @@ details{margin:6px 0}summary{cursor:pointer;color:var(--navy2);font-weight:600}
       };
     }
     if (!m.title) m.title = m.topic || (m.poster && m.poster.title) || 'Material sem título';
+    if (o._v2) m._v2 = o._v2;
     return m;
   }
 
@@ -574,12 +1148,66 @@ details{margin:6px 0}summary{cursor:pointer;color:var(--navy2);font-weight:600}
     catch (e) { return { ok: false, error: 'JSON inválido: ' + e.message + '. Peça ao Gem: "Reenvie apenas o JSON válido, completo".' }; }
   }
 
+  function fromV2(raw) {
+    const meta = raw.meta || {};
+    const pub = raw.publico || {};
+    const figs = new Map((raw.figuras || []).map((f) => [f.id, f]));
+    const fnMap = { abertura: 'problematizacao', historia: 'contexto', desenvolvimento: 'conceito', intuicao: 'conceito', formalizacao: 'conceito', exemplo: 'exemplo', atividade: 'atividade', exercicio: 'exercicios', sintese: 'nota', referencia_rapida: 'nota' };
+    const blocks = (raw.blocos || []).map((b) => {
+      const type = fnMap[b.funcao] || 'conceito';
+      const fig = b.figura_id ? figs.get(b.figura_id) : null;
+      return {
+        id: b.id || uid('b'),
+        type,
+        title: b.titulo || BLOCK_TYPES[type][0],
+        content: b.corpo || '',
+        svg: fig && fig.svg ? String(fig.svg) : '',
+        callout: b.callout || null,
+      };
+    });
+    if ((raw.questoes || []).length) {
+      const qTxt = raw.questoes.map((q, i) => (i + 1) + '. ' + q.enunciado + (q.alternativas ? '\n' + q.alternativas.map((a) => '   - **' + a.letra + ')** ' + a.texto).join('\n') : '')).join('\n\n');
+      const gTxt = raw.questoes.map((q, i) => (i + 1) + '. **Resposta:** ' + q.gabarito + (q.resolucao ? ' — ' + q.resolucao : '')).join('\n\n');
+      blocks.push({ id: uid('b'), type: 'exercicios', title: 'Questões', content: qTxt, svg: '', callout: null });
+      blocks.push({ id: uid('b'), type: 'gabarito', title: 'Gabarito comentado', content: gTxt, svg: '', callout: null });
+    }
+    const refs = (raw.referencias || []).map((r) => ({
+      authors: r.autores || '', title: r.titulo || '', year: String(r.ano || ''), venue: r.obra || '',
+      doi: r.doi || '', url: r.url || '',
+      accessLevel: (r.verificacao && r.verificacao.estado) || 'nao_verificada',
+      verified: !!(r.verificacao && r.verificacao.estado === 'confirmada'),
+    }));
+    const lims = (raw.transparencia && raw.transparencia.nao_verificado_ou_assumido) || [];
+    if (raw.transparencia && raw.transparencia.para_o_professor_conferir && raw.transparencia.para_o_professor_conferir.length) {
+      lims.push('Conferir: ' + raw.transparencia.para_o_professor_conferir.join('; '));
+    }
+    return normalize({
+      schema: SCHEMA,
+      title: meta.titulo || 'Material v2',
+      author: meta.autor || DEFAULT_AUTHOR,
+      discipline: meta.area || meta.disciplina || '',
+      level: pub.serie_ou_curso || pub.nivel || '',
+      topic: meta.titulo || '',
+      duration: meta.duracao_minutos ? meta.duracao_minutos + ' minutos' : '',
+      epistemicType: meta.tipo_conhecimento || detectType(meta.area),
+      objectives: raw.objetivos || [],
+      prerequisites: pub.conhecimentos_previos || [],
+      blocks,
+      references: refs,
+      limitations: lims.length ? lims : ['Material v2 importado; verificar referências e aprovação docente.'],
+      poster: raw.poster || { title: meta.titulo || 'Material v2', subtitle: pub.registro ? 'Registro: ' + pub.registro : '', author: meta.autor || DEFAULT_AUTHOR, sections: blocks.slice(0, 5).map((b) => ({ label: BLOCK_TYPES[b.type][0], title: b.title, text: String(b.content).slice(0, 120) })), summary: [], theme: 'alegre' },
+      meta: { generatedBy: 'v2-import', version: VERSION },
+      _v2: raw,
+    });
+  }
+
   function importFromText(text) {
     const r = parseModelJson(text); if (!r.ok) return r;
-    const m = normalize(r.data);
+    const isV2 = Array.isArray(r.data.blocos);
+    const m = isV2 ? fromV2(r.data) : normalize(r.data);
     const warnings = [];
-    if (!m.blocks.length && !m.poster) return { ok: false, error: 'O JSON não tem "blocks" nem "poster".' };
-    if (!r.data.schema) warnings.push('O JSON não declara "schema"; importei assim mesmo.');
+    if (!m.blocks.length && !m.poster) return { ok: false, error: 'O JSON não tem "blocks"/"blocos" nem "poster".' };
+    if (!r.data.schema && !r.data.schema_versao) warnings.push('O JSON não declara "schema"; importei assim mesmo.');
     if (m.meta.generatedBy === 'manual') m.meta.generatedBy = 'skill';
     return { ok: true, material: m, warnings };
   }
@@ -956,7 +1584,7 @@ details{margin:6px 0}summary{cursor:pointer;color:var(--navy2);font-weight:600}
     });
   }
 
-  return { VERSION, SCHEMA, DEFAULT_AUTHOR, INTERIOR_STYLES, AVATAR_OPTIONS, LOGO_OPTIONS, BLOCK_PEDAGOGY, CONTENT_PROFILES, EPISTEMIC, BLOCK_TYPES, POSTER_THEMES, COVER_CSS, POSTER_CSS, DOC_CSS, VISUALS, esc, uid, wc, clone, detectType, sanitizeSvg, renderMarkdown, renderCleanCover, renderPoster, buildImagePrompt, buildRequestText, normalize, parseModelJson, importFromText, audit, toMarkdown, toHTML, toApostila, CALLOUTS, scaffold, demo };
+  return { VERSION, SCHEMA, DEFAULT_AUTHOR, REGISTROS, DESTINATARIOS, INTERIOR_STYLES, AVATAR_OPTIONS, LOGO_OPTIONS, BLOCK_PEDAGOGY, CONTENT_PROFILES, EPISTEMIC, BLOCK_TYPES, POSTER_THEMES, COVER_CSS, POSTER_CSS, DOC_CSS, VISUALS, esc, uid, wc, clone, detectType, sanitizeSvg, renderMarkdown, renderCleanCover, renderPoster, buildImagePrompt, buildRequestText, normalize, fromV2, parseModelJson, importFromText, audit, toMarkdown, toHTML, toApostila, CALLOUTS, scaffold, demo };
 });
 
 </script>
@@ -977,7 +1605,8 @@ details{margin:6px 0}summary{cursor:pointer;color:var(--navy2);font-weight:600}
   }
 
   const S = { tab: 'biblioteca', pid: null, mid: null, draft: null, dirty: false, showPrev: false, showVers: false, showArch: false,
-    form: { author: C.DEFAULT_AUTHOR, discipline: '', level: '', topic: '', duration: '1 aula de 50 minutos', objectives: '', type: 'auto', contentProfile: 'completo', target: '', pasted: '' }, vis: { kind: 'numberLine', text: '-6, 6, -2, 5', title: '' } };
+    diario: (() => { try { return JSON.parse(localStorage.getItem('mathlab.diario.v1') || 'null'); } catch (e) { return null; } })(),
+    form: { author: C.DEFAULT_AUTHOR, discipline: '', level: '', topic: '', duration: '1 aula de 50 minutos', objectives: '', type: 'auto', contentProfile: 'completo', registro: 'escolar', destinatario: 'estudante', target: '', pasted: '' }, vis: { kind: 'numberLine', text: '-6, 6, -2, 5', title: '' } };
 
   /* ---------- modelo: projetos > materiais > versões ---------- */
   const proj = (id) => lib.projects.find((p) => p.id === (id || S.pid));
@@ -1064,12 +1693,12 @@ details{margin:6px 0}summary{cursor:pointer;color:var(--navy2);font-weight:600}
   const lvlPill = (l) => '<span class="pill ' + (/Reprovado/.test(l) ? 'bad' : /Pronto/.test(l) ? 'ok' : 'warn') + '">' + esc(l) + '</span>';
 
   /* ---------- abas ---------- */
-  const TABS = [['biblioteca', '📚 Biblioteca'], ['criar', '✨ Criar'], ['editor', '✏️ Editor'], ['poster', '🖼️ Capa (pôster)'], ['apostila', '📘 Apostila completa'], ['auditoria', '🔍 Auditoria'], ['exportar', '📤 Exportar'], ['ajuda', '❓ Ajuda']];
+  const TABS = [['biblioteca', '📚 Biblioteca'], ['criar', '✨ Criar'], ['editor', '✏️ Editor'], ['poster', '🖼️ Capa (pôster)'], ['apostila', '📘 Apostila completa'], ['auditoria', '🔍 Auditoria'], ['exportar', '📤 Exportar'], ['diario', '📒 Diário & Portfólio'], ['ajuda', '❓ Ajuda']];
   const NEED = ['editor', 'poster', 'apostila', 'auditoria', 'exportar'];
 
   function render() {
     $('#tabs').innerHTML = TABS.map((t) => '<button role="tab" aria-selected="' + (S.tab === t[0] ? 'true' : 'false') + '" data-a="tab" data-t="' + t[0] + '" class="' + (S.tab === t[0] ? 'on' : '') + '">' + t[1] + '</button>').join('');
-    const v = { biblioteca: vBib, criar: vCriar, editor: vEditor, poster: vPoster, apostila: vApostila, auditoria: vAud, exportar: vExp, ajuda: vAjuda }[S.tab];
+    const v = { biblioteca: vBib, criar: vCriar, editor: vEditor, poster: vPoster, apostila: vApostila, auditoria: vAud, exportar: vExp, diario: vDiario, ajuda: vAjuda }[S.tab];
     $('#main').innerHTML = NEED.includes(S.tab) && !S.draft
       ? '<div class="card empty"><h2>Nenhum material aberto</h2><p>Abra um material na <b>Biblioteca</b> ou crie um em <b>Criar</b>.</p><button class="b gold" data-a="tab" data-t="biblioteca">Ir para a Biblioteca</button></div>' : v();
   }
@@ -1103,6 +1732,8 @@ details{margin:6px 0}summary{cursor:pointer;color:var(--navy2);font-weight:600}
       '<div class="row"><div><label>Autor</label><input data-form="author" value="' + esc(f.author) + '" placeholder="Prof. Alê Barbosa"></div><div><label>Disciplina</label><input data-form="discipline" value="' + esc(f.discipline) + '" placeholder="Ex.: História"></div><div><label>Etapa de ensino</label><input data-form="level" value="' + esc(f.level) + '" placeholder="Ex.: 8º ano"></div><div><label>Tema</label><input data-form="topic" value="' + esc(f.topic) + '" placeholder="Ex.: Revolução Francesa"></div><div><label>Duração</label><input data-form="duration" value="' + esc(f.duration) + '"></div></div>' +
       '<div class="row"><div><label>Tipo de conhecimento</label><select data-form="type">' + opt('auto', 'Detectar pela disciplina', f.type === 'auto') + Object.keys(C.EPISTEMIC).map((k) => opt(k, C.EPISTEMIC[k].label, f.type === k)).join('') + '</select></div>' +
       '<div><label>O que você quer incluir?</label><select data-form="contentProfile">' + Object.keys(C.CONTENT_PROFILES).map((k) => opt(k, C.CONTENT_PROFILES[k], f.contentProfile === k)).join('') + '</select></div>' +
+      '<div><label>Registro de linguagem</label><select data-form="registro">' + Object.keys(C.REGISTROS).map((k) => opt(k, C.REGISTROS[k], f.registro === k)).join('') + '</select></div>' +
+      '<div><label>Destinatário</label><select data-form="destinatario">' + Object.keys(C.DESTINATARIOS).map((k) => opt(k, C.DESTINATARIOS[k], f.destinatario === k)).join('') + '</select></div>' +
       '<div><label>Salvar no projeto</label><select data-form="target">' + opt('', '(criar projeto novo)', !f.target) + lib.projects.filter((p) => !p.archived).map((p) => opt(p.id, p.name, f.target === p.id)).join('') + '</select></div></div>' +
       '<label>Objetivos desejados (opcional)</label><textarea data-form="objectives" rows="2">' + esc(f.objectives) + '</textarea></div>' +
       '<div class="card steps"><h3>Caminho sem custo (recomendado)</h3>' +
@@ -1173,7 +1804,17 @@ details{margin:6px 0}summary{cursor:pointer;color:var(--navy2);font-weight:600}
   /* ---------- Auditoria ---------- */
   function vAud() {
     const d = S.draft, a = C.audit(d), tr = d.meta.teacherReview;
+    let v2Html = '';
+    if (d._v2 && window.MathLabAuditV2) {
+      const ach = window.MathLabAuditV2.auditar(d._v2, { final: !!(tr && tr.done) });
+      const nb = ach.filter((x) => x.nivel === 'bloqueante').length;
+      const np = ach.filter((x) => x.nivel === 'pendencia').length;
+      v2Html = '<div class="card" style="border-left:5px solid ' + (nb ? 'var(--bad)' : 'var(--ok)') + '"><h3>Auditoria v2 (R01–R18 + Aritmética Racional Exata)</h3>' +
+        '<p class="muted">' + nb + ' bloqueante(s) · ' + np + ' pendência(s) · ' + (ach.length - nb - np) + ' aviso(s)</p>' +
+        (ach.length ? ach.map((x) => '<div class="find ' + (x.nivel === 'bloqueante' ? 'hard' : x.nivel === 'pendencia' ? 'warn' : 'info') + '">' + (x.nivel === 'bloqueante' ? '⛔' : x.nivel === 'pendencia' ? '⏳' : 'ℹ️') + ' <b>' + esc(x.regra) + '</b> (' + esc(x.onde) + '): ' + esc(x.msg) + '</div>').join('') : '<div class="find">✅ Nenhum achado na auditoria v2.</div>') + '</div>';
+    }
     return '<div class="card"><h2>Auditoria de qualidade</h2><div style="display:flex;gap:24px;align-items:center;flex-wrap:wrap"><div><div class="score">' + a.score + '</div><span class="muted">de 100 · ' + a.words + ' palavras</span></div><div>' + lvlPill(a.level) + '<p class="muted" style="max-width:520px">' + esc(a.note) + '</p></div></div></div>' +
+      v2Html +
       (a.hard.length ? '<div class="card" style="border-color:var(--bad)"><h3 style="color:var(--bad)">Falhas graves (' + a.hard.length + ')</h3>' + a.hard.map((x) => '<div class="find hard">⛔ <b>' + esc(x.cat) + ':</b> ' + esc(x.msg) + '</div>').join('') + '</div>' : '') +
       '<div class="card"><h3>10 categorias</h3>' + a.categories.map((c) => '<div class="cat"><span>' + esc(c.name) + '</span><div class="bar"><i style="width:' + c.score * 10 + '%;background:' + (c.score >= 8 ? 'var(--ok)' : c.score >= 5 ? 'var(--warn)' : 'var(--bad)') + '"></i></div><b>' + c.score + '</b></div>' + c.findings.map((f) => '<div class="find ' + f.sev + '">' + (f.sev === 'hard' ? '⛔' : f.sev === 'warn' ? '⚠️' : 'ℹ️') + ' ' + esc(f.msg) + '</div>').join('')).join('') + '</div>' +
       '<div class="card"><h3>Revisão do professor</h3><p class="muted">A auditoria automática não confirma se o conteúdo está certo. Só você faz isso.</p><label><input type="checkbox" style="width:auto" data-a="review" ' + (tr && tr.done ? 'checked' : '') + '> Revisei o conteúdo e assumo a validação final' + (tr && tr.at ? ' (em ' + fmt(tr.at) + ')' : '') + '</label><p class="muted">Salve uma nova versão para registrar a revisão.</p></div>';
@@ -1198,6 +1839,49 @@ details{margin:6px 0}summary{cursor:pointer;color:var(--navy2);font-weight:600}
     return '<div class="card"><h2>Exportar</h2><p class="muted">Exporta o que está no Editor agora (mesmo sem salvar).</p><div class="btns"><button class="b gold" data-a="dlbook">📘 Apostila completa (capa + miolo)</button><button class="b" data-a="printbook">🖨️ Imprimir apostila / salvar PDF</button><button class="b ghost" data-a="dlhtml">📄 Material em HTML simples</button><button class="b ghost" data-a="printall">🖨️ Imprimir material simples</button><button class="b ghost" data-a="dlposter">🖼️ Só o pôster (HTML)</button><button class="b ghost" data-a="dlmd">Markdown</button><button class="b ghost" data-a="dljson">JSON (para reimportar)</button></div>' +
       (svgs.length ? '<h3>Figuras SVG</h3><div class="btns">' + svgs.map((x) => '<button class="b ghost sm" data-a="dlsvg" data-i="' + x[1] + '">' + esc(x[0].title) + '.svg</button>').join('') + '</div>' : '') +
       '<p class="muted">Para PDF: use “Imprimir / salvar PDF” e escolha “Salvar como PDF” no navegador. Word e PowerPoint ainda não estão nesta versão.</p></div>';
+  }
+
+  /* ---------- Diário & Portfólio Docente ---------- */
+  function saveDiario() { try { localStorage.setItem('mathlab.diario.v1', JSON.stringify(S.diario)); } catch (e) { /* ignora */ } }
+  function demoDiario() {
+    return {
+      schema_versao: 'diario.1', ano_letivo: new Date().getFullYear(), professor: C.DEFAULT_AUTHOR, escola: 'Escola MathLab', area: 'Matemática',
+      periodos: [{ id: 'b1', nome: '1º bimestre', inicio: '2026-02-01', fim: '2026-04-30' }, { id: 'b2', nome: '2º bimestre', inicio: '2026-05-01', fim: '2026-07-15' }],
+      turmas: [{ id: '6a', nome: '6º A', etapa: 'ef2', habilidades_previstas: ['EF06MA08', 'EF06MA11'] }],
+      habilidades: [{ codigo: 'EF06MA08', descricao: 'Frações e suas representações', verificado: false }, { codigo: 'EF06MA11', descricao: 'Operações com números decimais', verificado: false }],
+      entradas: [
+        { id: 'e1', data: '2026-02-24', turma_id: '6a', periodo_id: 'b1', tipo: 'aula', tema: 'Frações: parte de um todo', habilidades: ['EF06MA08'], resumo: 'Construção de barras de papel para comparar frações.', destaque: true },
+        { id: 'e2', data: '2026-04-14', turma_id: '6a', periodo_id: 'b1', tipo: 'retomada', tema: 'Retomada dos erros mais frequentes', habilidades: ['EF06MA08'], resumo: 'Correção coletiva com desenho antes do cálculo.', destaque: true, reflexao: 'Desenhar antes de calcular reduziu a soma de denominadores.' },
+      ],
+      avaliacoes: [
+        { id: 'av1', data: '2026-03-24', turma_id: '6a', instrumento: 'prova', n_participantes: 28, itens: [{ item: 'Q1 — fração de fração', habilidade: 'EF06MA08', acertos: 12, n: 28, erros_tipicos: [{ descricao: 'Somou numeradores e denominadores', contagem: 9 }] }], intervencao: 'Retomada com barras de papel (14/04).' },
+      ],
+    };
+  }
+  function vDiario() {
+    const P = window.MathLabPortfolio;
+    if (!S.diario) {
+      return '<div class="card empty"><h2>Diário de Aula & Portfólio Docente</h2><p>Registre suas aulas e avaliações e gere um portfólio em A4 com cobertura curricular por habilidade, evolução e privacidade garantida.</p>' +
+        '<div class="btns" style="justify-content:center"><button class="b gold" data-a="demodiario">Carregar exemplo de diário</button>' +
+        '<label class="b ghost" style="display:inline-block;margin:0;cursor:pointer">Importar diario.json<input type="file" accept=".json,application/json" data-a="importdiario" style="display:none"></label></div></div>';
+    }
+    const d = S.diario, cfg = P.CFG_PADRAO(d), ach = P.verificar(d, cfg);
+    const nb = ach.filter((x) => x.nivel === 'bloqueante').length;
+    const htmlPort = nb ? '' : P.montarHtml(d, cfg);
+    return '<div class="card"><div class="btns" style="justify-content:space-between"><h2 style="margin:0">Diário & Portfólio — ' + esc(d.professor || C.DEFAULT_AUTHOR) + '</h2>' +
+      '<div class="btns"><button class="b ghost sm" data-a="dldiario">Baixar diario.json</button><label class="b ghost sm" style="display:inline-block;margin:0;cursor:pointer">Importar JSON<input type="file" accept=".json,application/json" data-a="importdiario" style="display:none"></label></div></div>' +
+      '<p class="muted">' + d.turmas.length + ' turma(s) · ' + d.entradas.length + ' registro(s) · ' + (d.avaliacoes || []).length + ' avaliação(ões)</p>' +
+      (ach.length ? '<div style="margin:8px 0">' + ach.map((x) => '<div class="find ' + (x.nivel === 'bloqueante' ? 'hard' : 'warn') + '">' + (x.nivel === 'bloqueante' ? '⛔' : '⚠️') + ' <b>' + esc(x.regra) + '</b>: ' + esc(x.msg) + '</div>').join('') + '</div>' : '') +
+      '<div class="btns"><button class="b gold" data-a="dlportfolio"' + (nb ? ' disabled' : '') + '>📘 Baixar Portfólio (HTML)</button><button class="b" data-a="printportfolio"' + (nb ? ' disabled' : '') + '>🖨️ Imprimir / salvar PDF</button></div></div>' +
+      '<div class="card"><h3>Novo registro no diário</h3><div class="row"><div><label>Data</label><input id="dr-data" type="date" value="' + new Date().toISOString().slice(0, 10) + '"></div>' +
+      '<div><label>Turma</label><select id="dr-turma">' + d.turmas.map((t) => '<option value="' + esc(t.id) + '">' + esc(t.nome) + '</option>').join('') + '</select></div>' +
+      '<div><label>Tipo</label><select id="dr-tipo"><option value="aula">Aula</option><option value="retomada">Retomada</option><option value="avaliacao">Avaliação</option><option value="projeto">Projeto</option></select></div>' +
+      '<div><label>Habilidades (vírgula)</label><input id="dr-hab" placeholder="Ex.: EF06MA08"></div></div>' +
+      '<label>Tema da aula</label><input id="dr-tema" placeholder="Ex.: Frações equivalentes na reta numérica">' +
+      '<label>Resumo / evidência</label><textarea id="dr-resumo" rows="2"></textarea>' +
+      '<label>Reflexão docente (opcional)</label><textarea id="dr-refl" rows="2"></textarea>' +
+      '<div class="btns"><button class="b gold" data-a="adddiario">+ Adicionar ao diário</button></div></div>' +
+      (htmlPort ? '<div class="card"><h3>Prévia do Portfólio Docente (A4)</h3><iframe title="Prévia do portfólio" style="width:100%;height:72vh;border:0;border-radius:10px;background:#eef1f6" srcdoc="' + esc(htmlPort) + '"></iframe></div>' : '');
   }
 
   /* ---------- Ajuda ---------- */
@@ -1286,6 +1970,25 @@ details{margin:6px 0}summary{cursor:pointer;color:var(--navy2);font-weight:600}
     dljson: () => dl(slug(S.draft.title) + '.json', 'application/json', JSON.stringify(C.normalize(S.draft), null, 2)),
     dlsvg: (el) => { const b = S.draft.blocks[+el.dataset.i]; dl(slug(b.title) + '.svg', 'image/svg+xml', C.sanitizeSvg(b.svg)); },
     review: (el) => { S.draft.meta.teacherReview = el.checked ? { done: true, at: new Date().toISOString() } : { done: false }; S.dirty = true; render(); },
+    demodiario: () => { S.diario = demoDiario(); saveDiario(); render(); toast('Exemplo de diário carregado.'); },
+    importdiario: (el) => {
+      const f = el.files[0]; if (!f) return;
+      const rd = new FileReader(); rd.onload = () => {
+        try { const j = JSON.parse(rd.result); if (!Array.isArray(j.entradas)) throw new Error('JSON sem "entradas"'); S.diario = j; saveDiario(); render(); toast('Diário importado.'); }
+        catch (e) { toast('Diário inválido: ' + e.message, true); }
+      }; rd.readAsText(f);
+    },
+    dldiario: () => S.diario && dl('diario-' + (S.diario.ano_letivo || '2026') + '.json', 'application/json', JSON.stringify(S.diario, null, 2)),
+    adddiario: () => {
+      if (!S.diario) return;
+      const tema = $('#dr-tema').value.trim(); if (!tema) { toast('Informe o tema da aula.', true); return; }
+      const habs = $('#dr-hab').value.split(/[,;\s]+/).map((s) => s.trim()).filter(Boolean);
+      habs.forEach((h) => { if (!S.diario.habilidades.some((x) => x.codigo === h)) S.diario.habilidades.push({ codigo: h, descricao: 'Habilidade ' + h, verificado: false }); });
+      S.diario.entradas.push({ id: C.uid('e'), data: $('#dr-data').value || new Date().toISOString().slice(0, 10), turma_id: $('#dr-turma').value, tipo: $('#dr-tipo').value, tema, habilidades: habs, resumo: $('#dr-resumo').value.trim(), reflexao: $('#dr-refl').value.trim(), destaque: !!$('#dr-resumo').value.trim() });
+      saveDiario(); render(); toast('Registro adicionado ao diário.');
+    },
+    dlportfolio: () => { const P = window.MathLabPortfolio; if (S.diario && P) dl('portfolio-docente.html', 'text/html', P.montarHtml(S.diario, P.CFG_PADRAO(S.diario))); },
+    printportfolio: () => { const P = window.MathLabPortfolio; if (S.diario && P) printHTML(P.montarHtml(S.diario, P.CFG_PADRAO(S.diario))); },
   };
 
   document.addEventListener('click', (e) => { const el = e.target.closest('[data-a]'); if (!el || el.type === 'checkbox' || el.type === 'file') return; if (A[el.dataset.a]) A[el.dataset.a](el, e); });

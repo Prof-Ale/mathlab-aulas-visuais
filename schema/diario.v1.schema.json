@@ -1,0 +1,175 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mathlab:diario:v1",
+  "title": "MathLab — Diário de aula v1",
+  "description": "Registro corrido do ano letivo. Por desenho, NÃO guarda nome de aluno: só turma, contagens e evidências de trabalho. Os dados ficam no navegador do professor.",
+  "type": "object",
+  "required": ["schema_versao", "ano_letivo", "turmas", "periodos", "habilidades", "entradas"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_versao": { "const": "diario.1" },
+    "nota": { "type": "string" },
+    "professor": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": { "nome": { "type": "string" }, "escola": { "type": "string" } }
+    },
+    "ano_letivo": { "type": "integer", "minimum": 2000, "maximum": 2100 },
+    "turmas": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/turma" } },
+    "periodos": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/periodo" } },
+    "habilidades": {
+      "description": "Catálogo local. Cada código usado nas entradas precisa existir aqui, com o estado de conferência.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/habilidade" }
+    },
+    "entradas": { "type": "array", "items": { "$ref": "#/$defs/entrada" } },
+    "avaliacoes": { "type": "array", "items": { "$ref": "#/$defs/avaliacao" } }
+  },
+
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,39}$" },
+    "codigo": { "type": "string", "minLength": 2, "maxLength": 80 },
+
+    "turma": {
+      "type": "object",
+      "required": ["id", "nome", "etapa", "componente"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "nome": { "type": "string" },
+        "etapa": { "enum": ["ef1", "ef2", "em", "tecnico", "graduacao", "pos", "outro"] },
+        "componente": { "type": "string" },
+        "habilidades_previstas": {
+          "description": "O que o planejamento previa por período. Base da matriz de cobertura.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["periodo_id", "codigos"],
+            "additionalProperties": false,
+            "properties": {
+              "periodo_id": { "$ref": "#/$defs/id" },
+              "codigos": { "type": "array", "items": { "$ref": "#/$defs/codigo" } }
+            }
+          }
+        }
+      }
+    },
+
+    "periodo": {
+      "type": "object",
+      "required": ["id", "nome", "inicio", "fim"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "nome": { "type": "string" },
+        "inicio": { "type": "string", "format": "date" },
+        "fim": { "type": "string", "format": "date" }
+      }
+    },
+
+    "habilidade": {
+      "type": "object",
+      "required": ["codigo", "sistema", "verificado"],
+      "additionalProperties": false,
+      "properties": {
+        "codigo": { "$ref": "#/$defs/codigo" },
+        "sistema": { "enum": ["BNCC", "curriculo_estadual", "ementa", "outro"] },
+        "descricao": { "type": "string" },
+        "verificado": { "type": "boolean", "description": "true só se o código e a descrição foram conferidos no documento oficial." }
+      }
+    },
+
+    "entrada": {
+      "type": "object",
+      "required": ["id", "data", "turma_id", "tipo", "tema"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "data": { "type": "string", "format": "date" },
+        "turma_id": { "$ref": "#/$defs/id" },
+        "periodo_id": { "$ref": "#/$defs/id" },
+        "tipo": { "enum": ["aula", "avaliacao", "retomada", "projeto", "atividade_extra", "outro"] },
+        "tema": { "type": "string", "minLength": 3, "maxLength": 140 },
+        "resumo": { "type": "string", "maxLength": 600, "description": "O que foi feito, em poucas linhas. Sem nomes de alunos." },
+        "habilidades": { "type": "array", "items": { "$ref": "#/$defs/codigo" } },
+        "material_ref": { "type": "string", "description": "Id ou nome do material (apostila/plano) usado." },
+        "avaliacao_id": { "$ref": "#/$defs/id" },
+        "evidencias": { "type": "array", "items": { "$ref": "#/$defs/evidencia" } },
+        "reflexao": { "type": "string", "maxLength": 800 },
+        "destaque": { "type": "boolean", "default": false, "description": "Candidata a aparecer em destaque no portfólio." },
+        "redacao_ia": {
+          "type": "object",
+          "required": ["usada", "revisada_pelo_professor"],
+          "additionalProperties": false,
+          "properties": { "usada": { "type": "boolean" }, "revisada_pelo_professor": { "type": "boolean" } }
+        }
+      }
+    },
+
+    "evidencia": {
+      "type": "object",
+      "required": ["id", "tipo", "descricao"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "tipo": { "enum": ["foto", "documento", "link"] },
+        "arquivo": { "type": "string", "description": "Chave no armazenamento local (IndexedDB) ou URL. O arquivo em si NÃO fica no JSON." },
+        "descricao": { "type": "string", "minLength": 10, "description": "Texto alternativo: o que a evidência mostra e por que importa." },
+        "conteudo": { "enum": ["caderno", "mural", "quadro", "trabalho", "ambiente", "pessoas", "outro"] },
+        "contem_rosto": { "type": "boolean" },
+        "rostos_borrados": { "type": "boolean" },
+        "autorizacao_imagem": { "enum": ["nao_aplica", "registrada", "ausente"] }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "tipo": { "const": "foto" } }, "required": ["tipo"] },
+          "then": { "required": ["conteudo", "contem_rosto"] }
+        },
+        {
+          "if": { "properties": { "contem_rosto": { "const": true } }, "required": ["contem_rosto"] },
+          "then": { "required": ["rostos_borrados", "autorizacao_imagem"] }
+        }
+      ]
+    },
+
+    "avaliacao": {
+      "description": "Só agregados por item. Nenhum dado individual de aluno.",
+      "type": "object",
+      "required": ["id", "data", "turma_id", "instrumento", "n_participantes", "itens"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "data": { "type": "string", "format": "date" },
+        "turma_id": { "$ref": "#/$defs/id" },
+        "instrumento": { "enum": ["prova", "rubrica", "trabalho", "autoavaliacao", "diagnostica"] },
+        "descricao": { "type": "string" },
+        "n_participantes": { "type": "integer", "minimum": 1 },
+        "itens": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["item", "habilidade", "acertos", "n"],
+            "additionalProperties": false,
+            "properties": {
+              "item": { "type": "string" },
+              "habilidade": { "$ref": "#/$defs/codigo" },
+              "acertos": { "type": "integer", "minimum": 0 },
+              "n": { "type": "integer", "minimum": 1 },
+              "erros_tipicos": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["descricao", "contagem"],
+                  "additionalProperties": false,
+                  "properties": { "descricao": { "type": "string" }, "contagem": { "type": "integer", "minimum": 1 } }
+                }
+              }
+            }
+          }
+        },
+        "intervencao": { "type": "string", "description": "O que o professor fez a partir do resultado." }
+      }
+    }
+  }
+}

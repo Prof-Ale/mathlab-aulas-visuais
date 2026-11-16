@@ -5,9 +5,24 @@
 })(typeof self !== 'undefined' ? self : this, function () {
   'use strict';
 
-  const VERSION = '1.5.0';
+  const VERSION = '2.0.0';
   const SCHEMA = 'mathlab.material/2';
   const DEFAULT_AUTHOR = 'Prof. Alê Barbosa';
+
+  const REGISTROS = {
+    escolar: 'Escolar (anos finais e ensino médio — termo técnico com apoio)',
+    ludico: 'Lúdico (crianças, anos iniciais — frases curtas e narrativa)',
+    acessivel: 'Acessível (público geral — sem jargão, glossário cotidiano)',
+    tecnico: 'Técnico (ensino técnico e graduação — notação formal)',
+    academico: 'Acadêmico (pós-graduação e pesquisa — demonstração e limites)',
+  };
+
+  const DESTINATARIOS = {
+    estudante: 'Estudante (caderno do aluno)',
+    professor: 'Professor (guia docente e mediação)',
+    publico_geral: 'Público geral (divulgação científica)',
+    pesquisador: 'Pesquisador (rigor formal)',
+  };
 
   const INTERIOR_STYLES = {
     editorial: 'Editorial Clean (respiro, pílula de página, abertura com guia e colofão)',
@@ -412,6 +427,8 @@
     r = r || {};
     const t = r.type && r.type !== 'auto' ? r.type : detectType(r.discipline);
     const prof = CONTENT_PROFILES[r.contentProfile] ? r.contentProfile : 'completo';
+    const reg = REGISTROS[r.registro] ? r.registro : 'escolar';
+    const dest = DESTINATARIOS[r.destinatario] ? r.destinatario : 'estudante';
     const auth = String(r.author || DEFAULT_AUTHOR).trim();
     return [
       'Use o MathLab Aulas Visuais para criar um material didático.',
@@ -419,6 +436,7 @@
       'Base pedagógica: Psicologia Histórico-Cultural (Vigotski, Luria, Leontiev — ZDP, mediação semiótica e formação de conceitos científicos; sem confundir ZDP com scaffolding de Wood, Bruner & Ross, 1976).',
       'Disciplina: ' + (r.discipline || '[informe]'),
       'Etapa de ensino: ' + (r.level || '[informe]'),
+      'Público e registro: ' + DESTINATARIOS[dest] + ' · Registro ' + REGISTROS[reg],
       'Tema: ' + (r.topic || '[informe]'),
       'Duração: ' + (r.duration || '1 aula de 50 minutos'),
       'Tipo de conhecimento: ' + EPISTEMIC[t].label,
@@ -481,6 +499,7 @@
       };
     }
     if (!m.title) m.title = m.topic || (m.poster && m.poster.title) || 'Material sem título';
+    if (o._v2) m._v2 = o._v2;
     return m;
   }
 
@@ -494,12 +513,66 @@
     catch (e) { return { ok: false, error: 'JSON inválido: ' + e.message + '. Peça ao Gem: "Reenvie apenas o JSON válido, completo".' }; }
   }
 
+  function fromV2(raw) {
+    const meta = raw.meta || {};
+    const pub = raw.publico || {};
+    const figs = new Map((raw.figuras || []).map((f) => [f.id, f]));
+    const fnMap = { abertura: 'problematizacao', historia: 'contexto', desenvolvimento: 'conceito', intuicao: 'conceito', formalizacao: 'conceito', exemplo: 'exemplo', atividade: 'atividade', exercicio: 'exercicios', sintese: 'nota', referencia_rapida: 'nota' };
+    const blocks = (raw.blocos || []).map((b) => {
+      const type = fnMap[b.funcao] || 'conceito';
+      const fig = b.figura_id ? figs.get(b.figura_id) : null;
+      return {
+        id: b.id || uid('b'),
+        type,
+        title: b.titulo || BLOCK_TYPES[type][0],
+        content: b.corpo || '',
+        svg: fig && fig.svg ? String(fig.svg) : '',
+        callout: b.callout || null,
+      };
+    });
+    if ((raw.questoes || []).length) {
+      const qTxt = raw.questoes.map((q, i) => (i + 1) + '. ' + q.enunciado + (q.alternativas ? '\n' + q.alternativas.map((a) => '   - **' + a.letra + ')** ' + a.texto).join('\n') : '')).join('\n\n');
+      const gTxt = raw.questoes.map((q, i) => (i + 1) + '. **Resposta:** ' + q.gabarito + (q.resolucao ? ' — ' + q.resolucao : '')).join('\n\n');
+      blocks.push({ id: uid('b'), type: 'exercicios', title: 'Questões', content: qTxt, svg: '', callout: null });
+      blocks.push({ id: uid('b'), type: 'gabarito', title: 'Gabarito comentado', content: gTxt, svg: '', callout: null });
+    }
+    const refs = (raw.referencias || []).map((r) => ({
+      authors: r.autores || '', title: r.titulo || '', year: String(r.ano || ''), venue: r.obra || '',
+      doi: r.doi || '', url: r.url || '',
+      accessLevel: (r.verificacao && r.verificacao.estado) || 'nao_verificada',
+      verified: !!(r.verificacao && r.verificacao.estado === 'confirmada'),
+    }));
+    const lims = (raw.transparencia && raw.transparencia.nao_verificado_ou_assumido) || [];
+    if (raw.transparencia && raw.transparencia.para_o_professor_conferir && raw.transparencia.para_o_professor_conferir.length) {
+      lims.push('Conferir: ' + raw.transparencia.para_o_professor_conferir.join('; '));
+    }
+    return normalize({
+      schema: SCHEMA,
+      title: meta.titulo || 'Material v2',
+      author: meta.autor || DEFAULT_AUTHOR,
+      discipline: meta.area || meta.disciplina || '',
+      level: pub.serie_ou_curso || pub.nivel || '',
+      topic: meta.titulo || '',
+      duration: meta.duracao_minutos ? meta.duracao_minutos + ' minutos' : '',
+      epistemicType: meta.tipo_conhecimento || detectType(meta.area),
+      objectives: raw.objetivos || [],
+      prerequisites: pub.conhecimentos_previos || [],
+      blocks,
+      references: refs,
+      limitations: lims.length ? lims : ['Material v2 importado; verificar referências e aprovação docente.'],
+      poster: raw.poster || { title: meta.titulo || 'Material v2', subtitle: pub.registro ? 'Registro: ' + pub.registro : '', author: meta.autor || DEFAULT_AUTHOR, sections: blocks.slice(0, 5).map((b) => ({ label: BLOCK_TYPES[b.type][0], title: b.title, text: String(b.content).slice(0, 120) })), summary: [], theme: 'alegre' },
+      meta: { generatedBy: 'v2-import', version: VERSION },
+      _v2: raw,
+    });
+  }
+
   function importFromText(text) {
     const r = parseModelJson(text); if (!r.ok) return r;
-    const m = normalize(r.data);
+    const isV2 = Array.isArray(r.data.blocos);
+    const m = isV2 ? fromV2(r.data) : normalize(r.data);
     const warnings = [];
-    if (!m.blocks.length && !m.poster) return { ok: false, error: 'O JSON não tem "blocks" nem "poster".' };
-    if (!r.data.schema) warnings.push('O JSON não declara "schema"; importei assim mesmo.');
+    if (!m.blocks.length && !m.poster) return { ok: false, error: 'O JSON não tem "blocks"/"blocos" nem "poster".' };
+    if (!r.data.schema && !r.data.schema_versao) warnings.push('O JSON não declara "schema"; importei assim mesmo.');
     if (m.meta.generatedBy === 'manual') m.meta.generatedBy = 'skill';
     return { ok: true, material: m, warnings };
   }
@@ -876,5 +949,5 @@
     });
   }
 
-  return { VERSION, SCHEMA, DEFAULT_AUTHOR, INTERIOR_STYLES, AVATAR_OPTIONS, LOGO_OPTIONS, BLOCK_PEDAGOGY, CONTENT_PROFILES, EPISTEMIC, BLOCK_TYPES, POSTER_THEMES, COVER_CSS, POSTER_CSS, DOC_CSS, VISUALS, esc, uid, wc, clone, detectType, sanitizeSvg, renderMarkdown, renderCleanCover, renderPoster, buildImagePrompt, buildRequestText, normalize, parseModelJson, importFromText, audit, toMarkdown, toHTML, toApostila, CALLOUTS, scaffold, demo };
+  return { VERSION, SCHEMA, DEFAULT_AUTHOR, REGISTROS, DESTINATARIOS, INTERIOR_STYLES, AVATAR_OPTIONS, LOGO_OPTIONS, BLOCK_PEDAGOGY, CONTENT_PROFILES, EPISTEMIC, BLOCK_TYPES, POSTER_THEMES, COVER_CSS, POSTER_CSS, DOC_CSS, VISUALS, esc, uid, wc, clone, detectType, sanitizeSvg, renderMarkdown, renderCleanCover, renderPoster, buildImagePrompt, buildRequestText, normalize, fromV2, parseModelJson, importFromText, audit, toMarkdown, toHTML, toApostila, CALLOUTS, scaffold, demo };
 });

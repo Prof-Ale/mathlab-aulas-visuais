@@ -1,0 +1,418 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mathlab:material:v2",
+  "title": "MathLab — Material didático v2",
+  "description": "Contrato entre o gerador (Gem/skill) e o site. Princípio: nenhuma afirmação factual existe sem dizer COMO é sustentada (referência, cálculo, demonstração, definição adotada ou declaração autoral), e nenhuma referência existe sem ser usada por alguma afirmação.",
+  "type": "object",
+  "required": ["schema_versao", "meta", "publico", "objetivos", "referencias", "afirmacoes", "calculos", "blocos", "transparencia", "revisao_humana"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_versao": { "const": "2.0" },
+    "meta": { "$ref": "#/$defs/meta" },
+    "publico": { "$ref": "#/$defs/publico" },
+    "referencial_pedagogico": { "$ref": "#/$defs/referencial_pedagogico" },
+    "objetivos": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/objetivo" } },
+    "referencias": { "type": "array", "items": { "$ref": "#/$defs/referencia" } },
+    "afirmacoes": { "type": "array", "items": { "$ref": "#/$defs/afirmacao" } },
+    "calculos": { "type": "array", "items": { "$ref": "#/$defs/calculo" } },
+    "figuras": { "type": "array", "items": { "$ref": "#/$defs/figura" } },
+    "questoes": { "type": "array", "items": { "$ref": "#/$defs/questao" } },
+    "blocos": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/bloco" } },
+    "glossario": { "type": "array", "items": { "$ref": "#/$defs/termo" } },
+    "transparencia": { "$ref": "#/$defs/transparencia" },
+    "revisao_humana": { "$ref": "#/$defs/revisao_humana" },
+    "changelog": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["versao", "data", "resumo"],
+        "additionalProperties": false,
+        "properties": {
+          "versao": { "type": "string" },
+          "data": { "type": "string", "format": "date" },
+          "resumo": { "type": "string" }
+        }
+      }
+    }
+  },
+
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,39}$" },
+
+    "meta": {
+      "type": "object",
+      "required": ["titulo", "disciplina", "tipo_conhecimento", "idioma", "versao_material"],
+      "additionalProperties": false,
+      "properties": {
+        "titulo": { "type": "string", "minLength": 3 },
+        "subtitulo": { "type": "string" },
+        "autoria": {
+          "type": "object",
+          "required": ["nome"],
+          "additionalProperties": false,
+          "properties": { "nome": { "type": "string" }, "vinculo": { "type": "string" } }
+        },
+        "disciplina": { "type": "string" },
+        "area": { "type": "string" },
+        "tipo_conhecimento": {
+          "description": "Define o MODO de conferência (ver docs/03).",
+          "enum": ["formal", "empirico", "interpretativo", "historico", "linguistico", "pratico"]
+        },
+        "duracao_minutos": { "type": "integer", "minimum": 1 },
+        "idioma": { "type": "string", "default": "pt-BR" },
+        "versao_material": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+(-[A-Za-z0-9.-]+)?$" },
+        "data_criacao": { "type": "string", "format": "date" }
+      }
+    },
+
+    "publico": {
+      "description": "Para quem o material fala. Decide registro de linguagem, densidade de rigor e glossário.",
+      "type": "object",
+      "required": ["perfil", "nivel", "registro"],
+      "additionalProperties": false,
+      "properties": {
+        "perfil": { "enum": ["estudante", "professor", "publico_geral", "pesquisador"] },
+        "nivel": { "enum": ["ef1", "ef2", "em", "tecnico", "graduacao", "pos_lato", "pos_stricto", "livre"] },
+        "serie_ou_ano": { "type": "string" },
+        "faixa_etaria": {
+          "type": "object",
+          "required": ["min", "max"],
+          "additionalProperties": false,
+          "properties": { "min": { "type": "integer", "minimum": 0 }, "max": { "type": "integer", "minimum": 0 } }
+        },
+        "conhecimentos_previos": { "type": "array", "items": { "type": "string" } },
+        "registro": { "enum": ["ludico", "acessivel", "escolar", "tecnico", "academico"] },
+        "diretrizes_linguagem": { "type": "array", "items": { "type": "string" } },
+        "glossario_obrigatorio": { "type": "boolean", "default": false }
+      }
+    },
+
+    "referencial_pedagogico": {
+      "description": "Opcional e configurável (ex.: Psicologia Histórico-Cultural). Os critérios viram itens auditáveis, não só rótulos.",
+      "type": "object",
+      "required": ["nome"],
+      "additionalProperties": false,
+      "properties": {
+        "nome": { "type": "string" },
+        "criterios": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "descricao"],
+            "additionalProperties": false,
+            "properties": { "id": { "$ref": "#/$defs/id" }, "descricao": { "type": "string" } }
+          }
+        }
+      }
+    },
+
+    "objetivo": {
+      "type": "object",
+      "required": ["id", "texto"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "texto": { "type": "string", "minLength": 5 },
+        "habilidade": {
+          "type": "object",
+          "required": ["sistema", "codigo", "verificado"],
+          "additionalProperties": false,
+          "properties": {
+            "sistema": { "enum": ["BNCC", "ementa", "outro"] },
+            "codigo": { "type": "string" },
+            "descricao": { "type": "string" },
+            "verificado": { "type": "boolean", "description": "true só se o código foi conferido contra o documento oficial." }
+          }
+        }
+      }
+    },
+
+    "referencia": {
+      "type": "object",
+      "required": ["id", "tipo", "titulo", "verificacao"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "tipo": { "enum": ["artigo", "livro", "capitulo", "tese_dissertacao", "documento_oficial", "norma", "fonte_primaria", "dados", "site", "outro"] },
+        "titulo": { "type": "string", "minLength": 3 },
+        "autores": { "type": "array", "items": { "type": "string" } },
+        "ano": { "type": "integer", "minimum": 0, "maximum": 2100 },
+        "veiculo": { "type": "string" },
+        "edicao": { "type": "string" },
+        "editora": { "type": "string" },
+        "local": { "type": "string" },
+        "doi": { "type": "string", "pattern": "^10\\.\\d{4,9}/\\S+$" },
+        "isbn": { "type": "string" },
+        "url": { "type": "string", "format": "uri" },
+        "localizacao": { "type": "string", "description": "Onde achar quando não há DOI/ISBN/URL (biblioteca, arquivo, acervo)." },
+        "acessado_em": { "type": "string", "format": "date" },
+        "observacao": { "type": "string" },
+        "verificacao": { "$ref": "#/$defs/verificacao_referencia" }
+      },
+      "anyOf": [
+        { "required": ["doi"] },
+        { "required": ["isbn"] },
+        { "required": ["url"] },
+        { "required": ["localizacao"] }
+      ]
+    },
+
+    "verificacao_referencia": {
+      "description": "existir ≠ sustentar. 'localizada' = a obra existe e os metadados batem. 'confirmada' = um humano leu o trecho indicado e ele sustenta a afirmação.",
+      "type": "object",
+      "required": ["estado"],
+      "additionalProperties": false,
+      "properties": {
+        "estado": { "enum": ["nao_verificada", "localizada", "divergente", "nao_encontrada", "confirmada"] },
+        "base": { "type": "string", "description": "Ex.: Crossref, OpenAlex, Open Library, catálogo da biblioteca." },
+        "verificado_em": { "type": "string", "format": "date" },
+        "divergencias": { "type": "array", "items": { "type": "string" } },
+        "trecho_conferido_por_humano": { "type": "boolean" },
+        "conferido_por": { "type": "string" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "estado": { "const": "localizada" } }, "required": ["estado"] },
+          "then": { "required": ["base", "verificado_em"] }
+        },
+        {
+          "if": { "properties": { "estado": { "const": "confirmada" } }, "required": ["estado"] },
+          "then": {
+            "required": ["base", "verificado_em", "conferido_por", "trecho_conferido_por_humano"],
+            "properties": { "trecho_conferido_por_humano": { "const": true } }
+          }
+        },
+        {
+          "if": { "properties": { "estado": { "const": "divergente" } }, "required": ["estado"] },
+          "then": { "required": ["divergencias"], "properties": { "divergencias": { "minItems": 1 } } }
+        }
+      ]
+    },
+
+    "afirmacao": {
+      "description": "Unidade rastreável de conteúdo factual. Todo bloco de conteúdo lista as afirmações que carrega.",
+      "type": "object",
+      "required": ["id", "texto", "tipo", "sustentacao", "estado"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "texto": { "type": "string", "minLength": 5 },
+        "tipo": {
+          "enum": ["definicao", "fato", "resultado_empirico", "interpretacao", "procedimento", "demonstracao", "calculo", "alinhamento_curricular", "opiniao_autoral"]
+        },
+        "sustentacao": { "$ref": "#/$defs/sustentacao" },
+        "estado": { "enum": ["pendente", "calculada", "demonstrada", "adotada", "localizada", "confirmada", "autoral_declarada", "reprovada"] },
+        "observacao": { "type": "string" }
+      }
+    },
+
+    "sustentacao": {
+      "type": "object",
+      "required": ["modo"],
+      "additionalProperties": false,
+      "properties": {
+        "modo": { "enum": ["referencia", "fonte_primaria", "calculo", "demonstracao", "definicao_adotada", "autoral_declarado", "material_do_professor"] },
+        "refs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["ref_id", "localizador"],
+            "additionalProperties": false,
+            "properties": {
+              "ref_id": { "$ref": "#/$defs/id" },
+              "localizador": { "type": "string", "minLength": 1, "description": "Página, capítulo, seção, artigo/inciso, minuto — onde está a sustentação." },
+              "trecho_curto": { "type": "string", "maxLength": 200, "description": "Opcional. Trecho curto (limite de citação) para o revisor achar rápido." }
+            }
+          }
+        },
+        "calculo_ids": { "type": "array", "items": { "$ref": "#/$defs/id" } },
+        "demonstracao": { "type": "string", "minLength": 20 }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "modo": { "enum": ["referencia", "fonte_primaria"] } }, "required": ["modo"] },
+          "then": { "required": ["refs"], "properties": { "refs": { "minItems": 1 } } }
+        },
+        {
+          "if": { "properties": { "modo": { "const": "calculo" } }, "required": ["modo"] },
+          "then": { "required": ["calculo_ids"], "properties": { "calculo_ids": { "minItems": 1 } } }
+        },
+        {
+          "if": { "properties": { "modo": { "const": "demonstracao" } }, "required": ["modo"] },
+          "then": { "required": ["demonstracao"] }
+        }
+      ]
+    },
+
+    "calculo": {
+      "description": "Conferido por aritmética racional exata (tools/racional.mjs). Use ponto como separador decimal; operadores + - * / ^ ( ) e % pós-fixo.",
+      "type": "object",
+      "required": ["id", "expressao", "resultado_esperado"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "descricao": { "type": "string" },
+        "expressao": { "type": "string", "minLength": 1 },
+        "resultado_esperado": { "type": "string", "minLength": 1 },
+        "unidade": { "type": "string" },
+        "passos": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["expressao", "resultado"],
+            "additionalProperties": false,
+            "properties": { "expressao": { "type": "string" }, "resultado": { "type": "string" } }
+          }
+        }
+      }
+    },
+
+    "figura": {
+      "type": "object",
+      "required": ["id", "tipo", "alt"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "tipo": { "enum": ["svg", "parametrica", "imagem"] },
+        "alt": { "type": "string", "minLength": 20, "description": "Texto alternativo que descreve o que a figura ENSINA, não só o que mostra." },
+        "descricao_longa": { "type": "string" },
+        "svg": { "type": "string" },
+        "credito": { "type": "string" },
+        "licenca": { "type": "string" },
+        "fonte_ref": { "$ref": "#/$defs/id" }
+      },
+      "allOf": [
+        { "if": { "properties": { "tipo": { "const": "imagem" } }, "required": ["tipo"] }, "then": { "required": ["credito", "licenca"] } },
+        { "if": { "properties": { "tipo": { "const": "svg" } }, "required": ["tipo"] }, "then": { "required": ["svg"] } }
+      ]
+    },
+
+    "questao": {
+      "type": "object",
+      "required": ["id", "enunciado", "formato", "origem"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "enunciado": { "type": "string", "minLength": 10 },
+        "formato": { "enum": ["multipla_escolha", "resposta_curta", "aberta"] },
+        "origem": { "enum": ["material_do_professor", "autoral", "adaptada_de_fonte", "gerada_ia_a_revisar"] },
+        "nota_origem": { "type": "string" },
+        "alternativas": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["letra", "texto"],
+            "additionalProperties": false,
+            "properties": {
+              "letra": { "type": "string", "pattern": "^[A-E]$" },
+              "texto": { "type": "string" },
+              "erro_tipico": { "type": "string", "description": "Em alternativa incorreta: o raciocínio equivocado que leva a ela." },
+              "calculo_id": { "$ref": "#/$defs/id" }
+            }
+          }
+        },
+        "gabarito": { "type": "string" },
+        "resposta": { "type": "string" },
+        "resolucao": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["titulo", "texto"],
+            "additionalProperties": false,
+            "properties": {
+              "titulo": { "type": "string" },
+              "texto": { "type": "string" },
+              "calculo_id": { "$ref": "#/$defs/id" }
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "formato": { "const": "multipla_escolha" } }, "required": ["formato"] },
+          "then": { "required": ["alternativas", "gabarito"], "properties": { "alternativas": { "minItems": 3 } } }
+        },
+        {
+          "if": { "properties": { "formato": { "const": "resposta_curta" } }, "required": ["formato"] },
+          "then": { "required": ["resposta"] }
+        }
+      ]
+    },
+
+    "bloco": {
+      "type": "object",
+      "required": ["id", "tipo", "titulo"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "tipo": { "enum": ["abertura", "conceito", "exemplo", "questao", "atividade", "aprofundamento", "erros_comuns", "resumo", "avaliacao", "acessibilidade", "glossario", "transparencia", "outro"] },
+        "titulo": { "type": "string" },
+        "destinatario": { "enum": ["estudante", "professor", "publico_geral", "pesquisador"], "default": "estudante" },
+        "camada": { "enum": ["intuicao", "formalizacao", "rigor"] },
+        "funcao": {
+          "enum": ["situacao_problema", "mediacao", "conceito_cotidiano", "conceito_cientifico", "sintese", "aplicacao", "avaliacao_formativa", "outro"]
+        },
+        "texto": { "type": "string", "description": "Markdown seguro. Linguagem no registro de publico.registro (ou do destinatário)." },
+        "callout": {
+          "type": "object",
+          "required": ["tipo", "texto"],
+          "additionalProperties": false,
+          "properties": { "tipo": { "enum": ["dica", "sabia", "atencao", "prova"] }, "texto": { "type": "string" } }
+        },
+        "figura_ids": { "type": "array", "items": { "$ref": "#/$defs/id" } },
+        "questao_ids": { "type": "array", "items": { "$ref": "#/$defs/id" } },
+        "afirmacoes": { "type": "array", "items": { "$ref": "#/$defs/id" } },
+        "criterios_referencial": { "type": "array", "items": { "$ref": "#/$defs/id" } }
+      }
+    },
+
+    "termo": {
+      "type": "object",
+      "required": ["termo", "definicao"],
+      "additionalProperties": false,
+      "properties": {
+        "termo": { "type": "string" },
+        "definicao": { "type": "string" },
+        "afirmacao_id": { "$ref": "#/$defs/id" }
+      }
+    },
+
+    "transparencia": {
+      "description": "Equivale ao 'Sobre este material' da apostila, mas estruturado.",
+      "type": "object",
+      "required": ["fontes_consultadas"],
+      "additionalProperties": false,
+      "properties": {
+        "fontes_consultadas": { "type": "boolean" },
+        "limites": { "type": "array", "items": { "type": "string" } },
+        "decisoes_interpretativas": { "type": "array", "items": { "type": "string" } },
+        "ia_usada": {
+          "type": "object",
+          "required": ["usada"],
+          "additionalProperties": false,
+          "properties": { "usada": { "type": "boolean" }, "ferramenta": { "type": "string" }, "papel": { "type": "string" } }
+        }
+      }
+    },
+
+    "revisao_humana": {
+      "description": "Nunca é preenchida pelo gerador nem pela auditoria. Só o professor aprova.",
+      "type": "object",
+      "required": ["aprovado"],
+      "additionalProperties": false,
+      "properties": {
+        "aprovado": { "type": "boolean" },
+        "revisado_por": { "type": "string" },
+        "data": { "type": "string", "format": "date" },
+        "escopo": { "type": "array", "items": { "enum": ["conteudo", "calculos", "referencias", "linguagem", "acessibilidade"] } },
+        "observacoes": { "type": "string" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "aprovado": { "const": true } }, "required": ["aprovado"] },
+          "then": { "required": ["revisado_por", "data", "escopo"], "properties": { "escopo": { "minItems": 1 } } }
+        }
+      ]
+    }
+  }
+}

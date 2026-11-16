@@ -1,0 +1,117 @@
+{
+  "schema_versao": "2.0",
+  "meta": {
+    "titulo": "O produto de frações está bem definido",
+    "subtitulo": "Por que multiplicar numerador com numerador e denominador com denominador funciona",
+    "autoria": { "nome": "Exemplo MathLab" },
+    "disciplina": "Matemática",
+    "area": "Estruturas numéricas",
+    "tipo_conhecimento": "formal",
+    "duracao_minutos": 40,
+    "idioma": "pt-BR",
+    "versao_material": "2.0.0-exemplo",
+    "data_criacao": "2026-11-16"
+  },
+  "publico": {
+    "perfil": "estudante",
+    "nivel": "graduacao",
+    "serie_ou_ano": "1º ano — Álgebra / Fundamentos",
+    "conhecimentos_previos": ["números inteiros e suas propriedades", "relação de equivalência"],
+    "registro": "academico",
+    "diretrizes_linguagem": [
+      "Definições explícitas antes de teoremas.",
+      "Toda passagem de uma demonstração é justificada.",
+      "Notação formal permitida; símbolos novos são introduzidos antes de usados."
+    ],
+    "glossario_obrigatorio": false
+  },
+  "objetivos": [
+    { "id": "ob1", "texto": "Demonstrar que o produto de números racionais independe dos representantes escolhidos." }
+  ],
+  "referencias": [],
+  "afirmacoes": [
+    {
+      "id": "af-def",
+      "texto": "Duas frações a/b e a'/b' (com b e b' diferentes de zero) representam o mesmo racional quando ab' = a'b.",
+      "tipo": "definicao",
+      "sustentacao": { "modo": "definicao_adotada" },
+      "estado": "adotada",
+      "observacao": "Definição adotada neste texto. Em um texto publicável, citar o livro-texto de Álgebra de referência com localizador."
+    },
+    {
+      "id": "af-boa-def",
+      "texto": "O produto (a/b)·(c/d) := ac/bd não depende dos representantes escolhidos para os dois fatores.",
+      "tipo": "demonstracao",
+      "sustentacao": {
+        "modo": "demonstracao",
+        "demonstracao": "Sejam a/b = a'/b' e c/d = c'/d', isto é, ab' = a'b e cd' = c'd. Então (ac)(b'd') = (ab')(cd') = (a'b)(c'd) = (a'c')(bd), pela comutatividade e associatividade do produto em ℤ. Como bd e b'd' são não nulos, ac/bd = a'c'/b'd'."
+      },
+      "estado": "demonstrada"
+    },
+    {
+      "id": "af-exemplo",
+      "texto": "Os produtos 2/3 · 3/4 e 4/6 · 3/4 resultam no mesmo racional, 1/2.",
+      "tipo": "calculo",
+      "sustentacao": { "modo": "calculo", "calculo_ids": ["c-rep1", "c-rep2"] },
+      "estado": "calculada"
+    }
+  ],
+  "calculos": [
+    { "id": "c-rep1", "expressao": "2/3 * 3/4", "resultado_esperado": "1/2" },
+    { "id": "c-rep2", "expressao": "4/6 * 3/4", "resultado_esperado": "1/2" }
+  ],
+  "questoes": [
+    {
+      "id": "q-prova",
+      "enunciado": "Verifique, com dois pares diferentes de representantes, que o produto não muda. Depois demonstre o caso geral sem consultar o texto.",
+      "formato": "aberta",
+      "origem": "autoral"
+    }
+  ],
+  "blocos": [
+    {
+      "id": "b-def",
+      "tipo": "conceito",
+      "titulo": "Equivalência de frações",
+      "destinatario": "estudante",
+      "camada": "formalizacao",
+      "funcao": "conceito_cientifico",
+      "texto": "Uma fração é um par (a, b) de inteiros com b ≠ 0. Dois pares são equivalentes quando ab' = a'b. Um racional é uma classe de equivalência. O produto será definido nos representantes e precisa respeitar essa equivalência.",
+      "afirmacoes": ["af-def"]
+    },
+    {
+      "id": "b-exemplo",
+      "tipo": "exemplo",
+      "titulo": "Dois representantes, um só resultado",
+      "destinatario": "estudante",
+      "camada": "intuicao",
+      "texto": "Antes da prova geral, teste a ideia. Troque 2/3 por 4/6 e compare os produtos com 3/4.",
+      "afirmacoes": ["af-exemplo"]
+    },
+    {
+      "id": "b-prova",
+      "tipo": "aprofundamento",
+      "titulo": "Teorema: o produto está bem definido",
+      "destinatario": "estudante",
+      "camada": "rigor",
+      "texto": "**Enunciado.** Se a/b = a'/b' e c/d = c'/d', então ac/bd = a'c'/b'd'.\n\n**Demonstração.** Por hipótese, ab' = a'b e cd' = c'd. Multiplicando as igualdades, (ab')(cd') = (a'b)(c'd). Reorganizando os fatores em ℤ, (ac)(b'd') = (a'c')(bd). Como bd ≠ 0 e b'd' ≠ 0, isso é a definição de ac/bd = a'c'/b'd'. ∎",
+      "afirmacoes": ["af-boa-def"]
+    },
+    {
+      "id": "b-atividade",
+      "tipo": "questao",
+      "titulo": "Exercício",
+      "destinatario": "estudante",
+      "questao_ids": ["q-prova"]
+    }
+  ],
+  "transparencia": {
+    "fontes_consultadas": false,
+    "limites": [
+      "Conteúdo formal e autossuficiente: não há referências externas.",
+      "Para publicar como texto de graduação, acrescentar um livro-texto de Álgebra com localizador e conferir a definição adotada."
+    ],
+    "ia_usada": { "usada": true, "ferramenta": "Claude", "papel": "Redação do exemplo." }
+  },
+  "revisao_humana": { "aprovado": false, "observacoes": "Exemplo ilustrativo. A demonstração foi conferida passo a passo pelo gerador, mas não por um professor." }
+}
