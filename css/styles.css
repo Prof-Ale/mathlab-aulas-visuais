@@ -4,6 +4,7 @@ body{margin:0;font-family:"Segoe UI",Arial,sans-serif;background:var(--bg);color
 .top{background:var(--navy);color:#fff;padding:10px 18px;display:flex;flex-wrap:wrap;gap:10px 24px;align-items:center;position:sticky;top:0;z-index:20;box-shadow:0 2px 8px rgba(0,0,0,.25)}
 .brand{display:flex;gap:10px;align-items:center;font-size:1.15rem}.brand small{display:block;font-size:.72rem;color:#b9c6e6}
 .logo{display:grid;place-items:center;width:40px;height:40px;border-radius:10px;background:var(--gold);color:var(--navy);font-weight:900;font-size:1.5rem}
+.logo-img{width:42px;height:42px;border-radius:10px;object-fit:cover;border:2px solid var(--gold);background:#fff}
 .gold{color:var(--gold)}
 nav{display:flex;flex-wrap:wrap;gap:4px}
 nav button{background:transparent;border:0;color:#cfd9f2;padding:8px 12px;border-radius:8px;cursor:pointer;font:inherit;font-size:.92rem}
@@ -23,7 +24,12 @@ button.ghost{background:#fff;color:var(--navy);border:1px solid var(--navy)}butt
 button.sm{padding:4px 9px;font-size:.82rem}
 .muted{color:var(--mut);font-size:.88rem}
 .pill{display:inline-block;padding:2px 10px;border-radius:99px;font-size:.78rem;font-weight:700;background:#e8edf8;color:var(--navy)}
-.pill.ok{background:#dcf5e6;color:var(--ok)}.pill.bad{background:#fde3e1;color:var(--bad)}.pill.warn{background:#fff1d1;color:var(--warn)}
+.pill.ok{background:#dcf5e6;color:#126134}.pill.bad{background:#fde3e1;color:#a8241c}.pill.warn{background:#fff1d1;color:#7a4e08}
+.style-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin:10px 0}
+.style-opt{text-align:left;padding:12px 14px;border:2px solid var(--line);border-radius:12px;background:#fff;cursor:pointer;font:inherit;color:var(--ink)}
+.style-opt.on{border-color:var(--navy);background:#eef4ff;box-shadow:0 0 0 2px #14264f22}
+.style-opt b{display:block;color:var(--navy);margin-bottom:2px}
+.style-opt small{display:block;color:var(--mut);font-size:.82rem}
 .list-item{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:8px 0;background:#fafbfe}
 .blk{border:1px solid var(--line);border-left:6px solid var(--navy);border-radius:10px;padding:10px 12px;margin:10px 0;background:#fcfdff}
 .blk .head{display:grid;grid-template-columns:200px 1fr auto;gap:8px;align-items:end}

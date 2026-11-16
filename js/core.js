@@ -5,7 +5,7 @@
 })(typeof self !== 'undefined' ? self : this, function () {
   'use strict';
 
-  const VERSION = '1.4.0';
+  const VERSION = '1.5.0';
   const SCHEMA = 'mathlab.material/2';
   const DEFAULT_AUTHOR = 'Prof. Alê Barbosa';
 
@@ -326,16 +326,22 @@
     return '--c1:' + t.c[0] + ';--c2:' + t.c[1] + ';--c3:' + t.c[2] + ';--c4:' + t.c[3] + ';--c5:' + t.c[4] + ';--bg:' + t.bg + ';--tt:' + t.title + ';--ac:' + t.accent;
   }
 
+  function assetSrc(file) {
+    const inlineMap = typeof window !== 'undefined' && window.MATHLAB_INLINE_ASSETS;
+    if (inlineMap && inlineMap[file]) return inlineMap[file];
+    return 'assets/' + esc(file);
+  }
+
   function avatarHtml(choice, cls) {
     const c = choice || 'avatar-prof-ale-1.jpg';
     if (c === 'svg' || !AVATAR_OPTIONS[c]) return MASCOT_SVG;
-    return '<img class="' + (cls || 'ml-av') + '" src="assets/' + esc(c) + '" alt="Prof. Alê Barbosa">';
+    return '<img class="' + (cls || 'ml-av') + '" src="' + assetSrc(c) + '" alt="Prof. Alê Barbosa">';
   }
 
   function logoHtml(choice, cls) {
     const c = choice || 'logo-mathlab-clean.jpg';
     if (c === 'none' || !LOGO_OPTIONS[c]) return '';
-    return '<img class="' + (cls || 'ml-lg') + '" src="assets/' + esc(c) + '" alt="MathLab Educação">';
+    return '<img class="' + (cls || 'ml-lg') + '" src="' + assetSrc(c) + '" alt="MathLab Educação">';
   }
 
   function renderCleanCover(m) {
@@ -460,10 +466,11 @@
     });
     if (o.poster && typeof o.poster === 'object') {
       const p = o.poster;
+      const isLegacy = o.meta && o.meta.version && /^1\.[0-3]\./.test(String(o.meta.version));
       m.poster = {
         title: String(p.title || m.title), subtitle: String(p.subtitle || ''), author: String(p.author || m.author || DEFAULT_AUTHOR), mascot: String(p.mascot || ''),
         coverClean: p.coverClean !== false,
-        interiorStyle: INTERIOR_STYLES[p.interiorStyle] ? p.interiorStyle : 'editorial',
+        interiorStyle: INTERIOR_STYLES[p.interiorStyle] ? p.interiorStyle : (isLegacy ? 'ludico' : 'editorial'),
         avatarChoice: AVATAR_OPTIONS[p.avatarChoice] ? p.avatarChoice : 'avatar-prof-ale-1.jpg',
         logoChoice: LOGO_OPTIONS[p.logoChoice] ? p.logoChoice : 'logo-mathlab-clean.jpg',
         videoTitle: String(p.videoTitle || '').trim(),
@@ -721,7 +728,7 @@
     '.mlauthor-box img{width:64px;height:64px;border-radius:50%;object-fit:cover;object-position:top center;border:2px solid var(--ac)}',
     '.mlcolophon{font-size:11.5px;color:#475569;border-top:1.5px solid #cbd5e1;padding-top:10px;margin-top:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:6px}',
     '@page{size:A4;margin:0}',
-    '@media print{.mlbook{background:#fff;padding:0}.mlpage{width:210mm;min-height:296mm;margin:0;border-radius:0;box-shadow:none;page-break-after:always;break-after:page;padding:12mm 12mm 18mm}.mlpage.mlcover .mlp,.mlpage.mlcover .mlclean{min-height:296mm;border-radius:0}.mlpf{left:12mm;right:12mm;bottom:6mm}.mlc,.mlco,.mlsynth{break-inside:avoid;page-break-inside:avoid}}',
+    '@media print{.mlbook{background:#fff;padding:0}.mlpage{width:210mm;min-height:296mm;margin:0;border-radius:0;box-shadow:none;page-break-after:always;break-after:page;padding:12mm 12mm 18mm}.mlpage.mlcover .mlp,.mlpage.mlcover .mlclean{min-height:296mm;border-radius:0}.mlpf{left:12mm;right:12mm;bottom:6mm}.mlnav{display:none!important}.mlc,.mlco,.mlsynth{break-inside:avoid;page-break-inside:avoid}}',
     '@media(max-width:820px){.mlpage{padding:18px 14px 54px;min-height:0}.mlpf{left:14px;right:14px}.mlh2{font-size:23px}}',
   ].join('\n');
 

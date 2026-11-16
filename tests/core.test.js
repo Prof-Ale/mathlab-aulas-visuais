@@ -108,8 +108,8 @@ test('"R$" (reais) não vira fórmula nem gera aviso falso', () => {
   assert.ok(C.audit(m).soft.some((x) => /\$/.test(x.msg)), 'deve avisar fórmula realmente desbalanceada');
 });
 
-test('v1.4: versão do núcleo é 1.4.x e autor padrão é Prof. Alê Barbosa', () => {
-  assert.match(C.VERSION, /^1\.4\./);
+test('v1.5: versão do núcleo é 1.5.x e autor padrão é Prof. Alê Barbosa', () => {
+  assert.match(C.VERSION, /^1\.5\./);
   assert.strictEqual(C.DEFAULT_AUTHOR, 'Prof. Alê Barbosa');
 });
 
@@ -232,4 +232,11 @@ test('v1.4: Miolo Editorial Clean inclui pílula de página, guia, navegação, 
   assert.match(h, /Aula de Inteiros/);
   assert.match(h, /class="mlauthor-box mlmove"/);
   assert.match(h, /id="ml-colophon"/);
+});
+
+test('v1.5: impressão oculta .mlnav e material legado v1.3 mantém estilo lúdico por padrão', () => {
+  const h = C.toApostila(C.demo());
+  assert.match(h, /@media print\{[\s\S]*\.mlnav\{display:none!important\}/);
+  const leg = C.normalize({ title: 'Antigo', meta: { version: '1.3.0' }, poster: { title: 'Antigo' } });
+  assert.strictEqual(leg.poster.interiorStyle, 'ludico');
 });

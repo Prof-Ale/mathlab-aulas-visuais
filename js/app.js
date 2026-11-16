@@ -42,11 +42,18 @@
     if (S.dirty && !confirm('Há alterações não salvas no material aberto. Descartar e abrir outro?')) return;
     S.pid = pid; S.mid = mid; S.draft = C.clone(curData(proj(pid).materials.find((m) => m.id === mid))); S.dirty = false; S.tab = 'editor'; render();
   }
+  let autoTimer = null;
+  function scheduleAutosave() {
+    clearTimeout(autoTimer);
+    autoTimer = setTimeout(() => {
+      const rec = mat(); if (!rec || !S.draft) return;
+      try { localStorage.setItem('mathlab.autosave.v1', JSON.stringify({ pid: S.pid, mid: S.mid, at: new Date().toISOString(), draft: S.draft })); } catch (e) { /* ignora */ }
+      const m = $('#dirtymark'); if (m) { m.className = 'pill ok'; m.textContent = '✓ rascunho salvo automaticamente'; }
+    }, 1200);
+  }
   function saveDraft() {
     const rec = mat(); if (!rec) return;
-    const note = prompt('Anote o que mudou nesta versão (opcional):', '');
-    if (note === null) return;
-    S.draft = C.normalize(S.draft); pushVersion(rec, S.draft, note || 'Edição manual');
+    S.draft = C.normalize(S.draft); pushVersion(rec, S.draft, 'Edição ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }));
     logp(proj(), 'Nova versão salva: ' + S.draft.title); if (persist()) toast('Versão salva. As anteriores continuam disponíveis em "Versões".');
     S.dirty = false; render();
   }
@@ -66,10 +73,31 @@
     const f = document.createElement('iframe'); f.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0'; document.body.appendChild(f);
     f.onload = () => setTimeout(() => { f.contentWindow.focus(); f.contentWindow.print(); setTimeout(() => f.remove(), 3000); }, 300); f.srcdoc = html;
   }
+  const assetCache = {};
+  async function fetchDataUri(path) {
+    if (assetCache[path]) return assetCache[path];
+    try {
+      const res = await fetch(path); if (!res.ok) return null;
+      const blob = await res.blob();
+      const uri = await new Promise((ok) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = () => ok(null); r.readAsDataURL(blob); });
+      if (uri) assetCache[path] = uri;
+      return uri;
+    } catch (e) { return null; }
+  }
+  async function inlineAssets(html) {
+    const matches = Array.from(new Set((html.match(/src="(assets\/[^"]+)"/g) || []).map((s) => s.slice(5, -1))));
+    let out = html;
+    for (const p of matches) {
+      const uri = await fetchDataUri(p);
+      if (uri) out = out.split('src="' + p + '"').join('src="' + uri + '"');
+    }
+    return out;
+  }
   const get = (path) => path.split('.').reduce((o, k) => (o == null ? o : o[k]), S.draft);
   function setPath(path, val) { const k = path.split('.'); let o = S.draft; for (let i = 0; i < k.length - 1; i++) o = o[k[i]]; o[k[k.length - 1]] = val; }
-  const inp = (path, label, ph) => '<label>' + label + '</label><input data-f="' + path + '" value="' + esc(get(path)) + '"' + (ph ? ' placeholder="' + esc(ph) + '"' : '') + '>';
-  const area = (path, label, rows, lines) => '<label>' + label + '</label><textarea rows="' + (rows || 4) + '" data-f="' + path + '"' + (lines ? ' data-lines="1"' : '') + '>' + esc(lines ? (get(path) || []).join('\n') : get(path)) + '</textarea>';
+  const fid = (path) => 'f_' + path.replace(/[^a-zA-Z0-9_]/g, '_');
+  const inp = (path, label, ph) => '<label for="' + fid(path) + '">' + label + '</label><input id="' + fid(path) + '" data-f="' + path + '" value="' + esc(get(path)) + '"' + (ph ? ' placeholder="' + esc(ph) + '"' : '') + '>';
+  const area = (path, label, rows, lines) => '<label for="' + fid(path) + '">' + label + '</label><textarea id="' + fid(path) + '" rows="' + (rows || 4) + '" data-f="' + path + '"' + (lines ? ' data-lines="1"' : '') + '>' + esc(lines ? (get(path) || []).join('\n') : get(path)) + '</textarea>';
   const lvlPill = (l) => '<span class="pill ' + (/Reprovado/.test(l) ? 'bad' : /Pronto/.test(l) ? 'ok' : 'warn') + '">' + esc(l) + '</span>';
 
   /* ---------- abas ---------- */
@@ -77,7 +105,7 @@
   const NEED = ['editor', 'poster', 'apostila', 'auditoria', 'exportar'];
 
   function render() {
-    $('#tabs').innerHTML = TABS.map((t) => '<button data-a="tab" data-t="' + t[0] + '" class="' + (S.tab === t[0] ? 'on' : '') + '">' + t[1] + '</button>').join('');
+    $('#tabs').innerHTML = TABS.map((t) => '<button role="tab" aria-selected="' + (S.tab === t[0] ? 'true' : 'false') + '" data-a="tab" data-t="' + t[0] + '" class="' + (S.tab === t[0] ? 'on' : '') + '">' + t[1] + '</button>').join('');
     const v = { biblioteca: vBib, criar: vCriar, editor: vEditor, poster: vPoster, apostila: vApostila, auditoria: vAud, exportar: vExp, ajuda: vAjuda }[S.tab];
     $('#main').innerHTML = NEED.includes(S.tab) && !S.draft
       ? '<div class="card empty"><h2>Nenhum material aberto</h2><p>Abra um material na <b>Biblioteca</b> ou crie um em <b>Criar</b>.</p><button class="b gold" data-a="tab" data-t="biblioteca">Ir para a Biblioteca</button></div>' : v();
@@ -166,7 +194,6 @@
     const L = C.EPISTEMIC[d.epistemicType].labels;
     return '<div class="two"><div class="card"><h2>Capa Clean & Folha de Rosto</h2><p class="muted">A Capa Clean abre a apostila (título, subtítulo, logo, avatar e autor); a Folha de Rosto traz o mapa visual com caixas curtas (até 25 palavras).</p>' +
       '<label><input type="checkbox" style="width:auto" data-f="poster.coverClean"' + (p.coverClean !== false ? ' checked' : '') + '> Incluir Capa Clean (Página 1) antes da Folha de Rosto</label>' +
-      '<label>Estilo do Miolo</label><select data-f="poster.interiorStyle">' + Object.keys(C.INTERIOR_STYLES).map((k) => '<option value="' + k + '"' + ((p.interiorStyle || 'editorial') === k ? ' selected' : '') + '>' + esc(C.INTERIOR_STYLES[k]) + '</option>').join('') + '</select>' +
       '<label>Avatar do Prof. Alê / Mascote</label><select data-f="poster.avatarChoice">' + Object.keys(C.AVATAR_OPTIONS).map((k) => '<option value="' + k + '"' + ((p.avatarChoice || 'avatar-prof-ale-1.jpg') === k ? ' selected' : '') + '>' + esc(C.AVATAR_OPTIONS[k]) + '</option>').join('') + '</select>' +
       '<label>Logo MathLab</label><select data-f="poster.logoChoice">' + Object.keys(C.LOGO_OPTIONS).map((k) => '<option value="' + k + '"' + ((p.logoChoice || 'logo-mathlab-clean.jpg') === k ? ' selected' : '') + '>' + esc(C.LOGO_OPTIONS[k]) + '</option>').join('') + '</select>' +
       '<label>Tema de cores</label><select data-f="poster.theme">' + Object.keys(C.POSTER_THEMES).map((k) => '<option value="' + k + '"' + (p.theme === k ? ' selected' : '') + '>' + esc(C.POSTER_THEMES[k].nome) + '</option>').join('') + '</select>' +
@@ -192,9 +219,13 @@
   /* ---------- Apostila completa ---------- */
   function vApostila() {
     const d = S.draft;
+    const style = (d.poster && d.poster.interiorStyle) || 'editorial';
     const pg = (C.toApostila(d).match(/class="mlpage/g) || []).length;
-    return '<div class="card"><h2>Apostila completa</h2><p class="muted">Capa (pôster) + miolo em páginas A4 com o mesmo visual: ' + pg + ' páginas neste material. O miolo é montado a partir dos blocos do Editor; o texto aqui é o exato, sem IA de imagem. Para PDF, use “Imprimir apostila” e escolha “Salvar como PDF”.</p>' +
-      '<div class="btns"><button class="b gold" data-a="dlbook">📘 Baixar apostila (HTML)</button><button class="b" data-a="printbook">🖨️ Imprimir / salvar PDF</button></div></div>' +
+    return '<div class="card"><h2>Apostila completa</h2><p class="muted">Capa Clean + Folha de Rosto + miolo em páginas A4 (' + pg + ' páginas neste material). O arquivo HTML baixado embute as imagens para funcionar offline. Para PDF, use “Imprimir / salvar PDF”.</p>' +
+      '<div class="style-grid">' +
+      '<button type="button" class="style-opt' + (style === 'editorial' ? ' on' : '') + '" data-a="setstyle" data-v="editorial"><b>📄 Editorial Clean (padrão)</b><small>Cabeçalho com pílula de página, guia com avatar, caixas suaves e colofão.</small></button>' +
+      '<button type="button" class="style-opt' + (style === 'ludico' ? ' on' : '') + '" data-a="setstyle" data-v="ludico"><b>🎨 Lúdico / HQ</b><small>Caixas coloridas numeradas estilo pôster em todo o miolo.</small></button></div>' +
+      '<div class="btns"><button class="b gold" data-a="dlbook">📘 Baixar apostila (HTML autocontido)</button><button class="b" data-a="printbook">🖨️ Imprimir / salvar PDF</button></div></div>' +
       '<div class="card"><iframe id="bookFrame" title="Prévia da apostila completa" style="width:100%;height:78vh;border:0;border-radius:10px;background:#e9edf5" srcdoc="' + esc(C.toApostila(d)) + '"></iframe></div>';
   }
 
@@ -213,7 +244,8 @@
       '<div class="step"><b>Claude:</b> instale a skill <code>mathlab-aulas-visuais</code> (arquivo <code>skill/SKILL.md</code>).</div>' +
       '<div class="step">Aqui em <b>Criar</b>: preencha o pedido, copie, cole no Gem, copie o JSON que ele devolver e importe.</div>' +
       '<div class="step">Em <b>Apostila visual</b>: copie o prompt e gere a imagem ilustrada no Nano Banana (Gemini). O pôster em HTML já fica pronto para imprimir.</div>' +
-      '<div class="step"><b>Publicar no GitHub Pages:</b> suba esta pasta num repositório, em Settings → Pages escolha “GitHub Actions”. O arquivo <code>.github/workflows/pages.yml</code> já está pronto.</div></div>' +
+      '<div class="step"><b>Publicar no GitHub Pages:</b> suba esta pasta num repositório, em Settings → Pages escolha “GitHub Actions”. O arquivo <code>.github/workflows/pages.yml</code> já está pronto.</div>' +
+      '<div class="btns"><a class="b ghost" href="dist/mathlab-standalone.html" download="mathlab-standalone.html" style="text-decoration:none">⬇️ Baixar versão offline (arquivo único)</a></div></div>' +
       '<div class="card"><h3>Limites desta versão</h3><ul><li>Não escreve conteúdo sozinho: a IA vem da skill/Gem.</li><li>Exporta HTML, PDF (pelo navegador), Markdown, JSON e SVG. Word e PowerPoint ficam para a próxima etapa.</li><li>Dados ficam só neste navegador: faça backup na Biblioteca.</li></ul></div>';
   }
 
@@ -280,12 +312,13 @@
     addsum: () => { S.draft.poster.summary.push({ icon: '⭐', label: '', text: '' }); S.dirty = true; render(); },
     delsum: (el) => { S.draft.poster.summary.splice(+el.dataset.i, 1); S.dirty = true; render(); },
     copyimg: async () => { toast((await copy(C.buildImagePrompt(S.draft))) ? 'Prompt copiado. Cole no Gemini (Nano Banana).' : 'Não consegui copiar automaticamente.'); },
-    dlbook: () => dl(slug(S.draft.title) + '-apostila-completa.html', 'text/html', C.toApostila(S.draft)),
-    printbook: () => printHTML(C.toApostila(S.draft)),
-    dlposter: () => dl(slug(S.draft.title) + '-apostila-visual.html', 'text/html', C.toHTML(S.draft, { material: false })),
-    printposter: () => printHTML(C.toHTML(S.draft, { material: false })),
-    dlhtml: () => dl(slug(S.draft.title) + '.html', 'text/html', C.toHTML(S.draft)),
-    printall: () => printHTML(C.toHTML(S.draft)),
+    setstyle: (el) => { if (!S.draft.poster) A.mkposter(); S.draft.poster.interiorStyle = el.dataset.v; S.dirty = true; scheduleAutosave(); render(); },
+    dlbook: async () => dl(slug(S.draft.title) + '-apostila-completa.html', 'text/html', await inlineAssets(C.toApostila(S.draft))),
+    printbook: async () => printHTML(await inlineAssets(C.toApostila(S.draft))),
+    dlposter: async () => dl(slug(S.draft.title) + '-apostila-visual.html', 'text/html', await inlineAssets(C.toHTML(S.draft, { material: false }))),
+    printposter: async () => printHTML(await inlineAssets(C.toHTML(S.draft, { material: false }))),
+    dlhtml: async () => dl(slug(S.draft.title) + '.html', 'text/html', await inlineAssets(C.toHTML(S.draft))),
+    printall: async () => printHTML(await inlineAssets(C.toHTML(S.draft))),
     dlmd: () => dl(slug(S.draft.title) + '.md', 'text/markdown', C.toMarkdown(S.draft)),
     dljson: () => dl(slug(S.draft.title) + '.json', 'application/json', JSON.stringify(C.normalize(S.draft), null, 2)),
     dlsvg: (el) => { const b = S.draft.blocks[+el.dataset.i]; dl(slug(b.title) + '.svg', 'image/svg+xml', C.sanitizeSvg(b.svg)); },
@@ -300,7 +333,8 @@
     if (el.dataset.vis) { if (el.dataset.vis !== 'kind') S.vis[el.dataset.vis] = el.value; return; }
     if (el.dataset.f) {
       setPath(el.dataset.f, el.type === 'checkbox' ? el.checked : el.dataset.lines ? el.value.split('\n').map((x) => x.trim()).filter(Boolean) : el.value);
-      S.dirty = true; const m = $('#dirtymark'); if (m) { m.className = 'dirty'; m.textContent = '● alterações não salvas'; }
+      S.dirty = true; const m = $('#dirtymark'); if (m) { m.className = 'dirty'; m.textContent = '● salvando...'; }
+      scheduleAutosave();
       if (S.tab === 'poster' && S.draft.poster) { const pv = $('#posterPreview'); if (pv) pv.innerHTML = (S.draft.poster.coverClean !== false ? '<div style="margin-bottom:16px">' + C.renderCleanCover(S.draft) + '</div>' : '') + C.renderPoster(S.draft.poster, S.draft.author); }
     }
   });

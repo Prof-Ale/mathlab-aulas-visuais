@@ -26,7 +26,10 @@ jobs:
       - name: Montar site
         run: |
           mkdir _site
-          cp -r index.html css js _site/
+          cp -r index.html css js assets dist _site/
+          test -f _site/assets/avatar-prof-ale-1.jpg
+          test -f _site/assets/logo-mathlab-clean.jpg
+          test -f _site/dist/mathlab-standalone.html
           touch _site/.nojekyll
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
