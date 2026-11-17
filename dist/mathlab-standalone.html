@@ -42,6 +42,8 @@ button.sm{padding:4px 9px;font-size:.82rem}
 .style-opt.on{border-color:var(--navy);background:#eef4ff;box-shadow:0 0 0 2px #14264f22}
 .style-opt b{display:block;color:var(--navy);margin-bottom:2px}
 .style-opt small{display:block;color:var(--mut);font-size:.82rem}
+.skip{position:absolute;left:-9999px;top:0;background:var(--gold);color:var(--navy);padding:8px 14px;font-weight:700;z-index:100;border-radius:0 0 8px 0}.skip:focus{left:8px;top:8px}
+.ctx-bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;background:#f3f6fc;border:1px solid var(--line);border-left:5px solid var(--gold);border-radius:10px;padding:10px 12px;margin-bottom:12px}
 .list-item{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:8px 0;background:#fafbfe}
 .blk{border:1px solid var(--line);border-left:6px solid var(--navy);border-radius:10px;padding:10px 12px;margin:10px 0;background:#fcfdff}
 .blk .head{display:grid;grid-template-columns:200px 1fr auto;gap:8px;align-items:end}
@@ -70,6 +72,7 @@ details{margin:6px 0}summary{cursor:pointer;color:var(--navy2);font-weight:600}
 </style>
 </head>
 <body>
+<a class="skip" href="#main">Ir para o conteúdo principal</a>
 <header class="top">
   <div class="brand"><img class="logo-img" src="assets/logo-mathlab-selo.jpg" alt="MathLab Educação"><div><strong>MathLab</strong> <span class="gold">Aulas Visuais</span> <span class="gold">v2.0</span><small>Psicologia Histórico-Cultural · Prof. Alê Barbosa</small></div></div>
   <nav id="tabs" role="tablist" aria-label="Seções"></nav>
@@ -1101,6 +1104,8 @@ function montarHtml(d, cfg) {
       duration: String(o.duration || o.duracao || '').trim(),
       epistemicType: EPISTEMIC[o.epistemicType] ? o.epistemicType : detectType(o.discipline || o.disciplina),
       contentProfile: CONTENT_PROFILES[o.contentProfile] ? o.contentProfile : 'completo',
+      registro: REGISTROS[o.registro] ? o.registro : (o.publico && REGISTROS[o.publico.registro] ? o.publico.registro : 'escolar'),
+      destinatario: DESTINATARIOS[o.destinatario] ? o.destinatario : (o.publico && DESTINATARIOS[o.publico.destinatario] ? o.publico.destinatario : 'estudante'),
       objectives: arr(o.objectives), prerequisites: arr(o.prerequisites), limitations: arr(o.limitations),
       blocks: [], references: [], poster: null,
       meta: Object.assign({ generatedBy: 'manual', createdAt: new Date().toISOString() }, o.meta || {}),
@@ -1190,6 +1195,8 @@ function montarHtml(d, cfg) {
       topic: meta.titulo || '',
       duration: meta.duracao_minutos ? meta.duracao_minutos + ' minutos' : '',
       epistemicType: meta.tipo_conhecimento || detectType(meta.area),
+      registro: pub.registro || 'escolar',
+      destinatario: pub.destinatario || 'estudante',
       objectives: raw.objetivos || [],
       prerequisites: pub.conhecimentos_previos || [],
       blocks,
@@ -1697,9 +1704,12 @@ function montarHtml(d, cfg) {
   const NEED = ['editor', 'poster', 'apostila', 'auditoria', 'exportar'];
 
   function render() {
-    $('#tabs').innerHTML = TABS.map((t) => '<button role="tab" aria-selected="' + (S.tab === t[0] ? 'true' : 'false') + '" data-a="tab" data-t="' + t[0] + '" class="' + (S.tab === t[0] ? 'on' : '') + '">' + t[1] + '</button>').join('');
+    $('#tabs').innerHTML = TABS.map((t) => '<button id="tab-' + t[0] + '" role="tab" aria-selected="' + (S.tab === t[0] ? 'true' : 'false') + '" data-a="tab" data-t="' + t[0] + '" class="' + (S.tab === t[0] ? 'on' : '') + '">' + t[1] + '</button>').join('');
     const v = { biblioteca: vBib, criar: vCriar, editor: vEditor, poster: vPoster, apostila: vApostila, auditoria: vAud, exportar: vExp, diario: vDiario, ajuda: vAjuda }[S.tab];
-    $('#main').innerHTML = NEED.includes(S.tab) && !S.draft
+    const main = $('#main');
+    main.setAttribute('role', 'tabpanel');
+    main.setAttribute('aria-labelledby', 'tab-' + S.tab);
+    main.innerHTML = NEED.includes(S.tab) && !S.draft
       ? '<div class="card empty"><h2>Nenhum material aberto</h2><p>Abra um material na <b>Biblioteca</b> ou crie um em <b>Criar</b>.</p><button class="b gold" data-a="tab" data-t="biblioteca">Ir para a Biblioteca</button></div>' : v();
   }
 
@@ -1720,7 +1730,7 @@ function montarHtml(d, cfg) {
       '<div class="list-item"><div><b>' + esc(x.name) + '</b> ' + (x.archived ? '<span class="pill">arquivado</span>' : '') + '<br><span class="muted">' + esc([x.discipline, x.level].filter(Boolean).join(' · ')) + ' · ' + x.materials.length + ' material(is)</span></div><div class="btns"><button class="b sm" data-a="openproj" data-id="' + x.id + '">Abrir</button></div></div>').join('')
       : '<p class="muted">Nenhum projeto ainda. Crie o primeiro abaixo ou carregue o exemplo.</p>') +
       '<label><input type="checkbox" data-a="toggleArch" ' + (S.showArch ? 'checked' : '') + ' style="width:auto"> mostrar arquivados</label></div>' +
-      '<div class="card"><h3>Novo projeto</h3><div class="row"><div><label>Nome</label><input id="np-name" placeholder="Ex.: 7º ano — Matemática"></div><div><label>Disciplina</label><input id="np-disc" placeholder="Ex.: Matemática"></div><div><label>Etapa de ensino</label><input id="np-level" placeholder="Ex.: 7º ano do Ensino Fundamental"></div></div><div class="btns"><button class="b gold" data-a="newproj">Criar projeto</button><button class="b ghost" data-a="demo">Carregar exemplo completo</button></div></div>' +
+      '<div class="card"><h3>Novo projeto</h3><div class="row"><div><label for="np-name">Nome</label><input id="np-name" placeholder="Ex.: 7º ano — Matemática"></div><div><label for="np-disc">Disciplina</label><input id="np-disc" placeholder="Ex.: Matemática"></div><div><label for="np-level">Etapa de ensino</label><input id="np-level" placeholder="Ex.: 7º ano do Ensino Fundamental"></div></div><div class="btns"><button class="b gold" data-a="newproj">Criar projeto</button><button class="b ghost" data-a="demo">Carregar exemplo completo</button></div></div>' +
       '<div class="card"><h3>Backup</h3><p class="muted">Seus dados ficam só neste navegador. Baixe um backup de vez em quando.</p><div class="btns"><button class="b ghost" data-a="backup">Baixar backup da biblioteca</button><label class="b ghost" style="display:inline-block;margin:0;cursor:pointer">Restaurar backup<input type="file" accept=".json,application/json" data-a="restore" style="display:none"></label></div></div>';
   }
 
@@ -1729,13 +1739,13 @@ function montarHtml(d, cfg) {
     const f = S.form;
     const opt = (v, t, sel) => '<option value="' + esc(v) + '"' + (sel ? ' selected' : '') + '>' + esc(t) + '</option>';
     return '<div class="card"><h2>Criar material</h2><p class="muted">Funciona para qualquer disciplina, fundamentado na Psicologia Histórico-Cultural. Sem limite fixo de páginas e com escolha modular das seções.</p>' +
-      '<div class="row"><div><label>Autor</label><input data-form="author" value="' + esc(f.author) + '" placeholder="Prof. Alê Barbosa"></div><div><label>Disciplina</label><input data-form="discipline" value="' + esc(f.discipline) + '" placeholder="Ex.: História"></div><div><label>Etapa de ensino</label><input data-form="level" value="' + esc(f.level) + '" placeholder="Ex.: 8º ano"></div><div><label>Tema</label><input data-form="topic" value="' + esc(f.topic) + '" placeholder="Ex.: Revolução Francesa"></div><div><label>Duração</label><input data-form="duration" value="' + esc(f.duration) + '"></div></div>' +
-      '<div class="row"><div><label>Tipo de conhecimento</label><select data-form="type">' + opt('auto', 'Detectar pela disciplina', f.type === 'auto') + Object.keys(C.EPISTEMIC).map((k) => opt(k, C.EPISTEMIC[k].label, f.type === k)).join('') + '</select></div>' +
-      '<div><label>O que você quer incluir?</label><select data-form="contentProfile">' + Object.keys(C.CONTENT_PROFILES).map((k) => opt(k, C.CONTENT_PROFILES[k], f.contentProfile === k)).join('') + '</select></div>' +
-      '<div><label>Registro de linguagem</label><select data-form="registro">' + Object.keys(C.REGISTROS).map((k) => opt(k, C.REGISTROS[k], f.registro === k)).join('') + '</select></div>' +
-      '<div><label>Destinatário</label><select data-form="destinatario">' + Object.keys(C.DESTINATARIOS).map((k) => opt(k, C.DESTINATARIOS[k], f.destinatario === k)).join('') + '</select></div>' +
-      '<div><label>Salvar no projeto</label><select data-form="target">' + opt('', '(criar projeto novo)', !f.target) + lib.projects.filter((p) => !p.archived).map((p) => opt(p.id, p.name, f.target === p.id)).join('') + '</select></div></div>' +
-      '<label>Objetivos desejados (opcional)</label><textarea data-form="objectives" rows="2">' + esc(f.objectives) + '</textarea></div>' +
+      '<div class="row"><div><label for="cr-author">Autor</label><input id="cr-author" data-form="author" value="' + esc(f.author) + '" placeholder="Prof. Alê Barbosa"></div><div><label for="cr-disc">Disciplina</label><input id="cr-disc" data-form="discipline" value="' + esc(f.discipline) + '" placeholder="Ex.: História"></div><div><label for="cr-level">Etapa de ensino</label><input id="cr-level" data-form="level" value="' + esc(f.level) + '" placeholder="Ex.: 8º ano"></div><div><label for="cr-topic">Tema</label><input id="cr-topic" data-form="topic" value="' + esc(f.topic) + '" placeholder="Ex.: Revolução Francesa"></div><div><label for="cr-dur">Duração</label><input id="cr-dur" data-form="duration" value="' + esc(f.duration) + '"></div></div>' +
+      '<div class="row"><div><label for="cr-type">Tipo de conhecimento</label><select id="cr-type" data-form="type">' + opt('auto', 'Detectar pela disciplina', f.type === 'auto') + Object.keys(C.EPISTEMIC).map((k) => opt(k, C.EPISTEMIC[k].label, f.type === k)).join('') + '</select></div>' +
+      '<div><label for="cr-prof">O que você quer incluir?</label><select id="cr-prof" data-form="contentProfile">' + Object.keys(C.CONTENT_PROFILES).map((k) => opt(k, C.CONTENT_PROFILES[k], f.contentProfile === k)).join('') + '</select></div>' +
+      '<div><label for="cr-reg">Registro de linguagem</label><select id="cr-reg" data-form="registro">' + Object.keys(C.REGISTROS).map((k) => opt(k, C.REGISTROS[k], f.registro === k)).join('') + '</select></div>' +
+      '<div><label for="cr-dest">Destinatário</label><select id="cr-dest" data-form="destinatario">' + Object.keys(C.DESTINATARIOS).map((k) => opt(k, C.DESTINATARIOS[k], f.destinatario === k)).join('') + '</select></div>' +
+      '<div><label for="cr-target">Salvar no projeto</label><select id="cr-target" data-form="target">' + opt('', '(criar projeto novo)', !f.target) + lib.projects.filter((p) => !p.archived).map((p) => opt(p.id, p.name, f.target === p.id)).join('') + '</select></div></div>' +
+      '<label for="cr-obj">Objetivos desejados (opcional)</label><textarea id="cr-obj" data-form="objectives" rows="2">' + esc(f.objectives) + '</textarea></div>' +
       '<div class="card steps"><h3>Caminho sem custo (recomendado)</h3>' +
       '<div class="step"><b>Copie o pedido</b> e cole no seu Gem do Gemini (ou no Claude com a skill instalada).<div class="btns"><button class="b gold" data-a="copyreq">Copiar pedido</button></div></div>' +
       '<div class="step"><b>Cole aqui o JSON</b> que ele devolveu e importe.<textarea data-form="pasted" rows="6" placeholder="Cole aqui o bloco JSON inteiro…">' + esc(f.pasted) + '</textarea><div class="btns"><button class="b" data-a="importjson">Importar material</button></div></div>' +
@@ -1752,21 +1762,25 @@ function montarHtml(d, cfg) {
     if (S.showPrev) h += '<iframe class="pv" sandbox="" srcdoc="' + esc(C.toHTML(d)) + '"></iframe>';
     if (S.showVers && rec) h += '<h3>Versões</h3>' + rec.versions.slice().reverse().map((v, i) => '<div class="list-item"><div>' + fmt(v.at) + ' — ' + esc(v.note || '') + ' ' + (v.vid === rec.cur ? '<span class="pill ok">atual</span>' : '') + ' ' + lvlPill(v.audit.level) + ' <span class="muted">nota ' + v.audit.score + '</span></div>' + (v.vid === rec.cur ? '' : '<button class="b ghost sm" data-a="restorever" data-v="' + v.vid + '">Restaurar como nova versão</button>') + '</div>').join('');
     h += '</div>';
-    h += '<div class="card"><h3>Identificação</h3><div class="row"><div>' + inp('title', 'Título') + '</div><div>' + inp('author', 'Autor') + '</div><div>' + inp('discipline', 'Disciplina') + '</div><div>' + inp('level', 'Etapa de ensino') + '</div><div>' + inp('topic', 'Tema') + '</div><div>' + inp('duration', 'Duração') + '</div>' +
-      '<div><label>Tipo de conhecimento</label><select data-f="epistemicType">' + Object.keys(C.EPISTEMIC).map((k) => '<option value="' + k + '"' + (d.epistemicType === k ? ' selected' : '') + '>' + esc(C.EPISTEMIC[k].label) + '</option>').join('') + '</select></div>' +
-      '<div><label>Perfil do material</label><select data-f="contentProfile">' + Object.keys(C.CONTENT_PROFILES).map((k) => '<option value="' + k + '"' + (d.contentProfile === k ? ' selected' : '') + '>' + esc(C.CONTENT_PROFILES[k]) + '</option>').join('') + '</select></div></div>' +
+    h += '<div class="card"><h3>Contexto do Conhecimento & Identificação</h3>' +
+      '<div class="ctx-bar" aria-label="Resumo do contexto do conhecimento"><span class="pill">🧠 ' + esc(C.EPISTEMIC[d.epistemicType].label) + '</span><span class="pill">📘 Perfil: ' + esc(d.contentProfile || 'completo') + '</span><span class="pill">🗣️ ' + esc(d.registro || 'escolar') + '</span><span class="pill">👤 ' + esc(d.destinatario || 'estudante') + '</span><span class="pill ok">Psicologia Histórico-Cultural</span></div>' +
+      '<div class="row"><div>' + inp('title', 'Título') + '</div><div>' + inp('author', 'Autor') + '</div><div>' + inp('discipline', 'Disciplina') + '</div><div>' + inp('level', 'Etapa de ensino') + '</div><div>' + inp('topic', 'Tema') + '</div><div>' + inp('duration', 'Duração') + '</div>' +
+      '<div><label for="ed-epistemic">Tipo de conhecimento</label><select id="ed-epistemic" data-f="epistemicType">' + Object.keys(C.EPISTEMIC).map((k) => '<option value="' + k + '"' + (d.epistemicType === k ? ' selected' : '') + '>' + esc(C.EPISTEMIC[k].label) + '</option>').join('') + '</select></div>' +
+      '<div><label for="ed-profile">Perfil do material</label><select id="ed-profile" data-f="contentProfile">' + Object.keys(C.CONTENT_PROFILES).map((k) => '<option value="' + k + '"' + (d.contentProfile === k ? ' selected' : '') + '>' + esc(C.CONTENT_PROFILES[k]) + '</option>').join('') + '</select></div>' +
+      '<div><label for="ed-registro">Registro de linguagem</label><select id="ed-registro" data-f="registro">' + Object.keys(C.REGISTROS).map((k) => '<option value="' + k + '"' + ((d.registro || 'escolar') === k ? ' selected' : '') + '>' + esc(C.REGISTROS[k]) + '</option>').join('') + '</select></div>' +
+      '<div><label for="ed-dest">Destinatário</label><select id="ed-dest" data-f="destinatario">' + Object.keys(C.DESTINATARIOS).map((k) => '<option value="' + k + '"' + ((d.destinatario || 'estudante') === k ? ' selected' : '') + '>' + esc(C.DESTINATARIOS[k]) + '</option>').join('') + '</select></div></div>' +
       area('objectives', 'Objetivos de aprendizagem (um por linha)', 4, true) + area('prerequisites', 'Conhecimentos prévios (um por linha)', 3, true) + '</div>';
     h += '<div class="card"><h3>Blocos do material</h3>' + d.blocks.map((b, i) =>
-      '<div class="blk" style="border-left-color:' + (bc[b.type] || '#14264f') + '"><div class="head"><div><label>Tipo</label><select data-f="blocks.' + i + '.type">' + Object.keys(C.BLOCK_TYPES).map((k) => '<option value="' + k + '"' + (b.type === k ? ' selected' : '') + '>' + C.BLOCK_TYPES[k][1] + ' ' + C.BLOCK_TYPES[k][0] + '</option>').join('') + '</select></div><div>' + inp('blocks.' + i + '.title', 'Título do bloco') + '</div>' +
-      '<div class="btns"><button class="b ghost sm" data-a="bup" data-i="' + i + '" title="Subir">↑</button><button class="b ghost sm" data-a="bdn" data-i="' + i + '" title="Descer">↓</button><button class="b danger sm" data-a="bdel" data-i="' + i + '" title="Remover">✕</button></div></div>' +
+      '<div class="blk" style="border-left-color:' + (bc[b.type] || '#14264f') + '"><div class="head"><div><label for="ed-bt-' + i + '">Tipo</label><select id="ed-bt-' + i + '" data-f="blocks.' + i + '.type">' + Object.keys(C.BLOCK_TYPES).map((k) => '<option value="' + k + '"' + (b.type === k ? ' selected' : '') + '>' + C.BLOCK_TYPES[k][1] + ' ' + C.BLOCK_TYPES[k][0] + '</option>').join('') + '</select></div><div>' + inp('blocks.' + i + '.title', 'Título do bloco') + '</div>' +
+      '<div class="btns"><button class="b ghost sm" data-a="bup" data-i="' + i + '" title="Subir" aria-label="Subir bloco ' + (i + 1) + '">↑</button><button class="b ghost sm" data-a="bdn" data-i="' + i + '" title="Descer" aria-label="Descer bloco ' + (i + 1) + '">↓</button><button class="b danger sm" data-a="bdel" data-i="' + i + '" title="Remover" aria-label="Remover bloco ' + (i + 1) + '">✕</button></div></div>' +
       area('blocks.' + i + '.content', 'Conteúdo (Markdown simples: # título, **negrito**, listas, tabelas, $fórmula$)', 7) +
-      '<details' + (b.svg ? ' open' : '') + '><summary>Figura SVG ' + (b.svg ? '(com figura)' : '(sem figura)') + '</summary><textarea rows="4" data-f="blocks.' + i + '.svg" placeholder="Cole aqui um SVG ou use “Inserir figura” abaixo">' + esc(b.svg) + '</textarea>' + (b.svg ? '<div class="preview">' + C.sanitizeSvg(b.svg) + '</div>' : '') + '</details></div>').join('') +
-      '<div class="btns"><select id="newtype" style="width:auto">' + Object.keys(C.BLOCK_TYPES).map((k) => '<option value="' + k + '">' + C.BLOCK_TYPES[k][0] + '</option>').join('') + '</select><button class="b" data-a="addblock">+ Adicionar bloco</button></div></div>';
-    h += '<div class="card"><h3>Inserir figura (gerada offline)</h3><div class="row"><div><label>Tipo de figura</label><select data-vis="kind">' + [['numberLine', 'Reta numérica'], ['timeline', 'Linha do tempo'], ['flow', 'Fluxograma'], ['conceptMap', 'Mapa conceitual']].map((x) => '<option value="' + x[0] + '"' + (S.vis.kind === x[0] ? ' selected' : '') + '>' + x[1] + '</option>').join('') + '</select></div><div><label>Título da figura</label><input data-vis="title" value="' + esc(S.vis.title) + '"></div></div>' +
-      '<label>Dados</label><textarea data-vis="text" rows="4">' + esc(S.vis.text) + '</textarea><p class="muted" id="vishelp">' + visHelp(S.vis.kind) + '</p><div class="btns"><button class="b" data-a="addvis">+ Inserir como bloco visual</button></div></div>';
+      '<details' + (b.svg ? ' open' : '') + '><summary>Figura SVG ' + (b.svg ? '(com figura)' : '(sem figura)') + '</summary><textarea rows="4" data-f="blocks.' + i + '.svg" aria-label="Código SVG do bloco ' + (i + 1) + '" placeholder="Cole aqui um SVG ou use “Inserir figura” abaixo">' + esc(b.svg) + '</textarea>' + (b.svg ? '<div class="preview">' + C.sanitizeSvg(b.svg) + '</div>' : '') + '</details></div>').join('') +
+      '<div class="btns"><select id="newtype" aria-label="Tipo do novo bloco" style="width:auto">' + Object.keys(C.BLOCK_TYPES).map((k) => '<option value="' + k + '">' + C.BLOCK_TYPES[k][0] + '</option>').join('') + '</select><button class="b" data-a="addblock">+ Adicionar bloco</button></div></div>';
+    h += '<div class="card"><h3>Inserir figura (gerada offline)</h3><div class="row"><div><label for="vis-kind">Tipo de figura</label><select id="vis-kind" data-vis="kind">' + [['numberLine', 'Reta numérica'], ['timeline', 'Linha do tempo'], ['flow', 'Fluxograma'], ['conceptMap', 'Mapa conceitual']].map((x) => '<option value="' + x[0] + '"' + (S.vis.kind === x[0] ? ' selected' : '') + '>' + x[1] + '</option>').join('') + '</select></div><div><label for="vis-title">Título da figura</label><input id="vis-title" data-vis="title" value="' + esc(S.vis.title) + '"></div></div>' +
+      '<label for="vis-text">Dados</label><textarea id="vis-text" data-vis="text" rows="4">' + esc(S.vis.text) + '</textarea><p class="muted" id="vishelp">' + visHelp(S.vis.kind) + '</p><div class="btns"><button class="b" data-a="addvis">+ Inserir como bloco visual</button></div></div>';
     h += '<div class="card"><h3>Referências</h3><p class="muted">Nunca invente referências. Marque o nível de acesso real: só "integral" se leu a obra inteira.</p>' + d.references.map((r, i) =>
       '<div class="blk"><div class="row"><div>' + inp('references.' + i + '.authors', 'Autor(es)') + '</div><div>' + inp('references.' + i + '.title', 'Título') + '</div><div>' + inp('references.' + i + '.year', 'Ano') + '</div><div>' + inp('references.' + i + '.venue', 'Periódico/editora') + '</div><div>' + inp('references.' + i + '.doi', 'DOI') + '</div><div>' + inp('references.' + i + '.url', 'URL') + '</div>' +
-      '<div><label>Nível de acesso</label><select data-f="references.' + i + '.accessLevel">' + ['integral', 'parcial', 'resumo', 'metadados', 'localizada', 'nao-verificado'].map((k) => '<option' + (r.accessLevel === k ? ' selected' : '') + '>' + k + '</option>').join('') + '</select></div><div><label><input type="checkbox" style="width:auto" data-f="references.' + i + '.verified"' + (r.verified ? ' checked' : '') + '> verificada por mim</label></div></div><div class="btns"><button class="b danger sm" data-a="delref" data-i="' + i + '">Remover referência</button></div></div>').join('') +
+      '<div><label for="ed-ref-acc-' + i + '">Nível de acesso</label><select id="ed-ref-acc-' + i + '" data-f="references.' + i + '.accessLevel">' + ['integral', 'parcial', 'resumo', 'metadados', 'localizada', 'nao-verificado'].map((k) => '<option' + (r.accessLevel === k ? ' selected' : '') + '>' + k + '</option>').join('') + '</select></div><div><label><input type="checkbox" style="width:auto" data-f="references.' + i + '.verified"' + (r.verified ? ' checked' : '') + '> verificada por mim</label></div></div><div class="btns"><button class="b danger sm" data-a="delref" data-i="' + i + '">Remover referência</button></div></div>').join('') +
       '<div class="btns"><button class="b ghost" data-a="addref">+ Adicionar referência</button></div>' + area('limitations', 'Limitações documentais (uma por linha)', 3, true) + '</div>';
     return h;
   }
@@ -1788,14 +1802,14 @@ function montarHtml(d, cfg) {
     const L = C.EPISTEMIC[d.epistemicType].labels;
     return '<div class="two"><div class="card"><h2>Capa Clean & Folha de Rosto</h2><p class="muted">A Capa Clean abre a apostila (título, subtítulo, logo, avatar e autor); a Folha de Rosto traz o mapa visual com caixas curtas (até 25 palavras).</p>' +
       '<label><input type="checkbox" style="width:auto" data-f="poster.coverClean"' + (p.coverClean !== false ? ' checked' : '') + '> Incluir Capa Clean (Página 1) antes da Folha de Rosto</label>' +
-      '<label>Foto na seção “Sobre o Autor”</label><select data-f="poster.avatarChoice">' + Object.keys(C.AVATAR_OPTIONS).map((k) => '<option value="' + k + '"' + ((p.avatarChoice || 'avatar-prof-ale-1.jpg') === k ? ' selected' : '') + '>' + esc(C.AVATAR_OPTIONS[k]) + '</option>').join('') + '</select>' +
-      '<label>Logo MathLab</label><select data-f="poster.logoChoice">' + Object.keys(C.LOGO_OPTIONS).map((k) => '<option value="' + k + '"' + ((p.logoChoice || 'logo-mathlab-clean.jpg') === k ? ' selected' : '') + '>' + esc(C.LOGO_OPTIONS[k]) + '</option>').join('') + '</select>' +
-      '<label>Tema de cores</label><select data-f="poster.theme">' + Object.keys(C.POSTER_THEMES).map((k) => '<option value="' + k + '"' + (p.theme === k ? ' selected' : '') + '>' + esc(C.POSTER_THEMES[k].nome) + '</option>').join('') + '</select>' +
+      '<label for="ps-avatar">Foto na seção “Sobre o Autor”</label><select id="ps-avatar" data-f="poster.avatarChoice">' + Object.keys(C.AVATAR_OPTIONS).map((k) => '<option value="' + k + '"' + ((p.avatarChoice || 'avatar-prof-ale-1.jpg') === k ? ' selected' : '') + '>' + esc(C.AVATAR_OPTIONS[k]) + '</option>').join('') + '</select>' +
+      '<label for="ps-logo">Logo MathLab</label><select id="ps-logo" data-f="poster.logoChoice">' + Object.keys(C.LOGO_OPTIONS).map((k) => '<option value="' + k + '"' + ((p.logoChoice || 'logo-mathlab-clean.jpg') === k ? ' selected' : '') + '>' + esc(C.LOGO_OPTIONS[k]) + '</option>').join('') + '</select>' +
+      '<label for="ps-theme">Tema de cores</label><select id="ps-theme" data-f="poster.theme">' + Object.keys(C.POSTER_THEMES).map((k) => '<option value="' + k + '"' + (p.theme === k ? ' selected' : '') + '>' + esc(C.POSTER_THEMES[k].nome) + '</option>').join('') + '</select>' +
       inp('poster.title', 'Título do pôster') + inp('poster.subtitle', 'Subtítulo') + inp('poster.author', 'Autor na capa', C.DEFAULT_AUTHOR) + inp('poster.videoTitle', 'Videoaula complementar (título opcional)', 'Ex.: Aula em vídeo — Prof. Alê') + inp('poster.videoUrl', 'Link da videoaula (opcional)', 'https://youtube.com/...') + inp('poster.mascot', 'Mascote (descrição para a IA de imagem)', 'Ex.: estudante sorridente de mochila azul') +
       '<h3>Caixas numeradas</h3>' + p.sections.map((s, i) => '<div class="blk"><div class="row"><div>' + inp('poster.sections.' + i + '.label', 'Rótulo ' + (i + 1), L[i] || '') + '</div><div>' + inp('poster.sections.' + i + '.title', 'Subtítulo (opcional)') + '</div></div>' + area('poster.sections.' + i + '.text', 'Texto', 3) + '<button class="b danger sm" data-a="delsec" data-i="' + i + '">Remover caixa</button></div>').join('') +
       (p.sections.length < 6 ? '<div class="btns"><button class="b ghost" data-a="addsec">+ Caixa numerada</button></div>' : '') +
       '<h3>Caixas extras</h3>' + inp('poster.goldTip', '💡 Dica de ouro') + inp('poster.didYouKnow', 'Você sabia?') + inp('poster.attention', '⚠️ Atenção aos detalhes') +
-      '<h3>Faixa “Em resumo”</h3>' + p.summary.map((s, i) => '<div class="row"><div>' + inp('poster.summary.' + i + '.icon', 'Ícone (emoji)') + '</div><div>' + inp('poster.summary.' + i + '.label', 'Rótulo') + '</div><div>' + inp('poster.summary.' + i + '.text', 'Texto') + '</div><div><label>&nbsp;</label><button class="b danger sm" data-a="delsum" data-i="' + i + '">✕</button></div></div>').join('') +
+      '<h3>Faixa “Em resumo”</h3>' + p.summary.map((s, i) => '<div class="row"><div>' + inp('poster.summary.' + i + '.icon', 'Ícone (emoji)') + '</div><div>' + inp('poster.summary.' + i + '.label', 'Rótulo') + '</div><div>' + inp('poster.summary.' + i + '.text', 'Texto') + '</div><div><span class="muted" style="display:block;font-size:.82rem;margin:8px 0 3px">&nbsp;</span><button class="b danger sm" data-a="delsum" data-i="' + i + '" aria-label="Remover item ' + (i + 1) + ' do resumo">✕</button></div></div>').join('') +
       (p.summary.length < 5 ? '<div class="btns"><button class="b ghost" data-a="addsum">+ Item</button></div>' : '') + '</div>' +
       '<div><div class="card"><h3>Prévia (Capa Clean + Folha de Rosto)</h3><div id="posterPreview" class="preview">' + (p.coverClean !== false ? '<div style="margin-bottom:16px">' + C.renderCleanCover(d) + '</div>' : '') + C.renderPoster(p, d.author) + '</div></div>' +
       '<div class="card"><h3>Versão ilustrada com IA</h3><p class="muted">Copie o prompt, abra o Gemini (Nano Banana) e cole. O formato da imagem você escolhe no próprio app. IA de imagem às vezes erra letras: confira o texto na imagem. O pôster em HTML ao lado é sempre a versão exata.</p><div class="btns"><button class="b gold" data-a="copyimg">Copiar prompt da imagem</button><button class="b ghost" data-a="dlposter">Baixar pôster (HTML)</button><button class="b ghost" data-a="printposter">Imprimir / PDF</button></div><details><summary>Ver o prompt</summary><pre class="code">' + esc(C.buildImagePrompt(d)) + '</pre></details></div></div></div>';
@@ -1873,13 +1887,13 @@ function montarHtml(d, cfg) {
       '<p class="muted">' + d.turmas.length + ' turma(s) · ' + d.entradas.length + ' registro(s) · ' + (d.avaliacoes || []).length + ' avaliação(ões)</p>' +
       (ach.length ? '<div style="margin:8px 0">' + ach.map((x) => '<div class="find ' + (x.nivel === 'bloqueante' ? 'hard' : 'warn') + '">' + (x.nivel === 'bloqueante' ? '⛔' : '⚠️') + ' <b>' + esc(x.regra) + '</b>: ' + esc(x.msg) + '</div>').join('') + '</div>' : '') +
       '<div class="btns"><button class="b gold" data-a="dlportfolio"' + (nb ? ' disabled' : '') + '>📘 Baixar Portfólio (HTML)</button><button class="b" data-a="printportfolio"' + (nb ? ' disabled' : '') + '>🖨️ Imprimir / salvar PDF</button></div></div>' +
-      '<div class="card"><h3>Novo registro no diário</h3><div class="row"><div><label>Data</label><input id="dr-data" type="date" value="' + new Date().toISOString().slice(0, 10) + '"></div>' +
-      '<div><label>Turma</label><select id="dr-turma">' + d.turmas.map((t) => '<option value="' + esc(t.id) + '">' + esc(t.nome) + '</option>').join('') + '</select></div>' +
-      '<div><label>Tipo</label><select id="dr-tipo"><option value="aula">Aula</option><option value="retomada">Retomada</option><option value="avaliacao">Avaliação</option><option value="projeto">Projeto</option></select></div>' +
-      '<div><label>Habilidades (vírgula)</label><input id="dr-hab" placeholder="Ex.: EF06MA08"></div></div>' +
-      '<label>Tema da aula</label><input id="dr-tema" placeholder="Ex.: Frações equivalentes na reta numérica">' +
-      '<label>Resumo / evidência</label><textarea id="dr-resumo" rows="2"></textarea>' +
-      '<label>Reflexão docente (opcional)</label><textarea id="dr-refl" rows="2"></textarea>' +
+      '<div class="card"><h3>Novo registro no diário</h3><div class="row"><div><label for="dr-data">Data</label><input id="dr-data" type="date" value="' + new Date().toISOString().slice(0, 10) + '"></div>' +
+      '<div><label for="dr-turma">Turma</label><select id="dr-turma">' + d.turmas.map((t) => '<option value="' + esc(t.id) + '">' + esc(t.nome) + '</option>').join('') + '</select></div>' +
+      '<div><label for="dr-tipo">Tipo</label><select id="dr-tipo"><option value="aula">Aula</option><option value="retomada">Retomada</option><option value="avaliacao">Avaliação</option><option value="projeto">Projeto</option></select></div>' +
+      '<div><label for="dr-hab">Habilidades (vírgula)</label><input id="dr-hab" placeholder="Ex.: EF06MA08"></div></div>' +
+      '<label for="dr-tema">Tema da aula</label><input id="dr-tema" placeholder="Ex.: Frações equivalentes na reta numérica">' +
+      '<label for="dr-resumo">Resumo / evidência</label><textarea id="dr-resumo" rows="2"></textarea>' +
+      '<label for="dr-refl">Reflexão docente (opcional)</label><textarea id="dr-refl" rows="2"></textarea>' +
       '<div class="btns"><button class="b gold" data-a="adddiario">+ Adicionar ao diário</button></div></div>' +
       (htmlPort ? '<div class="card"><h3>Prévia do Portfólio Docente (A4)</h3><iframe title="Prévia do portfólio" style="width:100%;height:72vh;border:0;border-radius:10px;background:#eef1f6" srcdoc="' + esc(htmlPort) + '"></iframe></div>' : '');
   }
