@@ -1,4 +1,4 @@
-# MathLab Aulas Visuais — versão 1.5
+# MathLab Aulas Visuais — versão 1.5.1
 
 Ferramenta de **autoria docente para qualquer disciplina**. O professor pede um material em linguagem natural e recebe:
 
@@ -66,3 +66,7 @@ Não inventar referências nem resultados de testes; não aprovar automaticament
 ## Ainda não está nesta versão
 
 Exportação em **Word (.docx)** e **PowerPoint (.pptx)**, integração direta com API do Gemini e busca de referências no Crossref/OpenAlex. O caminho principal (Gem + importar JSON) cobre o essencial sem custo.
+
+## Manter as instruções em sincronia
+
+`skill/SKILL.md` é a fonte completa. `gemini/GEM_INSTRUCOES.md` e `chatgpt/CHATGPT_GPT_INSTRUCOES.md` são versões mais curtas e precisam acompanhar o esquema JSON: ao acrescentar ou renomear um campo, atualize os três. O teste `tests/instrucoes.test.js` confere os campos, a versão e as regras de pergunta e de tema interdisciplinar.
