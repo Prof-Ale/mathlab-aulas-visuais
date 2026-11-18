@@ -38,3 +38,21 @@ test('instruções: orientam tema interdisciplinar sem apagar perspectivas', () 
     assert.match(txt, /Perspectivas complementares/, nome);
   }
 });
+
+test('instruções: DUA, objetivos de 2 a 4 e terminologia da Educação Especial nos três', () => {
+  for (const [nome, txt] of Object.entries(files)) {
+    assert.match(txt, /Desenho Universal para a Aprendizagem/, nome);
+    assert.match(txt, /representação/, nome);
+    assert.match(txt, /2 a 4/, nome);
+    assert.match(txt, /estudantes da Educação Especial/, nome);
+    assert.match(txt, /público-alvo da Educação Especial/, nome);
+  }
+});
+
+test('instruções: o esquema de referências é completo no GPT, no Gem e na Skill', () => {
+  for (const [nome, txt] of Object.entries(files)) {
+    for (const c of ['authors', 'venue', 'doi', 'accessLevel', 'verified']) {
+      assert.ok(txt.includes('"' + c + '"'), nome + ' sem ' + c + ' em references');
+    }
+  }
+});
