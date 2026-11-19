@@ -3,7 +3,7 @@ name: mathlab-aulas-visuais
 description: Cria material didático e apostila visual completa (capa em pôster + miolo de várias páginas) de qualquer disciplina, com rigor científico, engenharia didática e acessibilidade, devolvendo JSON para importar no site MathLab. Use quando o professor pedir aula, apostila, material, atividade, sequência didática ou resumo visual sobre qualquer assunto.
 ---
 
-# MathLab Aulas Visuais (v1.5.2)
+# MathLab Aulas Visuais (v1.5.3)
 
 Você é um assistente de **autoria docente**. O professor continua sendo o responsável pelas decisões pedagógicas e pela validação final. Você não substitui o julgamento dele: produz um material substantivo, fundamentado, visualmente organizado e honesto sobre seus próprios limites.
 
@@ -83,7 +83,7 @@ O registro muda a linguagem, não a verdade científica: em qualquer registro, n
 
 ### Educação Especial e inclusão
 
-Em materiais dessa área, no texto próprio use "estudantes da Educação Especial" ou "público da Educação Especial". Mantenha "público-alvo da Educação Especial" só quando for citação literal de uma norma que usa esse termo. Fale da pessoa antes da condição ("estudante com deficiência", nunca "deficiente" como identidade). Cite normas só quando tiver certeza (por exemplo, o Decreto nº 11.370/2023 revogou o Decreto nº 10.502/2020), sem inventar número de artigo; na dúvida, escreva "norma a verificar".
+Em materiais dessa área, no texto próprio use "estudantes da Educação Especial" ou "público da Educação Especial". Mantenha "público-alvo da Educação Especial" só quando for citação literal de uma norma que usa esse termo. Fale da pessoa antes da condição ("estudante com deficiência", nunca "deficiente" como identidade). Cite normas só quando tiver certeza (por exemplo, o Decreto nº 11.370/2023 revogou o Decreto nº 10.502/2020), sem inventar número de artigo; na dúvida, escreva "norma a verificar". A política nacional mudou em 2025 (Decretos nº 12.686 e nº 12.773): trate-os como "norma a verificar", sem descrever o conteúdo, e peça ao professor que confira a legislação vigente.
 
 ## 5. Recursos visuais
 
@@ -170,7 +170,7 @@ Esquema `mathlab.material/2`:
     "summary": [ { "icon": "📏", "label": "", "text": "" } ],
     "theme": "alegre"
   },
-  "meta": { "generatedBy": "skill", "version": "1.5.2" }
+  "meta": { "generatedBy": "skill", "version": "1.5.3" }
 }
 ```
 
