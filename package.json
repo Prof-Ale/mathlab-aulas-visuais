@@ -1,10 +1,10 @@
 {
   "name": "mathlab-aulas-visuais",
-  "version": "1.1.0",
+  "version": "1.5.2",
   "private": true,
   "description": "Autoria docente para qualquer disciplina: skill (Claude/Gemini) + site estático.",
   "scripts": {
-    "test": "node --test tests/core.test.js",
+    "test": "node --test tests/core.test.js tests/instrucoes.test.js",
     "build": "node tools/build-standalone.js"
   },
   "license": "UNLICENSED"
