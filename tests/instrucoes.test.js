@@ -62,3 +62,11 @@ test('instruções: o bloco colável do GPT cabe no limite de 8000 caracteres do
   assert.ok(m, 'bloco text não encontrado');
   assert.ok([...m[1]].length <= 8000, 'bloco do GPT com ' + [...m[1]].length + ' caracteres');
 });
+
+test('instruções: Educação Especial manda tratar os decretos de 2025 como norma a verificar', () => {
+  for (const [nome, txt] of Object.entries(files)) {
+    assert.match(txt, /12\.686/, nome);
+    assert.match(txt, /12\.773/, nome);
+    assert.match(txt, /legislação vigente/, nome);
+  }
+});
