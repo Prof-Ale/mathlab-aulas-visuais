@@ -56,3 +56,9 @@ test('instruções: o esquema de referências é completo no GPT, no Gem e na Sk
     }
   }
 });
+
+test('instruções: o bloco colável do GPT cabe no limite de 8000 caracteres do campo Instructions', () => {
+  const m = files.gpt.match(/```text\n([\s\S]*?)\n```/);
+  assert.ok(m, 'bloco text não encontrado');
+  assert.ok([...m[1]].length <= 8000, 'bloco do GPT com ' + [...m[1]].length + ' caracteres');
+});
