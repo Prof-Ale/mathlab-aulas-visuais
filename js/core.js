@@ -375,7 +375,7 @@
       '<p class="mlclean-sub">' + esc(sub) + '</p>' +
       '<div class="mlclean-avatar-wrap"><div style="width:128px">' + MASCOT_SVG + '</div>' +
       '<div class="mlclean-author">' + esc(auth) + '</div><div class="mlclean-role">Autoria Docente · Psicologia Histórico-Cultural</div></div></section>' +
-      '<footer class="mlclean-bot"><span>' + (m.duration ? '⏱️ ' + esc(m.duration) : 'Material de Apoio Pedagógico') + '</span><span>Versão ' + VERSION + ' · Validado pelo professor</span></footer>' +
+      '<footer class="mlclean-bot"><span>' + (m.duration ? '⏱️ ' + esc(m.duration) : 'Material de Apoio Pedagógico') + '</span><span>' + esc(estadoRevisao(m).texto) + '</span></footer>' +
       '</article>';
   }
 
@@ -453,6 +453,29 @@
   /* ---------- normalização, validação, importação ---------- */
   const CALLOUTS = { dica: ['💡 DICA DE OURO', 'gold'], sabia: ['🔎 VOCÊ SABIA?', 'know'], atencao: ['⚠️ ATENÇÃO AOS DETALHES!', 'warn'], prova: ['🎯 COBRANÇA EM PROVAS', 'prova'] };
 
+  /* ---------- estado de revisão: só o professor valida, aqui no site ---------- */
+  function hashConteudo(m) {
+    const p = m.poster || {};
+    const base = JSON.stringify({
+      t: m.title, o: m.objectives, q: m.prerequisites, l: m.limitations, r: m.references,
+      b: (m.blocks || []).map((b) => [b.type, b.title, b.content, b.svg, b.callout]),
+      p: [p.title, p.subtitle, p.mascot, p.sections, p.goldTip, p.didYouKnow, p.attention, p.summary],
+    });
+    let h = 0x811c9dc5;
+    for (let i = 0; i < base.length; i++) { h ^= base.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+    return h.toString(16).padStart(8, '0');
+  }
+  function fmtData(iso) { const t = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return t ? t[3] + '/' + t[2] + '/' + t[1] : String(iso || ''); }
+  function estadoRevisao(m) {
+    const r = (m && m.revisao) || {};
+    const completa = r.aprovado === true && String(r.revisadoPor || '').trim() && String(r.data || '').trim();
+    if (!completa) return { validado: false, desatualizada: false, texto: 'Rascunho · aguarda revisão do professor', nota: 'Aguarda a revisão do docente.' };
+    if (!r.hash || r.hash !== hashConteudo(m)) return { validado: false, desatualizada: true, texto: 'Validação desatualizada · material alterado depois da revisão', nota: 'A validação anterior ficou desatualizada: o material foi alterado depois da revisão.' };
+    const quem = String(r.revisadoPor).trim(), quando = fmtData(r.data);
+    return { validado: true, desatualizada: false, texto: 'Validado pelo professor · ' + quem + ' · ' + quando, nota: 'Validado por ' + quem + ' em ' + quando + '.' };
+  }
+  const REVISAO_VAZIA = () => ({ aprovado: false, revisadoPor: '', data: '', hash: '' });
+
   function normalize(o) {
     o = o && typeof o === 'object' ? o : {};
     const arr = (x) => (Array.isArray(x) ? x.map(String).filter((s) => s.trim()) : typeof x === 'string' && x.trim() ? x.split(/\n+/).map((s) => s.trim()).filter(Boolean) : []);
@@ -470,6 +493,7 @@
       destinatario: DESTINATARIOS[o.destinatario] ? o.destinatario : (o.publico && DESTINATARIOS[o.publico.destinatario] ? o.publico.destinatario : 'estudante'),
       objectives: arr(o.objectives), prerequisites: arr(o.prerequisites), limitations: arr(o.limitations),
       blocks: [], references: [], poster: null,
+      revisao: REVISAO_VAZIA(),
       meta: Object.assign({ generatedBy: 'manual', createdAt: new Date().toISOString() }, o.meta || {}),
     };
     (Array.isArray(o.blocks) ? o.blocks : []).forEach((b) => {
@@ -499,6 +523,9 @@
         summary: (Array.isArray(p.summary) ? p.summary : []).slice(0, 5).map((s) => ({ icon: String(s.icon || '⭐'), label: String(s.label || ''), text: String(s.text || '') })),
         theme: POSTER_THEMES[p.theme] ? p.theme : 'alegre',
       };
+    }
+    if (o.revisao && typeof o.revisao === 'object') {
+      m.revisao = { aprovado: o.revisao.aprovado === true, revisadoPor: String(o.revisao.revisadoPor || ''), data: String(o.revisao.data || ''), hash: String(o.revisao.hash || '') };
     }
     if (!m.title) m.title = m.topic || (m.poster && m.poster.title) || 'Material sem título';
     if (o._v2) m._v2 = o._v2;
@@ -576,6 +603,9 @@
     const m = isV2 ? fromV2(r.data) : normalize(r.data);
     const warnings = [];
     if (!m.blocks.length && !m.poster) return { ok: false, error: 'O JSON não tem "blocks"/"blocos" nem "poster".' };
+    const trouxe = (r.data.revisao && r.data.revisao.aprovado === true) || (r.data.revisao_humana && r.data.revisao_humana.aprovado === true);
+    m.revisao = REVISAO_VAZIA();
+    if (trouxe) warnings.push('O JSON trazia uma revisão marcada como aprovada. Ignorei: só o professor valida, aqui no site, depois de revisar.');
     if (!r.data.schema && !r.data.schema_versao) warnings.push('O JSON não declara "schema"; importei assim mesmo.');
     if (m.meta.generatedBy === 'manual') m.meta.generatedBy = 'skill';
     return { ok: true, material: m, warnings };
@@ -866,9 +896,9 @@
       '<div class="mlsynth-q">3. Uma dúvida ou exemplo próprio para discutir em aula:</div><div class="mlsynth-line"></div></div>';
     if (m.references.length) fin += card('📚', '', 'Referências', '<ul class="mlrefs">' + m.references.map((r) => '<li>' + esc(r.authors) + ' (' + esc(r.year) + '). <em>' + esc(r.title) + '</em>. ' + esc(r.venue) + (r.doi ? ' DOI: ' + esc(r.doi) : '') + ' <small>[acesso: ' + esc(r.accessLevel) + ']</small></li>').join('') + '</ul>', 3);
     if (m.limitations.length) fin += card('⚠️', '', 'Sobre este material', '<ul>' + m.limitations.map((x) => '<li>' + inline(x) + '</li>').join('') + '</ul>', 4);
-    fin += '<div class="mlauthor-box mlmove">' + (m.poster && m.poster.avatarChoice !== 'svg' ? av : '') + '<div><strong>' + esc(m.author || DEFAULT_AUTHOR) + '</strong><br><small>MathLab Educação · Matemática em Investigação. Material didático fundamentado na Psicologia Histórico-Cultural e validado pelo docente.</small></div></div>';
+    fin += '<div class="mlauthor-box mlmove">' + (m.poster && m.poster.avatarChoice !== 'svg' ? av : '') + '<div><strong>' + esc(m.author || DEFAULT_AUTHOR) + '</strong><br><small>MathLab Educação · Matemática em Investigação. Material didático fundamentado na Psicologia Histórico-Cultural. ' + esc(estadoRevisao(m).nota) + '</small></div></div>';
     fin += '<div class="mlcolophon mlmove" id="ml-colophon"><div><b>Título:</b> ' + esc(m.title) + '</div><div><b>Autoria:</b> ' + esc(m.author || DEFAULT_AUTHOR) + '</div><div><b>Perfil:</b> ' + esc(profLabel) + '</div><div><b>Estilo do miolo:</b> ' + (isEd ? 'Editorial Clean' : 'Lúdico / HQ') + '</div><div><b>Tipografia:</b> Fredoka · Caveat · Nunito</div><div><b>Formato:</b> A4 · Versão ' + VERSION + '</div></div>';
-    fin += '<p class="mlnote mlmove">Este material deve ser conferido e validado pelo professor antes do uso em aula.</p>';
+    fin += '<p class="mlnote mlmove">' + (estadoRevisao(m).validado ? 'Material revisado e validado pelo professor. ' + esc(estadoRevisao(m).nota) : 'Este material deve ser conferido e validado pelo professor antes do uso em aula.') + '</p>';
     pages.push({ kind: 'final', html: fin, title: 'Em resumo' });
 
     /* numeração das páginas: Capa Clean (1) + Folha de Rosto/Pôster (2) + Miolo */
@@ -953,5 +983,5 @@
     });
   }
 
-  return { VERSION, SCHEMA, DEFAULT_AUTHOR, REGISTROS, DESTINATARIOS, INTERIOR_STYLES, AVATAR_OPTIONS, LOGO_OPTIONS, BLOCK_PEDAGOGY, CONTENT_PROFILES, EPISTEMIC, BLOCK_TYPES, POSTER_THEMES, COVER_CSS, POSTER_CSS, DOC_CSS, VISUALS, esc, uid, wc, clone, detectType, sanitizeSvg, renderMarkdown, renderCleanCover, renderPoster, buildImagePrompt, buildRequestText, normalize, fromV2, parseModelJson, importFromText, audit, toMarkdown, toHTML, toApostila, CALLOUTS, scaffold, demo };
+  return { VERSION, SCHEMA, hashConteudo, estadoRevisao, DEFAULT_AUTHOR, REGISTROS, DESTINATARIOS, INTERIOR_STYLES, AVATAR_OPTIONS, LOGO_OPTIONS, BLOCK_PEDAGOGY, CONTENT_PROFILES, EPISTEMIC, BLOCK_TYPES, POSTER_THEMES, COVER_CSS, POSTER_CSS, DOC_CSS, VISUALS, esc, uid, wc, clone, detectType, sanitizeSvg, renderMarkdown, renderCleanCover, renderPoster, buildImagePrompt, buildRequestText, normalize, fromV2, parseModelJson, importFromText, audit, toMarkdown, toHTML, toApostila, CALLOUTS, scaffold, demo };
 });

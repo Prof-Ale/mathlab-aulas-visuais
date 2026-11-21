@@ -158,6 +158,7 @@
   /* ---------- Editor ---------- */
   function vEditor() {
     const d = S.draft, rec = mat();
+    if (!d.revisao) d.revisao = { aprovado: false, revisadoPor: '', data: '', hash: '' };
     const bc = { exemplo: '#22a559', atividade: '#f28a1f', exercicios: '#7a4bd1', gabarito: '#1e6fd9', nota: '#d6453d', acessibilidade: '#0e8f8f', problematizacao: '#f2b705' };
     let h = '<div class="card"><div class="btns" style="justify-content:space-between"><h2 style="margin:0">' + esc(d.title) + ' ' + (S.dirty ? '<span class="dirty" id="dirtymark">● alterações não salvas</span>' : '<span class="pill ok" id="dirtymark">salvo</span>') + '</h2>' +
       '<div class="btns"><button class="b gold" data-a="save">💾 Salvar nova versão</button><button class="b ghost" data-a="prev">👁️ Prévia</button><button class="b ghost" data-a="vers">🕘 Versões (' + (rec ? rec.versions.length : 0) + ')</button></div></div>';
@@ -172,6 +173,12 @@
       '<div><label for="ed-registro">Registro de linguagem</label><select id="ed-registro" data-f="registro">' + Object.keys(C.REGISTROS).map((k) => '<option value="' + k + '"' + ((d.registro || 'escolar') === k ? ' selected' : '') + '>' + esc(C.REGISTROS[k]) + '</option>').join('') + '</select></div>' +
       '<div><label for="ed-dest">Destinatário</label><select id="ed-dest" data-f="destinatario">' + Object.keys(C.DESTINATARIOS).map((k) => '<option value="' + k + '"' + ((d.destinatario || 'estudante') === k ? ' selected' : '') + '>' + esc(C.DESTINATARIOS[k]) + '</option>').join('') + '</select></div></div>' +
       area('objectives', 'Objetivos de aprendizagem (um por linha)', 4, true) + area('prerequisites', 'Conhecimentos prévios (um por linha)', 3, true) + '</div>';
+    const rv = C.estadoRevisao(d);
+    h += '<div class="card" id="card-revisao"><h3>Validação do professor</h3>' +
+      '<p class="muted">Este campo só você preenche, depois de conferir o material. A IA e a auditoria nunca validam. Se você alterar o conteúdo depois, a validação fica desatualizada.</p>' +
+      '<p><span class="pill ' + (rv.validado ? 'ok' : 'warn') + '" id="revisao-estado">' + esc(rv.texto) + '</span></p>' +
+      '<div class="row"><div><label for="f_revisao_revisadoPor">Quem revisou</label><input id="f_revisao_revisadoPor" data-f="revisao.revisadoPor" value="' + esc(d.revisao.revisadoPor || '') + '" placeholder="Nome do professor"></div>' +
+      '<div><label><input type="checkbox" id="f_revisao_aprovado" data-f="revisao.aprovado"' + (d.revisao.aprovado ? ' checked' : '') + '> Revisei e valido este material</label>' + (d.revisao.data ? '<p class="muted">Data da validação: ' + esc(d.revisao.data) + '</p>' : '') + '</div></div></div>';
     h += '<div class="card"><h3>Blocos do material</h3>' + d.blocks.map((b, i) =>
       '<div class="blk" style="border-left-color:' + (bc[b.type] || '#14264f') + '"><div class="head"><div><label for="ed-bt-' + i + '">Tipo</label><select id="ed-bt-' + i + '" data-f="blocks.' + i + '.type">' + Object.keys(C.BLOCK_TYPES).map((k) => '<option value="' + k + '"' + (b.type === k ? ' selected' : '') + '>' + C.BLOCK_TYPES[k][1] + ' ' + C.BLOCK_TYPES[k][0] + '</option>').join('') + '</select></div><div>' + inp('blocks.' + i + '.title', 'Título do bloco') + '</div>' +
       '<div class="btns"><button class="b ghost sm" data-a="bup" data-i="' + i + '" title="Subir" aria-label="Subir bloco ' + (i + 1) + '">↑</button><button class="b ghost sm" data-a="bdn" data-i="' + i + '" title="Descer" aria-label="Descer bloco ' + (i + 1) + '">↓</button><button class="b danger sm" data-a="bdel" data-i="' + i + '" title="Remover" aria-label="Remover bloco ' + (i + 1) + '">✕</button></div></div>' +
@@ -415,8 +422,13 @@
     if (el.dataset.vis) { if (el.dataset.vis !== 'kind') S.vis[el.dataset.vis] = el.value; return; }
     if (el.dataset.f) {
       setPath(el.dataset.f, el.type === 'checkbox' ? el.checked : el.dataset.lines ? el.value.split('\n').map((x) => x.trim()).filter(Boolean) : el.value);
+      if (el.dataset.f === 'revisao.aprovado') {
+        if (el.checked) { S.draft.revisao.data = S.draft.revisao.data || new Date().toISOString().slice(0, 10); S.draft.revisao.hash = C.hashConteudo(S.draft); }
+        else { S.draft.revisao.hash = ''; S.draft.revisao.data = ''; }
+      }
       S.dirty = true; const m = $('#dirtymark'); if (m) { m.className = 'dirty'; m.textContent = '● salvando...'; }
       scheduleAutosave();
+      const rs = $('#revisao-estado'); if (rs) { const e = C.estadoRevisao(S.draft); rs.textContent = e.texto; rs.className = 'pill ' + (e.validado ? 'ok' : 'warn'); }
       if (S.tab === 'poster' && S.draft.poster) { const pv = $('#posterPreview'); if (pv) pv.innerHTML = (S.draft.poster.coverClean !== false ? '<div style="margin-bottom:16px">' + C.renderCleanCover(S.draft) + '</div>' : '') + C.renderPoster(S.draft.poster, S.draft.author); }
     }
   });

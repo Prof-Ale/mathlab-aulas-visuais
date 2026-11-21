@@ -4,7 +4,7 @@
   "private": true,
   "description": "Autoria docente para qualquer disciplina: skill (Claude/Gemini) + site estático.",
   "scripts": {
-    "test": "node --test tests/core.test.js tests/instrucoes.test.js",
+    "test": "node --test tests/core.test.js tests/instrucoes.test.js tests/validacao.test.js",
     "build": "node tools/build-standalone.js"
   },
   "license": "UNLICENSED"
