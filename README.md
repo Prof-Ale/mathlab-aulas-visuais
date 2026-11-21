@@ -23,6 +23,10 @@ Nenhum dado sai do navegador. Não há servidor, chave de API nem chamada extern
 4. Revise no **Editor**, ajuste a **Capa (pôster)**, confira a **Apostila completa**, rode a **Auditoria** e **Exporte** (botão "Apostila completa").
 5. Para a versão ilustrada: em **Capa (pôster)**, clique em **Copiar prompt da imagem** e cole no Gemini (Nano Banana). O pôster em HTML continua sendo a versão exata, porque IA de imagem pode errar letras.
 
+## Validação do professor
+
+Nenhum material nasce validado. A capa e a caixa do autor mostram "Rascunho, aguarda revisão do professor" até que o professor marque "Revisei e valido este material" na aba Editor, com o nome de quem revisou. A data e uma impressão digital do conteúdo são gravadas nesse momento. Se o conteúdo mudar depois, a validação aparece como desatualizada. Um JSON que traga revisão aprovada (de uma IA ou de um arquivo antigo) é importado como rascunho, com aviso: a validação não viaja no arquivo.
+
 ## Instalar o Gem (Gemini Pro)
 
 1. Em gemini.google.com, abra **Gems → Novo Gem**.
