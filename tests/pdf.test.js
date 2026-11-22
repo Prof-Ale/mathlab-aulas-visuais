@@ -58,3 +58,15 @@ test('PDF da apostila: uma folha por página, sem corte, sem rede, byte a byte r
   for (const fam of ['Fredoka', 'Nunito', 'Caveat']) assert.ok(new RegExp('/BaseFont\\s*/[A-Z]{6}\\+' + fam).test(txt), fam + ' não está embutida no PDF');
   assert.ok(!/\+Inter-|\+LiberationSans/.test(txt), 'caiu em fonte do sistema');
 });
+
+test('arquivo real do App Node vira PDF sem transbordo, sem corte e reproduzível', { skip: !temPlaywright && 'playwright não instalado', timeout: 120000 }, async () => {
+  const { gerarPdf } = await ferramenta();
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'mlpdf-'));
+  const imp = C.importFromText(fs.readFileSync(path.join(__dirname, 'fixtures/app-export.mathlab.json'), 'utf8'));
+  assert.strictEqual(imp.ok, true);
+  const a = await gerarPdf(imp.material, path.join(dir, 'a.pdf'));
+  const b = await gerarPdf(imp.material, path.join(dir, 'b.pdf'));
+  assert.strictEqual(a.paginasNoPdf, a.paginasNoDom);
+  assert.deepStrictEqual(a.paginasCortadas, []);
+  assert.deepStrictEqual(fs.readFileSync(path.join(dir, 'a.pdf')), fs.readFileSync(path.join(dir, 'b.pdf')));
+});

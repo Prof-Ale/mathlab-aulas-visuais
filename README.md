@@ -68,6 +68,8 @@ npm run pdf -- --demo apostila-demo.pdf    # material de demonstração
 
 Precisa do pacote `playwright` com Chromium (`npx playwright install chromium`). O script embute as fontes de `assets/fontes` (Fredoka, Caveat, Nunito, Patrick Hand e Noto Sans Math, todas com licença OFL, texto das licenças na mesma pasta), bloqueia qualquer pedido de rede, confere que cada folha da apostila virou uma página do PDF e que nada foi cortado, e zera data e identificador do arquivo. Duas execuções com o mesmo material saem idênticas, byte a byte.
 
+Caminho completo do App ao PDF: no App, **Enviar ao site (JSON)**; depois `npm run pdf -- arquivo.mathlab.json saida.pdf`. O arquivo do App é importado pelo mesmo código do site, com os mesmos avisos, e a apostila nasce marcada como rascunho até a revisão do professor.
+
 Limites conhecidos: emojis usam a fonte de emojis do sistema, então o desenho pode variar entre computadores. Subscritos Unicode, como ₁, também caem em fonte do sistema; o script avisa quando isso acontece. Imprimir pelo navegador (Salvar como PDF) continua funcionando, e agora também usa a margem zero na impressão, mas depende das fontes do Google estarem acessíveis.
 
 ## Desenvolvimento
