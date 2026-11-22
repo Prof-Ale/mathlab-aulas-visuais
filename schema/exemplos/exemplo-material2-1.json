@@ -1,0 +1,27 @@
+{
+  "schema": "mathlab.material/2",
+  "contractVersion": "2.1",
+  "title": "Soma de números inteiros",
+  "author": "Prof. Alê",
+  "discipline": "Matemática",
+  "level": "7º ano do Ensino Fundamental",
+  "topic": "Adição de números inteiros",
+  "duration": "2 aulas de 50 minutos",
+  "epistemicType": "formal",
+  "objectives": ["Calcular a soma de números inteiros de mesmo sinal e de sinais diferentes"],
+  "prerequisites": ["Localizar inteiros na reta numérica"],
+  "limitations": ["Nenhuma fonte externa foi consultada. O professor deve conferir com o livro didático adotado."],
+  "blocks": [
+    { "id": "b1", "type": "conceito", "title": "Somando números inteiros", "content": "Mesmo sinal: some os módulos e mantenha o sinal.", "callout": { "kind": "dica", "text": "Números opostos se anulam." } },
+    { "id": "b2", "type": "exemplo", "title": "Exemplo resolvido", "content": "(−8) + (+3) = −5, porque 8 − 3 = 5 e o sinal é o do maior módulo." }
+  ],
+  "references": [],
+  "claims": [
+    { "id": "a1", "blockId": "b1", "kind": "procedimento", "text": "Mesmo sinal: soma os módulos e mantém o sinal.", "support": { "mode": "definicao_adotada", "note": "Convenção usual do 7º ano." } },
+    { "id": "a2", "blockId": "b2", "kind": "calculo", "text": "(−8) + (+3) = −5", "support": { "mode": "calculo" } }
+  ],
+  "calculations": [
+    { "id": "c1", "blockId": "b2", "expression": "(-8) + 3", "result": "-5", "checkedBy": "nao_conferido" }
+  ],
+  "provenance": { "generator": "manual", "aiParticipated": false, "estadoEditorial": "GERADO" }
+}
