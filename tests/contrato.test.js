@@ -102,3 +102,7 @@ test('sem blocos ou sem schema o material é recusado', () => {
   const a = exemplo(); a.blocks = []; falha(a, /poucos itens/);
   const b = exemplo(); delete b.schema; falha(b, /falta schema/);
 });
+
+test('todo tipo epistêmico que o site emite é aceito pelo schema', () => {
+  for (const t of Object.keys(C.EPISTEMIC)) { const m = exemplo(); m.epistemicType = t; ok(m); }
+});

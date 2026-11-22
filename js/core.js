@@ -460,6 +460,8 @@
       t: m.title, o: m.objectives, q: m.prerequisites, l: m.limitations, r: m.references,
       b: (m.blocks || []).map((b) => [b.type, b.title, b.content, b.svg, b.callout]),
       p: [p.title, p.subtitle, p.mascot, p.sections, p.goldTip, p.didYouKnow, p.attention, p.summary],
+      c: m.claims && m.claims.length ? m.claims : undefined,
+      k: m.calculations && m.calculations.length ? m.calculations : undefined,
     });
     let h = 0x811c9dc5;
     for (let i = 0; i < base.length; i++) { h ^= base.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
@@ -528,6 +530,19 @@
       m.revisao = { aprovado: o.revisao.aprovado === true, revisadoPor: String(o.revisao.revisadoPor || ''), data: String(o.revisao.data || ''), hash: String(o.revisao.hash || '') };
     }
     if (!m.title) m.title = m.topic || (m.poster && m.poster.title) || 'Material sem título';
+    // Contrato 2.1 (opcional): guarda o que veio, sem inventar nada.
+    if (/^2\.\d+$/.test(String(o.contractVersion || ''))) m.contractVersion = String(o.contractVersion);
+    const CLAIM_KINDS = ['definicao', 'fato', 'resultado_empirico', 'interpretacao', 'procedimento', 'demonstracao', 'calculo', 'alinhamento_curricular', 'opiniao_autoral'];
+    const SUPPORT_MODES = ['referencia', 'fonte_primaria', 'calculo', 'demonstracao', 'definicao_adotada', 'autoral_declarado', 'material_do_professor', 'sem_fonte'];
+    const claims = (Array.isArray(o.claims) ? o.claims : []).filter((c) => c && typeof c === 'object' && c.id && String(c.text || '').trim() && CLAIM_KINDS.includes(c.kind) && c.support && SUPPORT_MODES.includes(c.support.mode));
+    if (claims.length) m.claims = claims.map((c) => ({ id: String(c.id), blockId: String(c.blockId || ''), kind: c.kind, text: String(c.text), support: { mode: c.support.mode, refId: String(c.support.refId || ''), note: String(c.support.note || '') } }));
+    const calcs = (Array.isArray(o.calculations) ? o.calculations : []).filter((c) => c && typeof c === 'object' && c.id && String(c.expression || '').trim() && String(c.result || '').trim());
+    if (calcs.length) m.calculations = calcs.map((c) => ({ id: String(c.id), blockId: String(c.blockId || ''), expression: String(c.expression), result: String(c.result), checkedBy: ['codigo', 'humano'].includes(c.checkedBy) ? c.checkedBy : 'nao_conferido' }));
+    if (o.provenance && typeof o.provenance === 'object') {
+      const pv = o.provenance;
+      m.provenance = { generator: String(pv.generator || ''), generatorVersion: String(pv.generatorVersion || ''), aiParticipated: pv.aiParticipated === true, createdAt: String(pv.createdAt || ''),
+        estadoEditorial: ['GERADO', 'VALIDADO_ESTRUTURALMENTE', 'AUDITADO_AUTOMATICAMENTE'].includes(pv.estadoEditorial) ? pv.estadoEditorial : '' };
+    }
     if (o._v2) m._v2 = o._v2;
     return m;
   }
@@ -597,11 +612,48 @@
     });
   }
 
+  /* Lista o que o normalize corrigiria, cortaria ou descartaria em silêncio, para o professor saber. */
+  function avisosDeImportacao(d) {
+    const w = [];
+    const plural = (n, um, varios) => n + ' ' + (n === 1 ? um : varios);
+    if (d.schema && d.schema !== SCHEMA) w.push('O JSON declara o schema "' + d.schema + '", e este site espera "' + SCHEMA + '". Importei assim mesmo; confira o resultado.');
+    if (d.contractVersion !== undefined && !/^2\.\d+$/.test(String(d.contractVersion))) w.push('A versão de contrato "' + d.contractVersion + '" não é da família 2.x. Ignorei esse campo.');
+    if (d.epistemicType !== undefined && !EPISTEMIC[d.epistemicType]) w.push('Tipo de conhecimento "' + d.epistemicType + '" não existe. Detectei pela disciplina.');
+    if (Array.isArray(d.blocks)) {
+      const naoObj = d.blocks.filter((b) => !b || typeof b !== 'object').length;
+      if (naoObj) w.push('Descartei ' + plural(naoObj, 'bloco que não era um objeto', 'blocos que não eram objetos') + '.');
+      const tipos = d.blocks.filter((b) => b && typeof b === 'object' && !BLOCK_TYPES[b.type]);
+      if (tipos.length) w.push(plural(tipos.length, 'bloco tinha', 'blocos tinham') + ' tipo desconhecido (' + [...new Set(tipos.map((b) => '"' + b.type + '"'))].join(', ') + ') e virou "nota".');
+      const cx = d.blocks.filter((b) => b && b.callout && typeof b.callout === 'object' && b.callout.kind && !CALLOUTS[b.callout.kind]).length;
+      if (cx) w.push(plural(cx, 'caixa de destaque tinha', 'caixas de destaque tinham') + ' tipo desconhecido e virou "dica".');
+    }
+    if (Array.isArray(d.references)) {
+      const ruins = d.references.filter((r) => !r || typeof r !== 'object').length;
+      if (ruins) w.push('Descartei ' + plural(ruins, 'referência inválida', 'referências inválidas') + '.');
+      const sem = d.references.filter((r) => r && typeof r === 'object' && !r.accessLevel).length;
+      if (sem) w.push(plural(sem, 'referência veio', 'referências vieram') + ' sem nível de acesso; marquei como "nao-verificado".');
+    }
+    const pst = d.poster && typeof d.poster === 'object' ? d.poster : null;
+    if (pst && Array.isArray(pst.sections) && pst.sections.length > 6) w.push('A capa aceita 6 seções e vieram ' + pst.sections.length + '. Cortei as ' + (pst.sections.length - 6) + ' últimas.');
+    if (pst && Array.isArray(pst.summary) && pst.summary.length > 5) w.push('O resumo da capa aceita 5 itens e vieram ' + pst.summary.length + '. Cortei os ' + (pst.summary.length - 5) + ' últimos.');
+    if (Array.isArray(d.claims)) {
+      const ok = normalize({ claims: d.claims }).claims || [];
+      if (ok.length < d.claims.length) w.push('Descartei ' + (d.claims.length - ok.length) + ' de ' + d.claims.length + ' afirmações (claims) por faltar id, texto, tipo ou forma de sustentação válida.');
+    }
+    if (Array.isArray(d.calculations)) {
+      const ok = normalize({ calculations: d.calculations }).calculations || [];
+      if (ok.length < d.calculations.length) w.push('Descartei ' + (d.calculations.length - ok.length) + ' de ' + d.calculations.length + ' cálculos por faltar id, expressão ou resultado.');
+      if (d.calculations.some((c) => c && (c.checkedBy === 'codigo' || c.checkedBy === 'humano'))) w.push('Há cálculos marcados como conferidos por "codigo" ou "humano". O site não refez a conta: trate como declaração de quem gerou.');
+    }
+    if (d.provenance && /^(REVISADO_POR_ESPECIALISTA|VALIDADO_PELO_RESPONSAVEL_EDITORIAL)$/.test(String(d.provenance.estadoEditorial || ''))) w.push('O JSON trazia um estado de validação humana em provenance. Ignorei: estado humano só nasce da revisão do professor aqui no site.');
+    return w;
+  }
+
   function importFromText(text) {
     const r = parseModelJson(text); if (!r.ok) return r;
     const isV2 = Array.isArray(r.data.blocos);
     const m = isV2 ? fromV2(r.data) : normalize(r.data);
-    const warnings = [];
+    const warnings = isV2 ? [] : avisosDeImportacao(r.data);
     if (!m.blocks.length && !m.poster) return { ok: false, error: 'O JSON não tem "blocks"/"blocos" nem "poster".' };
     const trouxe = (r.data.revisao && r.data.revisao.aprovado === true) || (r.data.revisao_humana && r.data.revisao_humana.aprovado === true);
     m.revisao = REVISAO_VAZIA();
@@ -983,5 +1035,5 @@
     });
   }
 
-  return { VERSION, SCHEMA, hashConteudo, estadoRevisao, DEFAULT_AUTHOR, REGISTROS, DESTINATARIOS, INTERIOR_STYLES, AVATAR_OPTIONS, LOGO_OPTIONS, BLOCK_PEDAGOGY, CONTENT_PROFILES, EPISTEMIC, BLOCK_TYPES, POSTER_THEMES, COVER_CSS, POSTER_CSS, DOC_CSS, VISUALS, esc, uid, wc, clone, detectType, sanitizeSvg, renderMarkdown, renderCleanCover, renderPoster, buildImagePrompt, buildRequestText, normalize, fromV2, parseModelJson, importFromText, audit, toMarkdown, toHTML, toApostila, CALLOUTS, scaffold, demo };
+  return { avisosDeImportacao, VERSION, SCHEMA, hashConteudo, estadoRevisao, DEFAULT_AUTHOR, REGISTROS, DESTINATARIOS, INTERIOR_STYLES, AVATAR_OPTIONS, LOGO_OPTIONS, BLOCK_PEDAGOGY, CONTENT_PROFILES, EPISTEMIC, BLOCK_TYPES, POSTER_THEMES, COVER_CSS, POSTER_CSS, DOC_CSS, VISUALS, esc, uid, wc, clone, detectType, sanitizeSvg, renderMarkdown, renderCleanCover, renderPoster, buildImagePrompt, buildRequestText, normalize, fromV2, parseModelJson, importFromText, audit, toMarkdown, toHTML, toApostila, CALLOUTS, scaffold, demo };
 });
