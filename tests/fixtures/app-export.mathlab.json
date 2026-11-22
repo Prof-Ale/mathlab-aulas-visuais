@@ -1,0 +1,147 @@
+{
+  "schema": "mathlab.material/2",
+  "contractVersion": "2.1",
+  "title": "Matemática: Aula de sistemas de equações do 1º grau para o 8º ano do ensino fundamental, 2 aulas (8º ano do ensino fundamental)",
+  "discipline": "Matemática",
+  "level": "8º ano do ensino fundamental",
+  "topic": "Aula de sistemas de equações do 1º grau para o 8º ano do ensino fundamental, 2 aulas",
+  "duration": "2 aula",
+  "epistemicType": "formal",
+  "objectives": [
+    "Compreender os fundamentos conceituais de Aula de sistemas de equações do 1º grau para o 8º ano do ensino fundamental, 2 aulas.",
+    "Articular múltiplas representações (algébrica, gráfica e verbal) aplicadas a Aula de sistemas de equações do 1º grau para o 8º ano do ensino fundamental, 2 aulas.",
+    "Resolver situações-problema graduadas e refletir sobre erros frequentes."
+  ],
+  "prerequisites": [
+    "Operações fundamentais e leitura de expressões simples.",
+    "Interpretação de tabelas e relações numéricas básicas."
+  ],
+  "blocks": [
+    {
+      "id": "blk-problematizacao",
+      "type": "problematizacao",
+      "title": "3. Contextualização e Problematização",
+      "content": "Em uma feira escolar, 2 cadernos e 1 caneta custam juntos R\\$ 15,00, enquanto 1 caderno e 1 caneta custam R\\$ 9,00. Como determinar o preço unitário de cada item relacionando as duas condições ao mesmo tempo?",
+      "callout": null
+    },
+    {
+      "id": "blk-desenvolvimento",
+      "type": "conceito",
+      "title": "4. Desenvolvimento Conceitual e Explicações",
+      "content": "### 1. Ideia Central dos Sistemas Lineares\nUma equação linear com duas incógnitas ($x + y = 5$) admite infinitos pares ordenados como solução. Ao impor uma segunda equação ($x - y = 1$), buscamos o par $(x, y)$ que satisfaz **simultaneamente** ambas as equações.\n\n### 2. Coordenação de Registros (Duval, 2003)\nNo registro algébrico, aplicamos os métodos da **adição** ou **substituição** preservando a equivalência; no registro gráfico, cada equação representa uma reta no plano cartesiano, e a solução única corresponde ao ponto de interseção.\n\n### 3. Classificação das Soluções\n- **SPD (Sistema Possível e Determinado):** retas concorrentes, solução única.\n- **SPI (Sistema Possível e Indeterminado):** retas coincidentes, infinitas soluções.\n- **SI (Sistema Impossível):** retas paralelas distintas, nenhuma solução.",
+      "callout": null
+    },
+    {
+      "id": "blk-visual",
+      "type": "visual",
+      "title": "5. Representação Visual Pedagógica",
+      "content": "Plano cartesiano exibindo as retas x + y = 5 e x - y = 1 se interceptando no ponto único P(3, 2), solução comum do sistema.\n\n$x + y = 5 \\quad \\text{e} \\quad x - y = 1 \\implies (x, y) = (3, 2)$",
+      "callout": null,
+      "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 420 260\" role=\"img\" aria-label=\"Representação Gráfica: Interseção de Retas\" style=\"max-width:100%;height:auto;background:#FFFFFF;border:1px solid #CBD5E1;border-radius:8px;\">\n  <rect x=\"0\" y=\"0\" width=\"420\" height=\"260\" fill=\"#FFFFFF\" />\n  <text x=\"210\" y=\"22\" text-anchor=\"middle\" font-family=\"Segoe UI, Arial, sans-serif\" font-size=\"13\" font-weight=\"bold\" fill=\"#0A2540\">Representação Gráfica: Interseção de Retas</text>\n  <g stroke=\"#E2E8F0\" stroke-width=\"1\">\n    <line x1=\"60\" y1=\"45\" x2=\"60\" y2=\"225\" /><line x1=\"120\" y1=\"45\" x2=\"120\" y2=\"225\" />\n    <line x1=\"180\" y1=\"45\" x2=\"180\" y2=\"225\" /><line x1=\"240\" y1=\"45\" x2=\"240\" y2=\"225\" />\n    <line x1=\"300\" y1=\"45\" x2=\"300\" y2=\"225\" /><line x1=\"360\" y1=\"45\" x2=\"360\" y2=\"225\" />\n    <line x1=\"45\" y1=\"75\" x2=\"375\" y2=\"75\" /><line x1=\"45\" y1=\"105\" x2=\"375\" y2=\"105\" />\n    <line x1=\"45\" y1=\"135\" x2=\"375\" y2=\"135\" /><line x1=\"45\" y1=\"165\" x2=\"375\" y2=\"165\" />\n    <line x1=\"45\" y1=\"195\" x2=\"375\" y2=\"195\" />\n  </g>\n  <line x1=\"45\" y1=\"195\" x2=\"380\" y2=\"195\" stroke=\"#0A2540\" stroke-width=\"2\" />\n  <line x1=\"120\" y1=\"230\" x2=\"120\" y2=\"40\" stroke=\"#0A2540\" stroke-width=\"2\" />\n  <text x=\"386\" y=\"199\" font-family=\"Segoe UI, Arial, sans-serif\" font-size=\"12\" fill=\"#0A2540\">x</text>\n  <text x=\"115\" y=\"34\" font-family=\"Segoe UI, Arial, sans-serif\" font-size=\"12\" fill=\"#0A2540\">y</text>\n  <line x1=\"90\" y1=\"55\" x2=\"330\" y2=\"215\" stroke=\"#1D4ED8\" stroke-width=\"2.5\" />\n  <text x=\"310\" y=\"190\" font-family=\"Segoe UI, Arial, sans-serif\" font-size=\"11\" fill=\"#1D4ED8\">x + y = 5</text>\n  <line x1=\"90\" y1=\"215\" x2=\"330\" y2=\"55\" stroke=\"#B45309\" stroke-width=\"2.5\" stroke-dasharray=\"6,3\" />\n  <text x=\"295\" y=\"72\" font-family=\"Segoe UI, Arial, sans-serif\" font-size=\"11\" fill=\"#B45309\">x - y = 1</text>\n  <circle cx=\"210\" cy=\"135\" r=\"5.5\" fill=\"#E5A000\" stroke=\"#0A2540\" stroke-width=\"2\" />\n  <text x=\"220\" y=\"128\" font-family=\"Segoe UI, Arial, sans-serif\" font-size=\"11\" font-weight=\"bold\" fill=\"#0A2540\">Solução (3, 2)</text>\n</svg>"
+    },
+    {
+      "id": "blk-exemplos",
+      "type": "exemplo",
+      "title": "6. Exemplos Resolvidos Passo a Passo",
+      "content": "**Exemplo Resolvido 1 (Método da Adição):**\n- *Enunciado:* Resolva o sistema $\\begin{cases} x + y = 5 \\\\ x - y = 1 \\end{cases}$.\n- *Resolução:* Somando as equações membro a membro: $(x + x) + (y - y) = 5 + 1 \\implies 2x = 6 \\implies x = 3$. Substituindo em $x + y = 5$: $3 + y = 5 \\implies y = 2$.\n- *Resposta:* **$(3, 2)$**.\n\n**Exemplo Resolvido 2 (Método da Substituição — problema da feira):**\n- *Enunciado:* Sabendo que $2c + k = 15$ e $c + k = 9$, encontre $c$ e $k$.\n- *Resolução:* De $c + k = 9$, isolamos $k = 9 - c$ e substituímos na 1ª equação: $2c + (9 - c) = 15 \\implies c = 6$. Logo $k = 9 - 6 = 3$.\n- *Resposta:* **Caderno = R\\$ 6,00 e Caneta = R\\$ 3,00**.",
+      "callout": null
+    },
+    {
+      "id": "blk-atividades",
+      "type": "exercicios",
+      "title": "7. Exercícios Completos",
+      "content": "1. Resolva pelo método da adição: $\\begin{cases} x + y = 10 \\\\ x - y = 4 \\end{cases}$.\n2. Resolva pelo método da substituição: $\\begin{cases} y = 2x \\\\ x + y = 12 \\end{cases}$.\n3. Em um estacionamento há 20 veículos entre carros e motos, totalizando 56 rodas. Quantos são os carros e quantas são as motos?",
+      "callout": null
+    },
+    {
+      "id": "blk-atividade-visual",
+      "type": "atividade",
+      "title": "8. Atividade Visual Prática",
+      "content": "**Atividade Visual:** No plano cartesiano, construa uma tabela com 3 pontos para $x + y = 6$ e 3 pontos para $x - y = 2$, trace as duas retas e destaque o ponto de interseção.",
+      "callout": null
+    },
+    {
+      "id": "blk-gabarito",
+      "type": "gabarito",
+      "title": "9. Gabarito Comentado",
+      "content": "1. **$(7, 3)$** — Somando as equações, $2x = 14 \\implies x = 7$ e $y = 10 - 7 = 3$.\n2. **$(4, 8)$** — Substituindo $y = 2x$ em $x + 2x = 12 \\implies 3x = 12 \\implies x = 4$ e $y = 8$.\n3. **8 carros e 12 motos** — $c + m = 20$ e $4c + 2m = 56 \\implies 2c + m = 28 \\implies c = 8$ e $m = 12$.\n- **Atividade Visual:** A interseção ocorre em **$(4, 2)$**, pois $4 + 2 = 6$ e $4 - 2 = 2$.",
+      "callout": null
+    },
+    {
+      "id": "blk-dua",
+      "type": "acessibilidade",
+      "title": "10. Adaptação Pedagógica — DUA (Desenho Universal para a Aprendizagem)",
+      "content": "- **Representação (DUA I):** Usar cores diferentes para cada reta no gráfico e tabelas passo a passo.\n- **Ação e Expressão (DUA II):** Permitir resolução por tabela de tentativas orientadas, gráfico ou método algébrico.\n- **Engajamento (DUA III):** Problemas contextualizados de compras e contagem de veículos.",
+      "callout": null
+    },
+    {
+      "id": "blk-avaliacao",
+      "type": "avaliacao",
+      "title": "11. Sistematização, Avaliação Formativa e Referências",
+      "content": "**Critérios formativos (Alinhamento Construtivo M03):**\n- Identifica dados relevantes e formula hipótese coerente (não basta apenas copiar o enunciado).\n- Mantém consistência matemática/científica na passagem entre representações.\n- Justifica a validade da resposta frente às condições do problema.\n\n**Referências (M01):**\n- BRASIL. Ministério da Educação (2018). *Base Nacional Comum Curricular (BNCC) — Matemática*. [Normativa | Acesso: Metadados]\n- DUVAL, Raymond (2003). *Registros de representações semióticas e funcionamento cognitivo da compreensão em matemática*. [Teórica | Acesso: Referência localizada]\n\n**Nota epistemológica:** ZDP (Vigotski) não é reduzida a técnica de ajuda; suporte contingente gradual (scaffolding) é atribuído à operacionalização empírica de Wood, Bruner & Ross (1976).",
+      "callout": null
+    }
+  ],
+  "references": [
+    {
+      "refId": "r1",
+      "authors": "BRASIL. Ministério da Educação",
+      "title": "Base Nacional Comum Curricular (BNCC) — Matemática",
+      "year": "2018",
+      "venue": "MEC",
+      "doi": "",
+      "url": "",
+      "accessLevel": "metadados",
+      "verified": false
+    },
+    {
+      "refId": "r2",
+      "authors": "DUVAL, Raymond",
+      "title": "Registros de representações semióticas e funcionamento cognitivo da compreensão em matemática",
+      "year": "2003",
+      "venue": "Aprendizagem em matemática: registros de representação semiótica (org. Machado)",
+      "doi": "",
+      "url": "",
+      "accessLevel": "localizada",
+      "verified": false
+    }
+  ],
+  "limitations": [
+    "Sem busca externa ativa em modo offline; referências com estado \"Metadados\" ou \"Referência localizada\" não devem ser declaradas como consulta integral.",
+    "Afirmações históricas ou citações textuais literais exigem verificação direta em fonte primária."
+  ],
+  "provenance": {
+    "generator": "app-node",
+    "generatorVersion": "2.0.0-fase.6",
+    "aiParticipated": false,
+    "createdAt": "2026-11-22T16:24:06.044Z",
+    "estadoEditorial": "AUDITADO_AUTOMATICAMENTE"
+  },
+  "meta": {
+    "generatedBy": "app-node",
+    "bridge": {
+      "source": "app-node",
+      "droppedBlocks": [
+        {
+          "id": "blk-identificacao",
+          "reason": "Identificação duplica disciplina, etapa, duração e tema, que viajam como campos próprios."
+        },
+        {
+          "id": "blk-objetivos",
+          "reason": "Objetivos e conhecimentos prévios viajam como campos próprios."
+        }
+      ]
+    }
+  },
+  "claims": [
+    {
+      "id": "v1",
+      "kind": "fato",
+      "text": "Verificar códigos específicos de habilidade da BNCC aplicáveis a \"Aula de sistemas de equações do 1º grau para o 8º ano do ensino fundamental, 2 aulas\" em \"8º ano do ensino fundamental\" na edição vigente.",
+      "support": {
+        "mode": "sem_fonte",
+        "note": "O App marcou esta afirmação como exigindo verificação."
+      }
+    }
+  ]
+}

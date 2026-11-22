@@ -27,6 +27,17 @@ Nenhum dado sai do navegador. Não há servidor, chave de API nem chamada extern
 
 Nenhum material nasce validado. A capa e a caixa do autor mostram "Rascunho, aguarda revisão do professor" até que o professor marque "Revisei e valido este material" na aba Editor, com o nome de quem revisou. A data e uma impressão digital do conteúdo são gravadas nesse momento. Se o conteúdo mudar depois, a validação aparece como desatualizada. Um JSON que traga revisão aprovada (de uma IA ou de um arquivo antigo) é importado como rascunho, com aviso: a validação não viaja no arquivo.
 
+## Plano por unidades, reparo e troca com o App
+
+O contrato de troca é o `mathlab.material/2`, versão menor 2.1 (`docs/CONTRATO_MATERIAL_2.md`, `schema/mathlab.material.2.schema.json`). Os campos novos são opcionais: `claims`, `calculations`, `provenance` e `contractVersion`.
+
+1. **Avisos na importação.** O site diz tudo que corrigiu, cortou ou descartou ao importar um JSON.
+2. **Conferência e reparo.** No Editor, o cartão "Conferência e reparo" gera um pedido para o Gem corrigir só o que falta (`mathlab.repair/1`). A resposta troca apenas blocos que já existem e deixa a validação do professor desatualizada.
+3. **Plano por unidades.** Na aba "Plano por unidades" o Gem propõe um plano (`mathlab.blueprint/1`), o professor aprova com nome e data, e cada unidade (`mathlab.unit/1`) é pedida e aplicada em ordem. Mudar o plano depois de aprovado desatualiza a aprovação.
+4. **Arquivo do App Node.** O App gera o botão "Enviar ao site (JSON)". O site importa esse arquivo sem aviso, guarda objetivos, referências, afirmações e proveniência, e o material chega sem validação. Há um arquivo real do App em `tests/fixtures/app-export.mathlab.json`, usado nos testes.
+
+Só o site registra validação humana. Estado de revisão que venha em um JSON é ignorado, com aviso.
+
 ## Instalar o Gem (Gemini Pro)
 
 1. Em gemini.google.com, abra **Gems → Novo Gem**.
