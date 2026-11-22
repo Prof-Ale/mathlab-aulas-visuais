@@ -102,17 +102,50 @@
   const lvlPill = (l) => '<span class="pill ' + (/Reprovado/.test(l) ? 'bad' : /Pronto/.test(l) ? 'ok' : 'warn') + '">' + esc(l) + '</span>';
 
   /* ---------- abas ---------- */
-  const TABS = [['biblioteca', '📚 Biblioteca'], ['criar', '✨ Criar'], ['editor', '✏️ Editor'], ['poster', '🖼️ Capa (pôster)'], ['apostila', '📘 Apostila completa'], ['auditoria', '🔍 Auditoria'], ['exportar', '📤 Exportar'], ['diario', '📒 Diário & Portfólio'], ['ajuda', '❓ Ajuda']];
+  const TABS = [['biblioteca', '📚 Biblioteca'], ['criar', '✨ Criar'], ['plano', '🧭 Plano por unidades'], ['editor', '✏️ Editor'], ['poster', '🖼️ Capa (pôster)'], ['apostila', '📘 Apostila completa'], ['auditoria', '🔍 Auditoria'], ['exportar', '📤 Exportar'], ['diario', '📒 Diário & Portfólio'], ['ajuda', '❓ Ajuda']];
   const NEED = ['editor', 'poster', 'apostila', 'auditoria', 'exportar'];
 
   function render() {
     $('#tabs').innerHTML = TABS.map((t) => '<button id="tab-' + t[0] + '" role="tab" aria-selected="' + (S.tab === t[0] ? 'true' : 'false') + '" data-a="tab" data-t="' + t[0] + '" class="' + (S.tab === t[0] ? 'on' : '') + '">' + t[1] + '</button>').join('');
-    const v = { biblioteca: vBib, criar: vCriar, editor: vEditor, poster: vPoster, apostila: vApostila, auditoria: vAud, exportar: vExp, diario: vDiario, ajuda: vAjuda }[S.tab];
+    const v = { biblioteca: vBib, criar: vCriar, plano: vPlano, editor: vEditor, poster: vPoster, apostila: vApostila, auditoria: vAud, exportar: vExp, diario: vDiario, ajuda: vAjuda }[S.tab];
     const main = $('#main');
     main.setAttribute('role', 'tabpanel');
     main.setAttribute('aria-labelledby', 'tab-' + S.tab);
     main.innerHTML = NEED.includes(S.tab) && !S.draft
       ? '<div class="card empty"><h2>Nenhum material aberto</h2><p>Abra um material na <b>Biblioteca</b> ou crie um em <b>Criar</b>.</p><button class="b gold" data-a="tab" data-t="biblioteca">Ir para a Biblioteca</button></div>' : v();
+  }
+
+  /* ---------- Plano por unidades ---------- */
+  function curPlan() { const ps = lib.plans || []; return ps.find((x) => x.id === S.planId) || ps[0] || null; }
+  function vPlano() {
+    const f = S.form, plans = lib.plans || [], bp = curPlan();
+    let h = '<div class="card"><h2>Plano por unidades</h2><p class="muted">Para materiais grandes: primeiro o plano, que você aprova; depois uma unidade por vez, sempre dentro do que foi aprovado.</p>' +
+      '<div class="step"><b>1. Peça o plano ao Gem.</b> Usa a disciplina, etapa, tema e duração da aba Criar.<div class="row"><div><label for="pl-disc">Disciplina</label><input id="pl-disc" data-form="discipline" value="' + esc(f.discipline || '') + '"></div><div><label for="pl-lvl">Etapa</label><input id="pl-lvl" data-form="level" value="' + esc(f.level || '') + '"></div></div>' +
+      '<div class="row"><div><label for="pl-top">Tema</label><input id="pl-top" data-form="topic" value="' + esc(f.topic || '') + '"></div><div><label for="pl-dur">Duração</label><input id="pl-dur" data-form="duration" value="' + esc(f.duration || '') + '"></div></div>' +
+      '<div class="btns"><button class="b gold" data-a="copyplanreq">Copiar pedido de plano</button></div></div>' +
+      '<div class="step"><b>2. Cole o plano que ele devolveu.</b><textarea data-form="planoResp" id="pl-resp" rows="5" placeholder="Cole o JSON mathlab.blueprint/1…">' + esc(f.planoResp || '') + '</textarea><div class="btns"><button class="b" data-a="importplan">Importar plano</button></div></div>';
+    if (plans.length) h += '<label for="pl-sel">Plano em andamento</label><select id="pl-sel" data-form-plan="1">' + plans.map((x) => '<option value="' + esc(x.id) + '"' + (bp && bp.id === x.id ? ' selected' : '') + '>' + esc(x.title || x.topic || 'Plano') + '</option>').join('') + '</select>';
+    h += '</div>';
+    if (!bp) return h;
+    const e = C.estadoBlueprint(bp), prox = C.proximaUnidade(bp);
+    h += '<div class="card" id="card-plano"><h3>' + esc(bp.title) + '</h3><p><span class="pill ' + (e.aprovado ? 'ok' : 'warn') + '" id="plano-estado">' + esc(e.texto) + '</span></p>' +
+      '<ol class="units">' + bp.units.map((u, i) => {
+        const feito = bp.progress && bp.progress[u.id];
+        return '<li><b>' + esc(u.id) + '</b> ' + (feito ? '<span class="pill ok">gerada</span>' : prox && prox.id === u.id ? '<span class="pill warn">próxima</span>' : '<span class="pill">pendente</span>') +
+          '<label for="pu-t-' + i + '">Título</label><input id="pu-t-' + i + '" data-pu="' + i + '.title" value="' + esc(u.title) + '">' +
+          '<label for="pu-g-' + i + '">Objetivo</label><input id="pu-g-' + i + '" data-pu="' + i + '.goal" value="' + esc(u.goal) + '">' +
+          (u.mustCover.length ? '<p class="muted">Cobrir: ' + esc(u.mustCover.join('; ')) + '</p>' : '') + '</li>';
+      }).join('') + '</ol>' +
+      '<p class="muted">Se você mudar título ou objetivo de uma unidade, a aprovação fica desatualizada e é preciso aprovar de novo.</p>' +
+      '<div class="row"><div><label for="pl-quem">Quem aprova (pessoa)</label><input id="pl-quem" data-form="planoQuem" value="' + esc(f.planoQuem || '') + '" placeholder="Nome do professor"></div><div class="btns"><button class="b" data-a="approveplan">Aprovar plano</button></div></div></div>';
+    if (e.aprovado) {
+      h += '<div class="card"><h3>Gerar por unidade</h3>' + (prox
+        ? '<p>Próxima: <b>' + esc(prox.id) + '</b> ' + esc(prox.title) + '</p><div class="btns"><button class="b gold" data-a="copyunitreq">Copiar pedido da unidade</button></div>' +
+          '<label for="pl-ures">Cole a resposta do Gem (formato ' + C.UNIT_SCHEMA + ')</label><textarea id="pl-ures" data-form="unidadeResp" rows="5">' + esc(f.unidadeResp || '') + '</textarea><div class="btns"><button class="b" data-a="applyunit">Aplicar unidade</button></div>'
+        : '<p>Todas as unidades foram geradas.</p>') +
+        (bp.material && bp.material.blocks.length ? '<div class="btns"><button class="b" data-a="openplanmat">Abrir o material montado no editor</button></div><p class="muted">' + bp.material.blocks.length + ' blocos até agora.</p>' : '') + '</div>';
+    }
+    return h;
   }
 
   /* ---------- Biblioteca ---------- */
@@ -358,6 +391,30 @@
       }; rd.readAsText(f);
     },
     copyreq: async () => { const t = C.buildRequestText(S.form); toast((await copy(t)) ? 'Pedido copiado. Cole no seu Gem ou no Claude.' : 'Não consegui copiar automaticamente.', false); },
+    copyplanreq: async () => { toast((await copy(C.buildBlueprintRequest(S.form))) ? 'Pedido de plano copiado. Cole no seu Gem.' : 'Não consegui copiar automaticamente.', false); },
+    importplan: () => {
+      const r = C.importBlueprint(S.form.planoResp); if (!r.ok) { toast(r.error, true); return; }
+      lib.plans = lib.plans || []; lib.plans.unshift(r.blueprint); S.planId = r.blueprint.id; S.form.planoResp = ''; persist();
+      toast('Plano importado. Revise e aprove.' + (r.warnings.length ? ' ' + r.warnings.join(' ') : ''), false); render();
+    },
+    approveplan: () => {
+      const bp = curPlan(); if (!bp) return;
+      const r = C.approveBlueprint(bp, S.form.planoQuem); if (!r.ok) { toast(r.error, true); return; }
+      Object.assign(bp, r.blueprint); persist(); toast('Plano aprovado.', false); render();
+    },
+    copyunitreq: async () => {
+      const bp = curPlan(); const r = C.buildUnitRequest(bp); if (!r.ok) { toast(r.error, true); return; }
+      toast((await copy(r.texto)) ? 'Pedido da unidade ' + r.unitId + ' copiado.' : 'Não consegui copiar automaticamente.', false);
+    },
+    applyunit: () => {
+      const bp = curPlan(); const r = C.applyUnit(bp, S.form.unidadeResp); if (!r.ok) { toast(r.error, true); return; }
+      Object.assign(bp, r.blueprint); S.form.unidadeResp = ''; persist();
+      toast('Unidade ' + r.unitId + ' aplicada (' + r.added + ' blocos).' + (r.completo ? ' Plano completo.' : '') + (r.warnings.length ? ' ' + r.warnings.join(' ') : ''), false); render();
+    },
+    openplanmat: () => {
+      const bp = curPlan(); if (!bp || !bp.material) return;
+      const p = newProject(bp.discipline || bp.title, bp.discipline, bp.level); const rec = addMaterial(p, bp.material, 'Montado por unidades'); openMat(p.id, rec.id);
+    },
     copyrepair: async () => {
       const pr = C.buildRepairPrompt(S.draft, C.problemasParaReparo(S.draft, S.avisosImport && S.avisosImport.mid === S.mid ? S.avisosImport.list : []));
       if (!pr.ok) { toast(pr.error, true); return; }
@@ -433,9 +490,13 @@
   };
 
   document.addEventListener('click', (e) => { const el = e.target.closest('[data-a]'); if (!el || el.type === 'checkbox' || el.type === 'file') return; if (A[el.dataset.a]) A[el.dataset.a](el, e); });
-  document.addEventListener('change', (e) => { const el = e.target; if ((el.type === 'checkbox' || el.type === 'file') && el.dataset.a && A[el.dataset.a]) A[el.dataset.a](el, e); else if (el.dataset.vis === 'kind') { S.vis.kind = el.value; S.vis.text = { numberLine: '-6, 6, -2, 5', timeline: '1789 | Revolução Francesa\n1822 | Independência do Brasil', flow: 'Observar\nFormular hipótese\nTestar\nConcluir', conceptMap: 'Tema central\nConceito A\nConceito B\nConceito C' }[el.value]; render(); } });
+  document.addEventListener('change', (e) => { const el = e.target; if (el.dataset.formPlan) { S.planId = el.value; render(); return; } if ((el.type === 'checkbox' || el.type === 'file') && el.dataset.a && A[el.dataset.a]) A[el.dataset.a](el, e); else if (el.dataset.vis === 'kind') { S.vis.kind = el.value; S.vis.text = { numberLine: '-6, 6, -2, 5', timeline: '1789 | Revolução Francesa\n1822 | Independência do Brasil', flow: 'Observar\nFormular hipótese\nTestar\nConcluir', conceptMap: 'Tema central\nConceito A\nConceito B\nConceito C' }[el.value]; render(); } });
   document.addEventListener('input', (e) => {
     const el = e.target;
+    if (el.dataset.pu) {
+      const bp = curPlan(); const [i, k] = el.dataset.pu.split('.'); if (bp && bp.units[+i]) { bp.units[+i][k] = el.value; persist(); const st = $('#plano-estado'); if (st) { const e2 = C.estadoBlueprint(bp); st.textContent = e2.texto; st.className = 'pill ' + (e2.aprovado ? 'ok' : 'warn'); } }
+      return;
+    }
     if (el.dataset.form) { S.form[el.dataset.form] = el.value; return; }
     if (el.dataset.vis) { if (el.dataset.vis !== 'kind') S.vis[el.dataset.vis] = el.value; return; }
     if (el.dataset.f) {

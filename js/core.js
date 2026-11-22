@@ -834,6 +834,137 @@
     return { ok: true, material: novo, changed: trocados, warnings, notes: String(d.notes || '') };
   }
 
+  /* ---------- plano aprovado (blueprint) e produção por unidade ---------- */
+  const BLUEPRINT_SCHEMA = 'mathlab.blueprint/1';
+  const UNIT_SCHEMA = 'mathlab.unit/1';
+  const ATOR_AUTOMATICO = /^(ia|ai|llm|auto|automatico|automático|sistema|bot|gemini|chatgpt|claude|gem)$/i;
+
+  function buildBlueprintRequest(r) {
+    r = r || {};
+    return [
+      'Monte o PLANO (não o material) de uma apostila. Ainda não escreva o conteúdo das aulas.',
+      'Disciplina: ' + (r.discipline || '[informe]'), 'Etapa: ' + (r.level || '[informe]'), 'Tema: ' + (r.topic || '[informe]'), 'Duração: ' + (r.duration || '[informe]'),
+      r.objectives ? 'Objetivos desejados: ' + r.objectives : null,
+      '',
+      'Responda SOMENTE com um bloco de código JSON no formato ' + BLUEPRINT_SCHEMA + ':',
+      '{"schema":"' + BLUEPRINT_SCHEMA + '","title":"","discipline":"","level":"","topic":"","duration":"","epistemicType":"formal|empirica|interpretativa|historica|linguistica|pratica|geral","objectives":["..."],',
+      ' "units":[{"id":"u1","title":"","goal":"o que o estudante deve conseguir ao fim da unidade","blockTypes":["conceito","exemplo","atividade"],"mustCover":["tópicos obrigatórios"],"dependsOn":[]}],',
+      ' "limitations":["o que este plano não cobre"]}',
+      'Regras: de 2 a 8 unidades, ids curtos sem espaço (u1, u2...), ordem didática, cada unidade com objetivo verificável. Não inclua aprovação nem validação: quem aprova o plano é o professor, no site.',
+    ].filter((x) => x !== null).join('\n');
+  }
+
+  function hashBlueprint(bp) {
+    const base = JSON.stringify({ t: bp.title, d: bp.discipline, l: bp.level, p: bp.topic, o: bp.objectives, u: (bp.units || []).map((u) => [u.id, u.title, u.goal, u.blockTypes, u.mustCover, u.dependsOn]) });
+    let h = 0x811c9dc5; for (let i = 0; i < base.length; i++) { h ^= base.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+    return h.toString(16).padStart(8, '0');
+  }
+
+  function normalizeBlueprint(o) {
+    o = o && typeof o === 'object' ? o : {};
+    const arr = (x) => (Array.isArray(x) ? x.map(String).map((t) => t.trim()).filter(Boolean) : []);
+    const seen = new Set();
+    const units = (Array.isArray(o.units) ? o.units : []).filter((u) => u && typeof u === 'object').map((u, i) => {
+      let id = String(u.id || 'u' + (i + 1)).trim().replace(/\s+/g, '_'); if (seen.has(id)) id = id + '_' + (i + 1); seen.add(id);
+      return { id, title: String(u.title || '').trim(), goal: String(u.goal || '').trim(), blockTypes: arr(u.blockTypes).filter((t) => BLOCK_TYPES[t]), mustCover: arr(u.mustCover), dependsOn: arr(u.dependsOn) };
+    });
+    return {
+      schema: BLUEPRINT_SCHEMA, id: String(o.id || uid('plano')), title: String(o.title || o.topic || '').trim(), discipline: String(o.discipline || '').trim(), level: String(o.level || '').trim(),
+      topic: String(o.topic || '').trim(), duration: String(o.duration || '').trim(), epistemicType: EPISTEMIC[o.epistemicType] ? o.epistemicType : detectType(o.discipline),
+      objectives: arr(o.objectives), units, limitations: arr(o.limitations),
+      aprovacao: { aprovado: false, aprovadoPor: '', data: '', hash: '' }, progress: {}, material: null,
+    };
+  }
+
+  function importBlueprint(text) {
+    const r = parseModelJson(text); if (!r.ok) return r;
+    const d = r.data; const warnings = [];
+    if (d.schema !== BLUEPRINT_SCHEMA) return { ok: false, error: 'A resposta não é um plano (esperado "' + BLUEPRINT_SCHEMA + '"). Peça ao Gem para responder no formato do pedido.' };
+    const bp = normalizeBlueprint(d);
+    if (!bp.units.length) return { ok: false, error: 'O plano não tem unidades.' };
+    if (bp.units.length > 8) warnings.push('O plano tem ' + bp.units.length + ' unidades; o pedido era de no máximo 8. Confira se não está grande demais.');
+    if (bp.units.some((u) => !u.title || !u.goal)) warnings.push('Há unidades sem título ou sem objetivo. Complete antes de aprovar.');
+    const ids = new Set(bp.units.map((u) => u.id));
+    bp.units.forEach((u) => { const ruins = u.dependsOn.filter((x) => !ids.has(x)); if (ruins.length) { warnings.push('A unidade "' + u.id + '" depende de ids que não existem (' + ruins.join(', ') + '). Ignorei.'); u.dependsOn = u.dependsOn.filter((x) => ids.has(x)); } });
+    if (d.aprovacao && d.aprovacao.aprovado === true) warnings.push('O JSON trazia o plano marcado como aprovado. Ignorei: só o professor aprova, aqui no site.');
+    if (Array.isArray(d.units) && d.units.some((u) => u && u.blockTypes && arr2(u.blockTypes).some((t) => !BLOCK_TYPES[t]))) warnings.push('Alguns tipos de bloco do plano não existem e foram removidos.');
+    return { ok: true, blueprint: bp, warnings };
+    function arr2(x) { return Array.isArray(x) ? x : []; }
+  }
+
+  function estadoBlueprint(bp) {
+    const a = (bp && bp.aprovacao) || {};
+    const completa = a.aprovado === true && String(a.aprovadoPor || '').trim() && String(a.data || '').trim();
+    if (!completa) return { aprovado: false, desatualizado: false, texto: 'Plano aguardando aprovação do professor' };
+    if (a.hash !== hashBlueprint(bp)) return { aprovado: false, desatualizado: true, texto: 'Aprovação desatualizada: o plano mudou depois de aprovado' };
+    return { aprovado: true, desatualizado: false, texto: 'Plano aprovado por ' + String(a.aprovadoPor).trim() + ' em ' + fmtData(a.data) };
+  }
+
+  // Aprovar é ação humana explícita: exige nome de pessoa e data. Nome de ferramenta ou de IA é recusado.
+  function approveBlueprint(bp, nome, dataISO) {
+    nome = String(nome || '').trim();
+    if (!nome) return { ok: false, error: 'Informe quem está aprovando o plano.' };
+    if (ATOR_AUTOMATICO.test(nome)) return { ok: false, error: 'A aprovação precisa ser de uma pessoa, não de "' + nome + '".' };
+    if (!bp.units.length) return { ok: false, error: 'O plano não tem unidades.' };
+    if (bp.units.some((u) => !u.title || !u.goal)) return { ok: false, error: 'Há unidades sem título ou sem objetivo. Complete antes de aprovar.' };
+    const novo = clone(bp);
+    novo.aprovacao = { aprovado: true, aprovadoPor: nome, data: String(dataISO || new Date().toISOString().slice(0, 10)), hash: hashBlueprint(novo) };
+    return { ok: true, blueprint: novo };
+  }
+
+  function proximaUnidade(bp) {
+    return (bp.units || []).find((u) => !(bp.progress || {})[u.id]) || null;
+  }
+
+  function buildUnitRequest(bp) {
+    const e = estadoBlueprint(bp);
+    if (!e.aprovado) return { ok: false, error: e.desatualizado ? 'A aprovação do plano está desatualizada. Aprove de novo.' : 'Aprove o plano antes de gerar unidades.' };
+    const u = proximaUnidade(bp);
+    if (!u) return { ok: false, error: 'Todas as unidades já foram geradas.' };
+    const i = bp.units.indexOf(u);
+    const anterior = i > 0 ? (bp.progress[bp.units[i - 1].id] || {}).forNext : null;
+    const carry = anterior && (anterior.terms.length || anterior.notation.length || anterior.assumed.length)
+      ? ['Herdado da unidade anterior (use exatamente estes termos e notações):', anterior.terms.length ? 'Termos: ' + anterior.terms.join('; ') : null, anterior.notation.length ? 'Notação: ' + anterior.notation.join('; ') : null, anterior.assumed.length ? 'Já ensinado: ' + anterior.assumed.join('; ') : null].filter((x) => x !== null)
+      : [];
+    const texto = [
+      'Escreva SOMENTE a unidade ' + (i + 1) + ' de ' + bp.units.length + ' do plano aprovado "' + bp.title + '" (' + bp.discipline + ', ' + bp.level + ').',
+      'Unidade "' + u.id + '": ' + u.title, 'Objetivo: ' + u.goal,
+      u.mustCover.length ? 'Cobrir obrigatoriamente: ' + u.mustCover.join('; ') : null,
+      u.blockTypes.length ? 'Tipos de bloco previstos: ' + u.blockTypes.join(', ') : null,
+      'Plano completo, só para você saber o lugar desta unidade (NÃO escreva as outras): ' + bp.units.map((x, k) => (k + 1) + '. ' + x.title).join(' | '),
+      ...carry, '',
+      'Responda SOMENTE com um bloco de código JSON no formato ' + UNIT_SCHEMA + ':',
+      '{"schema":"' + UNIT_SCHEMA + '","unitId":"' + u.id + '","blocks":[{"type":"conceito","title":"","content":"","callout":null}],"forNextUnit":{"terms":["termos definidos aqui"],"notation":["notação adotada"],"assumed":["o que já foi ensinado"]},"limitations":[]}',
+      'Regras: não invente referências nem fontes; não inclua revisão nem aprovação; não repita conteúdo de outras unidades.',
+    ].filter((x) => x !== null).join('\n');
+    return { ok: true, texto, unitId: u.id };
+  }
+
+  function applyUnit(bp, text) {
+    const e = estadoBlueprint(bp);
+    if (!e.aprovado) return { ok: false, error: 'Aprove o plano antes de aplicar unidades.' };
+    const r = parseModelJson(text); if (!r.ok) return r;
+    const d = r.data; const warnings = [];
+    if (d.schema !== UNIT_SCHEMA) return { ok: false, error: 'A resposta não é uma unidade (esperado "' + UNIT_SCHEMA + '").' };
+    const esperada = proximaUnidade(bp);
+    if (!esperada) return { ok: false, error: 'Todas as unidades já foram geradas.' };
+    if (d.unitId !== esperada.id) return { ok: false, error: 'A resposta é da unidade "' + d.unitId + '", mas a próxima do plano é "' + esperada.id + '". Gere na ordem.' };
+    const blocos = (Array.isArray(d.blocks) ? d.blocks : []).filter((b) => b && typeof b === 'object' && String(b.content || '').trim());
+    if (!blocos.length) return { ok: false, error: 'A unidade veio sem blocos com conteúdo.' };
+    const descartados = (Array.isArray(d.blocks) ? d.blocks.length : 0) - blocos.length;
+    if (descartados) warnings.push('Descartei ' + descartados + ' bloco(s) vazios ou inválidos.');
+    const novo = clone(bp);
+    if (!novo.material) novo.material = normalize({ title: novo.title, discipline: novo.discipline, level: novo.level, topic: novo.topic, duration: novo.duration, epistemicType: novo.epistemicType, objectives: novo.objectives, blocks: [], meta: { generatedBy: 'plano-por-unidades', planId: novo.id } });
+    const nb = normalize({ blocks: blocos }).blocks.map((b, k) => Object.assign(b, { id: esperada.id + '_b' + (k + 1) }));
+    novo.material.blocks = novo.material.blocks.concat(nb);
+    if (Array.isArray(d.limitations)) d.limitations.map(String).map((x) => x.trim()).filter((x) => x && !novo.material.limitations.includes(x)).forEach((x) => novo.material.limitations.push(x));
+    const fn = d.forNextUnit && typeof d.forNextUnit === 'object' ? d.forNextUnit : {};
+    const l = (x) => (Array.isArray(x) ? x.map(String).map((t) => t.trim()).filter(Boolean) : []);
+    novo.progress[esperada.id] = { at: new Date().toISOString(), blocks: nb.length, forNext: { terms: l(fn.terms), notation: l(fn.notation), assumed: l(fn.assumed) } };
+    ['revisao', 'references', 'aprovacao'].forEach((k) => { if (k in d) warnings.push('Ignorei "' + k + '" na resposta: unidades só trazem blocos, passagem adiante e limitações.'); });
+    return { ok: true, blueprint: novo, unitId: esperada.id, added: nb.length, warnings, completo: !proximaUnidade(novo) };
+  }
+
   /* ---------- exportação ---------- */
   function toMarkdown(m) {
     m = normalize(m);
@@ -1098,5 +1229,5 @@
     });
   }
 
-  return { problemasParaReparo, buildRepairPrompt, applyRepair, REPAIR_SCHEMA, avisosDeImportacao, VERSION, SCHEMA, hashConteudo, estadoRevisao, DEFAULT_AUTHOR, REGISTROS, DESTINATARIOS, INTERIOR_STYLES, AVATAR_OPTIONS, LOGO_OPTIONS, BLOCK_PEDAGOGY, CONTENT_PROFILES, EPISTEMIC, BLOCK_TYPES, POSTER_THEMES, COVER_CSS, POSTER_CSS, DOC_CSS, VISUALS, esc, uid, wc, clone, detectType, sanitizeSvg, renderMarkdown, renderCleanCover, renderPoster, buildImagePrompt, buildRequestText, normalize, fromV2, parseModelJson, importFromText, audit, toMarkdown, toHTML, toApostila, CALLOUTS, scaffold, demo };
+  return { BLUEPRINT_SCHEMA, UNIT_SCHEMA, buildBlueprintRequest, normalizeBlueprint, importBlueprint, hashBlueprint, estadoBlueprint, approveBlueprint, proximaUnidade, buildUnitRequest, applyUnit, problemasParaReparo, buildRepairPrompt, applyRepair, REPAIR_SCHEMA, avisosDeImportacao, VERSION, SCHEMA, hashConteudo, estadoRevisao, DEFAULT_AUTHOR, REGISTROS, DESTINATARIOS, INTERIOR_STYLES, AVATAR_OPTIONS, LOGO_OPTIONS, BLOCK_PEDAGOGY, CONTENT_PROFILES, EPISTEMIC, BLOCK_TYPES, POSTER_THEMES, COVER_CSS, POSTER_CSS, DOC_CSS, VISUALS, esc, uid, wc, clone, detectType, sanitizeSvg, renderMarkdown, renderCleanCover, renderPoster, buildImagePrompt, buildRequestText, normalize, fromV2, parseModelJson, importFromText, audit, toMarkdown, toHTML, toApostila, CALLOUTS, scaffold, demo };
 });
