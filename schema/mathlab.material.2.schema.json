@@ -19,7 +19,7 @@
     "level": { "type": "string" },
     "topic": { "type": "string" },
     "duration": { "type": "string" },
-    "epistemicType": { "enum": ["formal", "empirico", "interpretativo", "historico", "linguistico", "pratico"] },
+    "epistemicType": { "enum": ["formal", "empirica", "interpretativa", "historica", "linguistica", "pratica", "geral"] },
     "contentProfile": { "type": "string" },
     "registro": { "type": "string" },
     "destinatario": { "type": "string" },
