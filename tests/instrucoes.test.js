@@ -70,3 +70,44 @@ test('instruções: Educação Especial manda tratar os decretos de 2025 como no
     assert.match(txt, /legislação vigente/, nome);
   }
 });
+
+// Fatia 3 da Fase 2: formatos auxiliares do plano por unidades e do reparo.
+const C = require('../js/core.js');
+
+test('instruções: os três arquivos citam os formatos auxiliares com os nomes que o site espera', () => {
+  for (const [nome, txt] of Object.entries(files)) {
+    for (const f of [C.BLUEPRINT_SCHEMA, C.UNIT_SCHEMA, C.REPAIR_SCHEMA]) assert.ok(txt.includes(f), nome + ' sem ' + f);
+    assert.match(txt, /nunca inclua "revisao"/i, nome);
+  }
+});
+
+test('instruções: Gem e Skill trazem os campos completos de plano, unidade e reparo', () => {
+  for (const nome of ['gem', 'skill']) {
+    for (const c of ['"units"', '"mustCover"', '"dependsOn"', '"blockTypes"', '"unitId"', '"forNextUnit"', '"terms"', '"notation"', '"assumed"', '"notes"']) {
+      assert.ok(files[nome].includes(c), nome + ' sem ' + c);
+    }
+    for (const c of ['contractVersion', 'claims', 'calculations', 'provenance', 'sem_fonte', 'nao_conferido']) assert.ok(files[nome].includes(c), nome + ' sem ' + c);
+  }
+});
+
+test('instruções: só a Skill, que pode rodar código, admite checkedBy "codigo"; ninguém usa "humano"', () => {
+  assert.match(files.skill, /rodado código/);
+  assert.doesNotMatch(files.gem, /use "codigo"/);
+  assert.match(files.skill, /Nunca use "humano"/);
+});
+
+test('instruções: o site importa os exemplos de plano que as instruções descrevem', () => {
+  const m = files.skill.match(/mathlab\.blueprint\/1 \(plano\): (\{.*?\})\. De 2 a 8/s);
+  assert.ok(m, 'exemplo de plano não encontrado na Skill');
+  const r = C.importBlueprint(m[1]);
+  assert.strictEqual(r.ok, true);
+  assert.strictEqual(r.blueprint.units.length, 1);
+});
+
+test('instruções: o exemplo de reparo e de unidade da Skill é aceito pelo schema esperado', () => {
+  const u = files.skill.match(/mathlab\.unit\/1 \(uma unidade do plano aprovado\): (\{.*?\})\. Escreva só/s);
+  const r = files.skill.match(/mathlab\.repair\/1 \(correção\): (\{.*?\})\. Envie só/s);
+  assert.ok(u && r);
+  assert.strictEqual(JSON.parse(u[1]).schema, C.UNIT_SCHEMA);
+  assert.strictEqual(JSON.parse(r[1]).schema, C.REPAIR_SCHEMA);
+});

@@ -1,6 +1,6 @@
 {
   "name": "mathlab-aulas-visuais",
-  "version": "1.5.3",
+  "version": "1.6.0",
   "private": true,
   "description": "Autoria docente para qualquer disciplina: skill (Claude/Gemini) + site estático.",
   "scripts": {
