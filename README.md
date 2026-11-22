@@ -57,6 +57,19 @@ Use `skill/SKILL.md` como skill chamada `mathlab-aulas-visuais`.
 
 Sem GitHub: abra `dist/mathlab-standalone.html` com duplo clique (arquivo único, funciona offline).
 
+## PDF reproduzível
+
+Para gerar o PDF da apostila com as mesmas fontes e a mesma paginação em qualquer computador:
+
+```bash
+npm run pdf -- material.json saida.pdf     # a partir de um JSON do site
+npm run pdf -- --demo apostila-demo.pdf    # material de demonstração
+```
+
+Precisa do pacote `playwright` com Chromium (`npx playwright install chromium`). O script embute as fontes de `assets/fontes` (Fredoka, Caveat, Nunito, Patrick Hand e Noto Sans Math, todas com licença OFL, texto das licenças na mesma pasta), bloqueia qualquer pedido de rede, confere que cada folha da apostila virou uma página do PDF e que nada foi cortado, e zera data e identificador do arquivo. Duas execuções com o mesmo material saem idênticas, byte a byte.
+
+Limites conhecidos: emojis usam a fonte de emojis do sistema, então o desenho pode variar entre computadores. Subscritos Unicode, como ₁, também caem em fonte do sistema; o script avisa quando isso acontece. Imprimir pelo navegador (Salvar como PDF) continua funcionando, e agora também usa a margem zero na impressão, mas depende das fontes do Google estarem acessíveis.
+
 ## Desenvolvimento
 
 ```
