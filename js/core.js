@@ -771,6 +771,69 @@
       note: 'Auditoria automática por regras. Não substitui a revisão científica e pedagógica do professor.' };
   }
 
+  /* ---------- reparo: pedir ao Gem só o que falta, e aplicar só isso ---------- */
+  const REPAIR_SCHEMA = 'mathlab.repair/1';
+
+  // Reúne os problemas que valem um pedido de correção: avisos de importação e achados graves ou de atenção da auditoria.
+  function problemasParaReparo(m, avisos) {
+    const out = [];
+    (avisos || []).forEach((w) => out.push({ origem: 'importação', texto: String(w) }));
+    const a = audit(m);
+    a.categories.forEach((c) => c.findings.forEach((f) => { if (f.sev === 'hard' || f.sev === 'warn') out.push({ origem: c.name, gravidade: f.sev === 'hard' ? 'grave' : 'atenção', texto: f.msg }); }));
+    return out;
+  }
+
+  function buildRepairPrompt(m, problemas) {
+    m = normalize(m);
+    const ps = Array.isArray(problemas) ? problemas : problemasParaReparo(m);
+    if (!ps.length) return { ok: false, error: 'Não há problemas para corrigir.' };
+    const indice = m.blocks.map((b) => '- id "' + b.id + '" | ' + b.type + ' | ' + b.title).join('\n');
+    const lista = ps.map((p, i) => (i + 1) + '. [' + p.origem + (p.gravidade ? ', ' + p.gravidade : '') + '] ' + p.texto).join('\n');
+    const texto = [
+      'Você gerou o material "' + m.title + '" (' + m.discipline + ', ' + m.level + '). A conferência encontrou os pontos abaixo.',
+      '',
+      'PROBLEMAS:', lista, '',
+      'BLOCOS DO MATERIAL (use estes ids):', indice, '',
+      'O que fazer:',
+      '1. Corrija SOMENTE o que os problemas apontam. Não reescreva blocos que não precisam de mudança.',
+      '2. Responda com UM bloco de código JSON no formato ' + REPAIR_SCHEMA + ': {"schema":"' + REPAIR_SCHEMA + '","blocks":[{"id":"<id existente>","type":"...","title":"...","content":"...","callout":null}],"limitations":["..."],"notes":"o que mudou e por quê"}.',
+      '3. Em "blocks" envie só os blocos que mudaram, com o MESMO id e o conteúdo completo do bloco.',
+      '4. Não invente referências, números de página, DOI ou fontes. Se não puder sustentar uma afirmação, diga em "limitations" ou reescreva a afirmação de forma que o material possa sustentar.',
+      '5. Não inclua "revisao", validação, aprovação nem estado editorial: isso é do professor, no site.',
+      '6. Sem texto antes nem depois do JSON.',
+    ].join('\n');
+    return { ok: true, texto, total: ps.length };
+  }
+
+  // Aplica a resposta do Gem sobre o material, bloco a bloco. Não toca em nada que não esteja no pedido de reparo.
+  function applyRepair(m, text) {
+    m = normalize(m);
+    const r = parseModelJson(text); if (!r.ok) return r;
+    const d = r.data; const warnings = [];
+    if (d.schema !== REPAIR_SCHEMA) return { ok: false, error: 'A resposta não é um reparo (esperado "' + REPAIR_SCHEMA + '"). Peça ao Gem para responder no formato do pedido.' };
+    if (!Array.isArray(d.blocks) || !d.blocks.length) return { ok: false, error: 'O reparo não traz nenhum bloco em "blocks".' };
+    const novo = clone(m); const trocados = [];
+    d.blocks.forEach((b) => {
+      if (!b || typeof b !== 'object' || !b.id) { warnings.push('Ignorei um item de "blocks" sem id.'); return; }
+      const i = novo.blocks.findIndex((x) => x.id === b.id);
+      if (i < 0) { warnings.push('Ignorei o bloco "' + b.id + '": não existe no material. Reparo só altera blocos existentes.'); return; }
+      if (!String(b.content || '').trim()) { warnings.push('Ignorei o bloco "' + b.id + '": veio sem conteúdo.'); return; }
+      const ant = novo.blocks[i];
+      const nb = normalize({ blocks: [Object.assign({}, ant, b)] }).blocks[0];
+      nb.id = ant.id;
+      if (!b.svg) nb.svg = ant.svg;
+      novo.blocks[i] = nb; trocados.push(ant.id);
+    });
+    if (!trocados.length) return { ok: false, error: 'Nenhum bloco do reparo pôde ser aplicado.', warnings };
+    if (Array.isArray(d.limitations)) {
+      const novas = d.limitations.map(String).map((x) => x.trim()).filter((x) => x && !novo.limitations.includes(x));
+      if (novas.length) novo.limitations = novo.limitations.concat(novas);
+    }
+    ['revisao', 'references', 'claims', 'calculations', 'provenance', 'poster', 'title'].forEach((k) => { if (k in d) warnings.push('Ignorei "' + k + '" na resposta: o reparo só altera blocos e limitações.'); });
+    novo.meta = Object.assign({}, novo.meta, { lastRepairAt: new Date().toISOString() });
+    return { ok: true, material: novo, changed: trocados, warnings, notes: String(d.notes || '') };
+  }
+
   /* ---------- exportação ---------- */
   function toMarkdown(m) {
     m = normalize(m);
@@ -1035,5 +1098,5 @@
     });
   }
 
-  return { avisosDeImportacao, VERSION, SCHEMA, hashConteudo, estadoRevisao, DEFAULT_AUTHOR, REGISTROS, DESTINATARIOS, INTERIOR_STYLES, AVATAR_OPTIONS, LOGO_OPTIONS, BLOCK_PEDAGOGY, CONTENT_PROFILES, EPISTEMIC, BLOCK_TYPES, POSTER_THEMES, COVER_CSS, POSTER_CSS, DOC_CSS, VISUALS, esc, uid, wc, clone, detectType, sanitizeSvg, renderMarkdown, renderCleanCover, renderPoster, buildImagePrompt, buildRequestText, normalize, fromV2, parseModelJson, importFromText, audit, toMarkdown, toHTML, toApostila, CALLOUTS, scaffold, demo };
+  return { problemasParaReparo, buildRepairPrompt, applyRepair, REPAIR_SCHEMA, avisosDeImportacao, VERSION, SCHEMA, hashConteudo, estadoRevisao, DEFAULT_AUTHOR, REGISTROS, DESTINATARIOS, INTERIOR_STYLES, AVATAR_OPTIONS, LOGO_OPTIONS, BLOCK_PEDAGOGY, CONTENT_PROFILES, EPISTEMIC, BLOCK_TYPES, POSTER_THEMES, COVER_CSS, POSTER_CSS, DOC_CSS, VISUALS, esc, uid, wc, clone, detectType, sanitizeSvg, renderMarkdown, renderCleanCover, renderPoster, buildImagePrompt, buildRequestText, normalize, fromV2, parseModelJson, importFromText, audit, toMarkdown, toHTML, toApostila, CALLOUTS, scaffold, demo };
 });
