@@ -45,7 +45,7 @@ test('normalizarPdf deixa iguais dois PDFs que só diferem em data e identificad
   assert.deepStrictEqual(normalizarPdf(a), normalizarPdf(b));
 });
 
-test('PDF da apostila: uma folha por página, sem corte, sem rede, byte a byte reproduzível', { skip: !temPlaywright && 'playwright não instalado' }, async () => {
+test('PDF da apostila: uma folha por página, sem corte, sem rede, byte a byte reproduzível', { skip: !temPlaywright && 'playwright não instalado', timeout: 120000 }, async () => {
   const { gerarPdf } = await ferramenta();
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'mlpdf-'));
   const r1 = await gerarPdf(C.demo(), path.join(dir, 'a.pdf'));
@@ -57,4 +57,4 @@ test('PDF da apostila: uma folha por página, sem corte, sem rede, byte a byte r
   const txt = fs.readFileSync(path.join(dir, 'a.pdf')).toString('latin1');
   for (const fam of ['Fredoka', 'Nunito', 'Caveat']) assert.ok(new RegExp('/BaseFont\\s*/[A-Z]{6}\\+' + fam).test(txt), fam + ' não está embutida no PDF');
   assert.ok(!/\+Inter-|\+LiberationSans/.test(txt), 'caiu em fonte do sistema');
-}, { timeout: 120000 });
+});
