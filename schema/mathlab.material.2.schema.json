@@ -1,0 +1,151 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mathlab:material:2",
+  "title": "MathLab, contrato mathlab.material/2 (com campos opcionais da versão 2.1)",
+  "description": "Contrato único de transporte entre quem gera o material (Gem, Skill, App Node) e o site. O que já existe continua válido. Os campos de verificação são OPCIONAIS e aditivos: quem não os envia segue válido. Política: o topo é tolerante (campos desconhecidos passam), mas o importador deve AVISAR sempre que corrigir, cortar ou ignorar algo. Os blocos novos (claims, calculations, provenance) são estritos. Só o site escreve a validação humana (revisao).",
+  "type": "object",
+  "required": ["schema", "title", "blocks"],
+  "additionalProperties": true,
+  "properties": {
+    "schema": { "const": "mathlab.material/2" },
+    "contractVersion": {
+      "description": "Versão menor do contrato. Ausente equivale a 2.0. Subir a versão menor só quando se acrescenta campo opcional. Mudança que quebra o formato antigo exige material/3 e conversor.",
+      "type": "string",
+      "pattern": "^2\\.\\d+$"
+    },
+    "title": { "type": "string", "minLength": 1 },
+    "author": { "type": "string" },
+    "discipline": { "type": "string" },
+    "level": { "type": "string" },
+    "topic": { "type": "string" },
+    "duration": { "type": "string" },
+    "epistemicType": { "enum": ["formal", "empirico", "interpretativo", "historico", "linguistico", "pratico"] },
+    "contentProfile": { "type": "string" },
+    "registro": { "type": "string" },
+    "destinatario": { "type": "string" },
+    "objectives": { "type": "array", "items": { "type": "string" } },
+    "prerequisites": { "type": "array", "items": { "type": "string" } },
+    "limitations": {
+      "description": "Declarar aqui o que NÃO foi feito (fonte não consultada, cálculo não conferido). É a contrapartida honesta de references vazio.",
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "blocks": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/block" } },
+    "references": {
+      "description": "Pode ser vazio. NÃO existe minItems: obrigar referência faria a IA inventar uma. Sem fonte verificada, deixe vazio e declare em limitations.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/reference" }
+    },
+    "poster": { "type": ["object", "null"] },
+    "claims": { "type": "array", "items": { "$ref": "#/$defs/claim" } },
+    "calculations": { "type": "array", "items": { "$ref": "#/$defs/calculation" } },
+    "provenance": { "$ref": "#/$defs/provenance" },
+    "revisao": { "$ref": "#/$defs/revisao" },
+    "meta": { "type": "object" }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,39}$" },
+
+    "block": {
+      "type": "object",
+      "required": ["type", "title", "content"],
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "svg": { "type": "string" },
+        "callout": {
+          "type": ["object", "null"],
+          "properties": {
+            "kind": { "enum": ["dica", "sabia", "atencao", "prova"] },
+            "text": { "type": "string" }
+          }
+        }
+      }
+    },
+
+    "reference": {
+      "type": "object",
+      "required": ["title"],
+      "properties": {
+        "refId": { "$ref": "#/$defs/id" },
+        "authors": { "type": "string" },
+        "title": { "type": "string", "minLength": 1 },
+        "year": { "type": "string" },
+        "venue": { "type": "string" },
+        "doi": { "type": "string" },
+        "url": { "type": "string" },
+        "accessLevel": { "enum": ["integral", "parcial", "resumo", "metadados", "localizada", "nao-verificado"] },
+        "verified": { "type": "boolean" }
+      }
+    },
+
+    "claim": {
+      "description": "Afirmação factual com a forma como é sustentada. 'sem_fonte' é um valor legítimo e honesto; nada de inventar referência para preencher.",
+      "type": "object",
+      "required": ["id", "kind", "text", "support"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "blockId": { "type": "string", "description": "Bloco em que a afirmação aparece." },
+        "kind": { "enum": ["definicao", "fato", "resultado_empirico", "interpretacao", "procedimento", "demonstracao", "calculo", "alinhamento_curricular", "opiniao_autoral"] },
+        "text": { "type": "string", "minLength": 1 },
+        "support": {
+          "type": "object",
+          "required": ["mode"],
+          "additionalProperties": false,
+          "properties": {
+            "mode": { "enum": ["referencia", "fonte_primaria", "calculo", "demonstracao", "definicao_adotada", "autoral_declarado", "material_do_professor", "sem_fonte"] },
+            "refId": { "$ref": "#/$defs/id" },
+            "note": { "type": "string" }
+          }
+        }
+      }
+    },
+
+    "calculation": {
+      "type": "object",
+      "required": ["id", "expression", "result", "checkedBy"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "blockId": { "type": "string" },
+        "expression": { "type": "string", "minLength": 1 },
+        "result": { "type": "string", "minLength": 1 },
+        "checkedBy": {
+          "description": "Quem conferiu. 'nao_conferido' é o valor padrão honesto. 'codigo' só se um script realmente recalculou.",
+          "enum": ["nao_conferido", "codigo", "humano"]
+        }
+      }
+    },
+
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "generator": { "enum": ["gem", "skill", "gpt", "app-node", "offline-scaffold", "manual", "outro"] },
+        "generatorVersion": { "type": "string" },
+        "aiParticipated": { "type": "boolean" },
+        "createdAt": { "type": "string" },
+        "estadoEditorial": {
+          "description": "Só os três estados automáticos podem vir de fora. Estados humanos nunca vêm no JSON importado: são derivados de 'revisao', escrita pelo site.",
+          "enum": ["GERADO", "VALIDADO_ESTRUTURALMENTE", "AUDITADO_AUTOMATICAMENTE"]
+        }
+      }
+    },
+
+    "revisao": {
+      "description": "PROPRIEDADE DO SITE. Quem gera não escreve aqui. Se o JSON importado trouxer aprovado=true, o importador ignora e avisa.",
+      "type": "object",
+      "properties": {
+        "aprovado": { "type": "boolean" },
+        "revisadoPor": { "type": "string" },
+        "data": { "type": "string" },
+        "hash": { "type": "string", "description": "Hash do conteúdo no momento da validação. Mudou o conteúdo, a validação fica desatualizada." },
+        "nivel": { "enum": ["especialista", "responsavel_editorial"], "description": "Opcional. Ausente com aprovado=true equivale a especialista." },
+        "escopo": { "type": "string" }
+      }
+    }
+  }
+}
