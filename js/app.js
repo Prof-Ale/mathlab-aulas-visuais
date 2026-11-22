@@ -179,6 +179,14 @@
       '<p><span class="pill ' + (rv.validado ? 'ok' : 'warn') + '" id="revisao-estado">' + esc(rv.texto) + '</span></p>' +
       '<div class="row"><div><label for="f_revisao_revisadoPor">Quem revisou</label><input id="f_revisao_revisadoPor" data-f="revisao.revisadoPor" value="' + esc(d.revisao.revisadoPor || '') + '" placeholder="Nome do professor"></div>' +
       '<div><label><input type="checkbox" id="f_revisao_aprovado" data-f="revisao.aprovado"' + (d.revisao.aprovado ? ' checked' : '') + '> Revisei e valido este material</label>' + (d.revisao.data ? '<p class="muted">Data da validação: ' + esc(d.revisao.data) + '</p>' : '') + '</div></div></div>';
+    const probs = C.problemasParaReparo(d, S.avisosImport && S.avisosImport.mid === S.mid ? S.avisosImport.list : []);
+    h += '<div class="card" id="card-reparo"><h3>Conferência e reparo</h3>' +
+      (probs.length
+        ? '<p class="muted">A conferência automática achou ' + probs.length + (probs.length === 1 ? ' ponto' : ' pontos') + ' para olhar. Você pode corrigir à mão, ou pedir ao Gem só o que precisa mudar.</p><ul>' + probs.slice(0, 8).map((x) => '<li>' + esc(x.texto) + '</li>').join('') + (probs.length > 8 ? '<li>e mais ' + (probs.length - 8) + '…</li>' : '') + '</ul>' +
+          '<div class="btns"><button class="b gold" data-a="copyrepair">Copiar pedido de reparo</button></div>' +
+          '<label for="rp-resp">Cole aqui a resposta do Gem (formato ' + C.REPAIR_SCHEMA + ')</label><textarea id="rp-resp" data-form="reparo" rows="4" placeholder="Cole o JSON do reparo…">' + esc(S.form.reparo || '') + '</textarea>' +
+          '<div class="btns"><button class="b" data-a="applyrepair">Aplicar reparo</button></div><p class="muted">O reparo só troca blocos que já existem. Depois dele, a validação do professor fica desatualizada e você revisa de novo.</p>'
+        : '<p class="muted">Nenhum ponto pendente na conferência automática. Isso não substitui a sua revisão.</p>') + '</div>';
     h += '<div class="card"><h3>Blocos do material</h3>' + d.blocks.map((b, i) =>
       '<div class="blk" style="border-left-color:' + (bc[b.type] || '#14264f') + '"><div class="head"><div><label for="ed-bt-' + i + '">Tipo</label><select id="ed-bt-' + i + '" data-f="blocks.' + i + '.type">' + Object.keys(C.BLOCK_TYPES).map((k) => '<option value="' + k + '"' + (b.type === k ? ' selected' : '') + '>' + C.BLOCK_TYPES[k][1] + ' ' + C.BLOCK_TYPES[k][0] + '</option>').join('') + '</select></div><div>' + inp('blocks.' + i + '.title', 'Título do bloco') + '</div>' +
       '<div class="btns"><button class="b ghost sm" data-a="bup" data-i="' + i + '" title="Subir" aria-label="Subir bloco ' + (i + 1) + '">↑</button><button class="b ghost sm" data-a="bdn" data-i="' + i + '" title="Descer" aria-label="Descer bloco ' + (i + 1) + '">↓</button><button class="b danger sm" data-a="bdel" data-i="' + i + '" title="Remover" aria-label="Remover bloco ' + (i + 1) + '">✕</button></div></div>' +
@@ -350,10 +358,20 @@
       }; rd.readAsText(f);
     },
     copyreq: async () => { const t = C.buildRequestText(S.form); toast((await copy(t)) ? 'Pedido copiado. Cole no seu Gem ou no Claude.' : 'Não consegui copiar automaticamente.', false); },
+    copyrepair: async () => {
+      const pr = C.buildRepairPrompt(S.draft, C.problemasParaReparo(S.draft, S.avisosImport && S.avisosImport.mid === S.mid ? S.avisosImport.list : []));
+      if (!pr.ok) { toast(pr.error, true); return; }
+      toast((await copy(pr.texto)) ? 'Pedido de reparo copiado. Cole no mesmo Gem que gerou o material.' : 'Não consegui copiar automaticamente.', false);
+    },
+    applyrepair: () => {
+      const r = C.applyRepair(S.draft, S.form.reparo); if (!r.ok) { toast(r.error, true); return; }
+      S.draft = r.material; S.dirty = true; S.form.reparo = '';
+      toast('Reparo aplicado em ' + r.changed.length + (r.changed.length === 1 ? ' bloco.' : ' blocos.') + (r.warnings.length ? ' ' + r.warnings.join(' ') : '') + ' Revise e salve.', false); render();
+    },
     importjson: () => {
       const r = C.importFromText(S.form.pasted); if (!r.ok) { toast(r.error, true); return; }
       const m = r.material; const p = (S.form.target && proj(S.form.target)) || newProject(m.discipline || m.title, m.discipline, m.level);
-      const rec = addMaterial(p, m, 'Importado da skill'); toast('Material importado.' + (r.warnings.length ? ' ' + r.warnings.join(' ') : '')); S.form.pasted = ''; openMat(p.id, rec.id);
+      const rec = addMaterial(p, m, 'Importado da skill'); toast('Material importado.' + (r.warnings.length ? ' ' + r.warnings.join(' ') : '')); S.form.pasted = ''; S.dirty = false; openMat(p.id, rec.id); S.avisosImport = { mid: rec.id, list: r.warnings.filter((w) => !/^O JSON não declara/.test(w)) }; render();
     },
     scaffold: () => {
       if (!S.form.topic.trim()) { toast('Preencha ao menos o tema.', true); return; }
