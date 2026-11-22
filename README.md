@@ -1,4 +1,4 @@
-# MathLab Aulas Visuais — versão 1.5.3
+# MathLab Aulas Visuais — versão 1.6.0
 
 Ferramenta de **autoria docente para qualquer disciplina**. O professor pede um material em linguagem natural e recebe:
 
