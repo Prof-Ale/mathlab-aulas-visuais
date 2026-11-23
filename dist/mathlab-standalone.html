@@ -2203,10 +2203,92 @@ function montarHtml(d, cfg) {
 
 </script>
 <script>
+/* MathLab Aulas Visuais: pasta de fontes do autor (RAG manual, sem API).
+   O professor cola trechos de livros, normas ou anotações. As fontes escolhidas entram no pedido como
+   "base obrigatória", com marcadores [F1], [F2]. Depois da resposta, a auditoria confere o uso:
+   marcador inexistente, fonte escolhida e nunca citada, e cópia literal do trecho. Tudo local. */
+(function (root, factory) {
+  if (typeof module === 'object' && module.exports) module.exports = factory(require('./core.js'));
+  else root.MathLabFontes = factory(root.MathLabCore);
+})(typeof self !== 'undefined' ? self : this, function (C) {
+  'use strict';
+  const LIM = { trecho: 3000, porFonte: 1500, total: 6000, max: 8, titulo: 160, campo: 120 };
+  const strip = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const limpa = (s, n) => String(s == null ? '' : s).replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim().slice(0, n);
+  const uid = () => 'f' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+  function normalizarFonte(o) {
+    o = o && typeof o === 'object' ? o : {};
+    const texto = String(o.text == null ? '' : o.text).replace(/<[^>]*>/g, '').replace(/\r/g, '').replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+    const f = { id: typeof o.id === 'string' && o.id ? o.id.slice(0, 40) : uid(), title: limpa(o.title, LIM.titulo), authors: limpa(o.authors, LIM.campo), year: limpa(o.year, 8),
+      venue: limpa(o.venue, LIM.campo), url: limpa(o.url, 300), text: texto.slice(0, LIM.trecho), truncated: texto.length > LIM.trecho,
+      access: ['FULL', 'PARTIAL', 'SUMMARY'].includes(o.access) ? o.access : 'PARTIAL' };
+    const erros = [];
+    if (!f.title) erros.push('Dê um título à fonte.');
+    if (f.text.length < 20) erros.push('Cole um trecho de pelo menos 20 caracteres.');
+    return { ok: !erros.length, fonte: f, erros };
+  }
+
+  /* Escolhe quais trechos cabem no pedido. Devolve texto, marcadores e avisos. */
+  function blocoDeFontes(fontes) {
+    const lista = (Array.isArray(fontes) ? fontes : []).slice(0, LIM.max), avisos = [];
+    if (!lista.length) return { texto: '', marcadores: [], avisos };
+    if (Array.isArray(fontes) && fontes.length > LIM.max) avisos.push('Só as ' + LIM.max + ' primeiras fontes entram no pedido.');
+    let restante = LIM.total; const marcadores = [], partes = [];
+    lista.forEach((f, i) => {
+      const m = 'F' + (i + 1), cabe = Math.min(LIM.porFonte, restante);
+      if (cabe < 80) { avisos.push('A fonte "' + f.title + '" ficou de fora: o limite de ' + LIM.total + ' caracteres do pedido acabou.'); return; }
+      const t = f.text.length > cabe ? f.text.slice(0, cabe).trimEnd() + ' […]' : f.text;
+      if (f.text.length > cabe) avisos.push('O trecho de "' + f.title + '" foi cortado em ' + cabe + ' caracteres.');
+      restante -= t.length;
+      marcadores.push({ marcador: m, id: f.id, title: f.title });
+      partes.push('[' + m + '] ' + [f.authors, f.title, f.year, f.venue].filter(Boolean).join('. ') + '\n"""\n' + t + '\n"""');
+    });
+    const texto = ['BASE OBRIGATÓRIA DO AUTOR (trechos fornecidos pelo professor):', ...partes,
+      'Como usar: apoie nestes trechos o que eles sustentam e marque o uso no texto com [F1], [F2] etc. Não copie frases inteiras: reescreva com suas palavras. Não atribua às fontes o que elas não dizem. O que não estiver nelas e você não puder verificar, deixe sem fonte e sinalize.'].join('\n\n');
+    return { texto, marcadores, avisos };
+  }
+
+  const palavras = (t) => strip(t).replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(Boolean);
+  /* Maior trecho idêntico (em palavras) entre o texto gerado e a fonte. */
+  function maiorCopia(gerado, fonte) {
+    const a = palavras(gerado), b = palavras(fonte); if (!a.length || !b.length) return 0;
+    const idx = new Map(); b.forEach((w, i) => { if (!idx.has(w)) idx.set(w, []); idx.get(w).push(i); });
+    let melhor = 0;
+    for (let i = 0; i < a.length; i++) for (const j of idx.get(a[i]) || []) { let k = 0; while (i + k < a.length && j + k < b.length && a[i + k] === b[j + k]) k++; if (k > melhor) melhor = k; }
+    return melhor;
+  }
+
+  /* Confere o material gerado contra as fontes escolhidas. Cada achado: {id, nivel, msg}. */
+  function auditarUso(material, fontes, opts) {
+    const m = C.normalize(material || {}), lista = (Array.isArray(fontes) ? fontes : []).slice(0, LIM.max), L = [];
+    const limite = (opts && opts.copiaMin) || 12;
+    if (!lista.length) return L;
+    const corpo = m.blocks.map((b) => b.title + ' ' + b.content + ' ' + ((b.callout && b.callout.text) || '')).join('\n');
+    const usados = new Set([...corpo.matchAll(/\[F(\d{1,2})\]/g)].map((x) => +x[1]));
+    usados.forEach((n) => { if (n < 1 || n > lista.length) L.push({ id: 'marc_' + n, nivel: 'warn', msg: 'O texto cita [F' + n + '], mas só existem ' + lista.length + ' fonte(s) no pedido.' }); });
+    lista.forEach((f, i) => {
+      if (!usados.has(i + 1)) L.push({ id: 'nao_citada_F' + (i + 1), nivel: 'info', msg: 'A fonte "' + f.title + '" ([F' + (i + 1) + ']) foi escolhida, mas o texto não a cita.' });
+      const c = maiorCopia(corpo, f.text);
+      if (c >= limite) L.push({ id: 'copia_F' + (i + 1), nivel: 'warn', msg: 'Há um trecho de ' + c + ' palavras seguidas igual ao da fonte "' + f.title + '". Reescreva com suas palavras ou use aspas e citação direta.' });
+    });
+    return L;
+  }
+
+  /* Referências prontas, com o nível de acesso que o professor declarou. */
+  function comoReferencias(fontes) {
+    return (Array.isArray(fontes) ? fontes : []).map((f) => ({ authors: f.authors, title: f.title, year: f.year, venue: f.venue, doi: '', url: f.url, accessLevel: f.access, verified: false }));
+  }
+
+  return { LIM, normalizarFonte, blocoDeFontes, maiorCopia, auditarUso, comoReferencias };
+});
+
+</script>
+<script>
 /* MathLab Aulas Visuais — interface. Tudo roda no navegador; nada é enviado a servidor algum. */
 (function () {
   'use strict';
-  const C = window.MathLabCore, esc = C.esc, D = window.MathLabDominios || null, LV = window.MathLabLivro || null;
+  const C = window.MathLabCore, esc = C.esc, D = window.MathLabDominios || null, LV = window.MathLabLivro || null, FT = window.MathLabFontes || null;
   const KEY = 'mathlab.lib.v2';
   const $ = (s, r) => (r || document).querySelector(s);
 
@@ -2221,7 +2303,7 @@ function montarHtml(d, cfg) {
   const S = { tab: 'biblioteca', pid: null, mid: null, draft: null, dirty: false, showPrev: false, showVers: false, showArch: false,
     diario: (() => { try { return JSON.parse(localStorage.getItem('mathlab.diario.v1') || 'null'); } catch (e) { return null; } })(),
     book: { sel: [], title: '', subtitle: '', author: '', glossary: true, answers: true, references: true, show: false },
-    form: { author: C.DEFAULT_AUTHOR, discipline: '', level: '', topic: '', duration: '1 aula de 50 minutos', objectives: '', type: 'auto', contentProfile: 'completo', registro: 'escolar', destinatario: 'estudante', target: '', pasted: '', domainId: '', domainResp: '' }, vis: { kind: 'numberLine', text: '-6, 6, -2, 5', title: '' } };
+    form: { author: C.DEFAULT_AUTHOR, discipline: '', level: '', topic: '', duration: '1 aula de 50 minutos', objectives: '', type: 'auto', contentProfile: 'completo', registro: 'escolar', destinatario: 'estudante', target: '', pasted: '', domainId: '', domainResp: '', srcSel: [], srcDraft: { title: '', authors: '', year: '', venue: '', url: '', text: '', access: 'PARTIAL' } }, vis: { kind: 'numberLine', text: '-6, 6, -2, 5', title: '' } };
 
   /* ---------- modelo: projetos > materiais > versões ---------- */
   const proj = (id) => lib.projects.find((p) => p.id === (id || S.pid));
@@ -2402,6 +2484,25 @@ function montarHtml(d, cfg) {
       '<div class="card"><h3>Backup</h3><p class="muted">Seus dados ficam só neste navegador. Baixe um backup de vez em quando.</p><div class="btns"><button class="b ghost" data-a="backup">Baixar backup da biblioteca</button><label class="b ghost" style="display:inline-block;margin:0;cursor:pointer">Restaurar backup<input type="file" accept=".json,application/json" data-a="restore" style="display:none"></label></div></div>';
   }
 
+  /* ---------- Fontes do autor (base obrigatória do pedido) ---------- */
+  function fontesEscolhidas() { return FT ? (lib.sources || []).filter((x) => S.form.srcSel.includes(x.id)) : []; }
+  function cardFontes() {
+    if (!FT) return '';
+    const L = lib.sources || [], d = S.form.srcDraft, sel = fontesEscolhidas(), pre = FT.blocoDeFontes(sel);
+    return '<div class="card" id="card-fontes"><h3>Fontes do autor</h3><p class="muted">Cole trechos do livro, da norma ou das suas anotações. As fontes marcadas vão no pedido como base obrigatória, com [F1], [F2]. Tudo fica só neste navegador.</p>' +
+      (L.length ? L.map((x) => '<div class="list-item"><label style="display:flex;gap:8px;align-items:center"><input type="checkbox" style="width:auto" data-a="srctoggle" data-k="' + esc(x.id) + '"' + (S.form.srcSel.includes(x.id) ? ' checked' : '') + '> <span><b>' + esc(x.title) + '</b> <span class="muted">' + esc([x.authors, x.year].filter(Boolean).join(', ')) + ' · ' + x.text.length + ' caracteres</span></span></label> <button class="b ghost sm" data-a="srcdel" data-k="' + esc(x.id) + '" aria-label="Remover fonte">✕</button></div>').join('') : '<p class="muted">Nenhuma fonte ainda.</p>') +
+      (pre.avisos.length ? '<div class="find warn">' + pre.avisos.map((w) => '⚠️ ' + esc(w)).join('<br>') + '</div>' : '') +
+      '<details><summary>Adicionar fonte</summary><div class="row"><div><label for="sr-t">Título</label><input id="sr-t" data-src="title" value="' + esc(d.title) + '"></div><div><label for="sr-a">Autoria</label><input id="sr-a" data-src="authors" value="' + esc(d.authors) + '"></div><div><label for="sr-y">Ano</label><input id="sr-y" data-src="year" value="' + esc(d.year) + '"></div></div>' +
+      '<label for="sr-x">Trecho (até ' + FT.LIM.trecho + ' caracteres)</label><textarea id="sr-x" data-src="text" rows="5">' + esc(d.text) + '</textarea><label for="sr-c">Quanto da obra você leu?</label><select id="sr-c" data-src="access"><option value="FULL"' + (d.access === 'FULL' ? ' selected' : '') + '>A obra inteira</option><option value="PARTIAL"' + (d.access === 'PARTIAL' ? ' selected' : '') + '>Parte da obra</option><option value="SUMMARY"' + (d.access === 'SUMMARY' ? ' selected' : '') + '>Só resumo</option></select>' +
+      '<div class="btns"><button class="b" data-a="addsource">Guardar fonte</button></div></details></div>';
+  }
+  function fonteAud(d) {
+    if (!FT || !d) return '';
+    const sel = fontesEscolhidas(); if (!sel.length) return '';
+    const L = FT.auditarUso(d, sel);
+    return '<div class="card"><h3>Uso das fontes do autor</h3>' + (L.length ? L.map((x) => '<div class="find ' + (x.nivel === 'warn' ? 'warn' : 'info') + '">' + (x.nivel === 'warn' ? '⚠️' : 'ℹ️') + ' ' + esc(x.msg) + '</div>').join('') : '<p class="muted">Todas as fontes escolhidas foram citadas e não há cópia literal.</p>') + '<p class="muted">Conferência automática por marcadores e sequência de palavras. Não substitui a sua leitura.</p></div>';
+  }
+
   /* ---------- Domínio do assunto (Passe 0) ---------- */
   function tipoDoForm(f) { return f.type && f.type !== 'auto' && C.EPISTEMIC[f.type] ? f.type : C.detectType(f.discipline); }
   function packDoForm(f) { return D ? D.achar(f.domainId, lib.domains, tipoDoForm(f)) : null; }
@@ -2436,6 +2537,7 @@ function montarHtml(d, cfg) {
       '<div><label for="cr-target">Salvar no projeto</label><select id="cr-target" data-form="target">' + opt('', '(criar projeto novo)', !f.target) + lib.projects.filter((p) => !p.archived).map((p) => opt(p.id, p.name, f.target === p.id)).join('') + '</select></div></div>' +
       '<label for="cr-obj">Objetivos desejados (opcional)</label><textarea id="cr-obj" data-form="objectives" rows="2">' + esc(f.objectives) + '</textarea></div>' +
       cardDominio() +
+      cardFontes() +
       '<div class="card steps"><h3>Caminho sem custo (recomendado)</h3>' +
       '<div class="step"><b>Copie o pedido</b> e cole no seu Gem do Gemini (ou no Claude com a skill instalada).<div class="btns"><button class="b gold" data-a="copyreq">Copiar pedido</button></div></div>' +
       '<div class="step"><b>Cole aqui o JSON</b> que ele devolveu e importe.<textarea data-form="pasted" rows="6" placeholder="Cole aqui o bloco JSON inteiro…">' + esc(f.pasted) + '</textarea><div class="btns"><button class="b" data-a="importjson">Importar material</button></div></div>' +
@@ -2536,6 +2638,7 @@ function montarHtml(d, cfg) {
       v2Html +
       (a.hard.length ? '<div class="card" style="border-color:var(--bad)"><h3 style="color:var(--bad)">Falhas graves (' + a.hard.length + ')</h3>' + a.hard.map((x) => '<div class="find hard">⛔ <b>' + esc(x.cat) + ':</b> ' + esc(x.msg) + '</div>').join('') + '</div>' : '') +
       dominioAud(d) +
+      fonteAud(d) +
       '<div class="card"><h3>10 categorias</h3>' + a.categories.map((c) => '<div class="cat"><span>' + esc(c.name) + '</span><div class="bar"><i style="width:' + c.score * 10 + '%;background:' + (c.score >= 8 ? 'var(--ok)' : c.score >= 5 ? 'var(--warn)' : 'var(--bad)') + '"></i></div><b>' + c.score + '</b></div>' + c.findings.map((f) => '<div class="find ' + f.sev + '">' + (f.sev === 'hard' ? '⛔' : f.sev === 'warn' ? '⚠️' : 'ℹ️') + ' ' + esc(f.msg) + '</div>').join('')).join('') + '</div>' +
       '<div class="card"><h3>Revisão do professor</h3><p class="muted">A auditoria automática não confirma se o conteúdo está certo. Só você faz isso.</p><label><input type="checkbox" style="width:auto" data-a="review" ' + (tr && tr.done ? 'checked' : '') + '> Revisei o conteúdo e assumo a validação final' + (tr && tr.at ? ' (em ' + fmt(tr.at) + ')' : '') + '</label><p class="muted">Salve uma nova versão para registrar a revisão.</p></div>';
   }
@@ -2638,16 +2741,16 @@ function montarHtml(d, cfg) {
     openmat: (el) => openMat(el.dataset.p, el.dataset.m),
     dupmat: (el) => { const p = proj(), r = p.materials.find((x) => x.id === el.dataset.m), c = C.clone(r); c.id = C.uid('m'); const d = curData(c); d.title += ' (cópia)'; p.materials.unshift(c); logp(p, 'Material duplicado'); persist(); render(); },
     delmat: (el) => { const p = proj(), r = p.materials.find((x) => x.id === el.dataset.m); if (!confirm('Excluir "' + curData(r).title + '" com todas as versões? Isso não pode ser desfeito.')) return; p.materials = p.materials.filter((x) => x !== r); if (S.mid === r.id) { S.draft = null; S.mid = null; S.dirty = false; } logp(p, 'Material excluído'); persist(); render(); },
-    backup: () => dl('mathlab-backup-' + new Date().toISOString().slice(0, 10) + '.json', 'application/json', JSON.stringify({ app: 'mathlab', version: 2, projects: lib.projects, plans: lib.plans || [], domains: lib.domains || [] }, null, 2)),
+    backup: () => dl('mathlab-backup-' + new Date().toISOString().slice(0, 10) + '.json', 'application/json', JSON.stringify({ app: 'mathlab', version: 2, projects: lib.projects, plans: lib.plans || [], domains: lib.domains || [], sources: lib.sources || [] }, null, 2)),
     restore: (el) => {
       const f = el.files[0]; if (!f) return;
       const rd = new FileReader(); rd.onload = () => {
         try { const j = JSON.parse(rd.result); if (!Array.isArray(j.projects)) throw new Error('arquivo sem projetos'); let n = 0; j.projects.forEach((p) => { if (!lib.projects.some((x) => x.id === p.id)) { lib.projects.push(p); n++; } });
-          ['plans', 'domains'].forEach((k) => { if (Array.isArray(j[k])) { lib[k] = lib[k] || []; j[k].forEach((o) => { if (o && o.id && !lib[k].some((x) => x.id === o.id)) lib[k].push(o); }); } }); persist(); render(); toast(n + ' projeto(s) restaurado(s); os que já existiam foram mantidos.'); }
+          ['plans', 'domains', 'sources'].forEach((k) => { if (Array.isArray(j[k])) { lib[k] = lib[k] || []; j[k].forEach((o) => { if (o && o.id && !lib[k].some((x) => x.id === o.id)) lib[k].push(o); }); } }); persist(); render(); toast(n + ' projeto(s) restaurado(s); os que já existiam foram mantidos.'); }
         catch (e) { toast('Backup inválido: ' + e.message, true); }
       }; rd.readAsText(f);
     },
-    copyreq: async () => { const t = C.buildRequestText(S.form) + (D && packDoForm(S.form) ? '\n\n' + D.regrasTexto(packDoForm(S.form)) : ''); toast((await copy(t)) ? 'Pedido copiado. Cole no seu Gem ou no Claude.' : 'Não consegui copiar automaticamente.', false); },
+    copyreq: async () => { const t = C.buildRequestText(S.form) + (D && packDoForm(S.form) ? '\n\n' + D.regrasTexto(packDoForm(S.form)) : '') + (FT && fontesEscolhidas().length ? '\n\n' + FT.blocoDeFontes(fontesEscolhidas()).texto : ''); toast((await copy(t)) ? 'Pedido copiado. Cole no seu Gem ou no Claude.' : 'Não consegui copiar automaticamente.', false); },
     booktoggle: (el) => { const k = el.dataset.k, a = S.book.sel; if (el.checked) { if (!a.includes(k)) a.push(k); } else S.book.sel = a.filter((x) => x !== k); S.book.show = false; render(); },
     bookopt: (el) => { S.book[el.dataset.o] = el.checked; S.book.show = false; },
     bookup: (el) => { const i = +el.dataset.i, a = S.book.sel; if (i > 0) { [a[i - 1], a[i]] = [a[i], a[i - 1]]; S.book.show = false; render(); } },
@@ -2655,6 +2758,13 @@ function montarHtml(d, cfg) {
     bookprev: () => { S.book.show = true; render(); },
     dlbook2: () => { const r = compilar(); if (!r.ok) { toast(r.error, true); return; } dl(slug(r.title) + '-livro.html', 'text/html', r.html); },
     printbook2: () => { const r = compilar(); if (!r.ok) { toast(r.error, true); return; } printHTML(r.html); },
+    srctoggle: (el) => { const k = el.dataset.k, a = S.form.srcSel; if (el.checked) { if (!a.includes(k)) a.push(k); } else S.form.srcSel = a.filter((x) => x !== k); render(); },
+    srcdel: (el) => { lib.sources = (lib.sources || []).filter((x) => x.id !== el.dataset.k); S.form.srcSel = S.form.srcSel.filter((x) => x !== el.dataset.k); persist(); render(); },
+    addsource: () => {
+      if (!FT) return; const r = FT.normalizarFonte(S.form.srcDraft); if (!r.ok) { toast(r.erros.join(' '), true); return; }
+      lib.sources = lib.sources || []; lib.sources.push(r.fonte); S.form.srcSel.push(r.fonte.id); S.form.srcDraft = { title: '', authors: '', year: '', venue: '', url: '', text: '', access: 'PARTIAL' }; persist();
+      toast('Fonte guardada e marcada para o pedido.' + (r.fonte.truncated ? ' O trecho foi cortado no limite.' : ''), false); render();
+    },
     copydomainreq: async () => { if (!D) return; toast((await copy(D.buildDomainRequest({ topic: S.form.topic, discipline: S.form.discipline, level: S.form.level }))) ? 'Pedido de pacote copiado. Cole no seu Gem.' : 'Não consegui copiar automaticamente.', false); },
     importdomain: () => {
       if (!D) return; const r = D.importDomain(S.form.domainResp); if (!r.ok) { toast(r.error, true); return; }
@@ -2767,6 +2877,7 @@ function montarHtml(d, cfg) {
       const bp = curPlan(); const [i, k] = el.dataset.pu.split('.'); if (bp && bp.units[+i]) { bp.units[+i][k] = el.value; persist(); const st = $('#plano-estado'); if (st) { const e2 = C.estadoBlueprint(bp); st.textContent = e2.texto; st.className = 'pill ' + (e2.aprovado ? 'ok' : 'warn'); } }
       return;
     }
+    if (el.dataset.src) { S.form.srcDraft[el.dataset.src] = el.value; return; }
     if (el.dataset.book) { S.book[el.dataset.book] = el.value; return; }
     if (el.dataset.form) { S.form[el.dataset.form] = el.value; return; }
     if (el.dataset.vis) { if (el.dataset.vis !== 'kind') S.vis[el.dataset.vis] = el.value; return; }
