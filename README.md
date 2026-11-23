@@ -38,6 +38,12 @@ O contrato de troca é o `mathlab.material/2`, versão menor 2.1 (`docs/CONTRATO
 
 Só o site registra validação humana. Estado de revisão que venha em um JSON é ignorado, com aviso.
 
+### Fontes do autor (base obrigatória do pedido)
+
+Na aba **Criar**, o card "Fontes do autor" guarda trechos de livros, normas ou anotações que você cola. As fontes marcadas entram no pedido como base obrigatória, numeradas [F1], [F2], com a instrução de apoiar nelas o que sustentam, marcar o uso no texto e reescrever com as próprias palavras. Limites: 3000 caracteres por trecho guardado, 1500 por fonte e 6000 no total do pedido, no máximo 8 fontes, com aviso quando algo é cortado ou fica de fora. Tudo fica só no navegador e entra no backup da Biblioteca.
+
+Na **Auditoria**, o card "Uso das fontes do autor" confere o resultado: marcador que não existe, fonte escolhida e nunca citada, e sequência de 12 palavras ou mais igual à da fonte (cópia literal). É conferência automática, não substitui a leitura.
+
 ### Memória acumulada entre unidades
 
 No plano por unidades, o pedido de cada unidade leva o que as anteriores já ensinaram: termos definidos, notação adotada, o que pode ser pressuposto e os títulos de exemplos e atividades já usados, para a IA trazer outros. A lista não repete itens (ignora maiúsculas e acentos), guarda só os mais recentes quando passa do teto (24 termos, 12 notações, 16 pressupostos, 12 exemplos) e aparece na tela antes de você copiar o pedido. Ao aplicar uma unidade, o site avisa se ela redefine um conceito que já foi definido antes.
