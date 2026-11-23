@@ -3,12 +3,7 @@
   "projeto": "MathLab Aulas Visuais (site)",
   "pacote": "1.6.0",
   "motor": "2.0.0",
-  "contrato": {
-    "schema": "mathlab.material/2",
-    "versao": "2.1",
-    "arquivo": "schema/mathlab.material.2.schema.json",
-    "exemplo": "schema/exemplos/exemplo-material2-1.json"
-  },
+  "contrato": { "schema": "mathlab.material/2", "versao": "2.1", "arquivo": "schema/mathlab.material.2.schema.json", "exemplo": "schema/exemplos/exemplo-material2-1.json" },
   "formatosAuxiliares": {
     "blueprint": "mathlab.blueprint/1",
     "unidade": "mathlab.unit/1",
@@ -17,37 +12,11 @@
   },
   "instrucoes": {
     "versao": "1.6.0",
-    "arquivos": [
-      "skill/SKILL.md",
-      "gemini/GEM_INSTRUCOES.md",
-      "chatgpt/CHATGPT_GPT_INSTRUCOES.md"
-    ]
+    "arquivos": ["skill/SKILL.md", "gemini/GEM_INSTRUCOES.md", "chatgpt/CHATGPT_GPT_INSTRUCOES.md"]
   },
-  "modulos": [
-    "js/racional.js",
-    "js/auditar-v2.js",
-    "js/portfolio.js",
-    "js/core.js",
-    "js/dominios.js",
-    "js/livro.js",
-    "js/fontes.js",
-    "js/app.js"
-  ],
+  "modulos": ["js/racional.js", "js/auditar-v2.js", "js/portfolio.js", "js/core.js", "js/dominios.js", "js/livro.js", "js/fontes.js", "js/app.js"],
   "compatibilidade": {
     "appNode": "Troca de arquivos com o contrato mathlab.material/2 a partir da versão menor 2.1. O App confere isso em tools/conferir-contrato.mjs.",
     "regra": "Subir a versão menor do contrato só quando se acrescenta campo opcional. Mudança que quebra leitores antigos exige mathlab.material/3."
-  },
-  "conhecimento": {
-    "status": "candidatas, nao aprovadas",
-    "origem": "knowledge/MANIFESTO_SHA256.md (Prof. Ale, App Node, 2026-11-21)",
-    "pasta": "knowledge",
-    "ausentes": [
-      "PACOTE_LEITURA_GEMINI_REV5_1/02_BASELINES/02_motor_pedagogico_v2.3.6.md",
-      "PACOTE_LEITURA_GEMINI_REV5_1/02_BASELINES/04_design_editorial_v2.4.md"
-    ],
-    "arquitetura": {
-      "docs/architecture/PRINCIPIO_INTELIGENCIA_EPISTEMICA.md": "02a257d5d44c2014b49f58c9e170ec2c2d2732acd225dce702d2c416381e952f",
-      "docs/architecture/FASE1_CONTRATOS_AUDITORIA_E_GOVERNANCA.md": "8f534a9aa4e3a959810065f46937b5bad57ac0e3f56394290ab54595055caced"
-    }
   }
 }

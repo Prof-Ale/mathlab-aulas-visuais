@@ -125,10 +125,6 @@ npm run build   # gera dist/mathlab-standalone.html
 
 Não inventar referências nem resultados de testes; não aprovar automaticamente (a auditoria é por regras e **não** substitui a revisão do professor); esqueleto offline é sempre reprovado até ser preenchido; exclusões pedem confirmação e baixam backup antes; versões nunca são apagadas ao restaurar.
 
-## Base de conhecimento
-
-A pasta `knowledge/` guarda os documentos M01 a M05 do App Node, como candidatas, não aprovadas. O `MANIFESTO_SHA256.md` traz tamanho e hash de cada um, e `tests/knowledge.test.js` falha se algum sumir ou mudar. Os dois documentos de arquitetura (Princípio da Inteligência Epistêmica e Fase 1) ficam em `docs/architecture/`. Veja `knowledge/LEIA-ME.md`.
-
 ## Ainda não está nesta versão
 
 Exportação em **Word (.docx)** e **PowerPoint (.pptx)**, integração direta com API do Gemini e busca de referências no Crossref/OpenAlex. O caminho principal (Gem + importar JSON) cobre o essencial sem custo.
