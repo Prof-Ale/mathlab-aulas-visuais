@@ -916,15 +916,37 @@
     return (bp.units || []).find((u) => !(bp.progress || {})[u.id]) || null;
   }
 
+  /* Estado acumulado: tudo o que as unidades anteriores já ensinaram, sem repetição e com teto, para o pedido da próxima.
+     Termos, notação e pressupostos vêm de forNextUnit de cada unidade; "usados" são os títulos de exemplos e atividades já escritos. */
+  const LIM_ACUM = { terms: 24, notation: 12, assumed: 16, usados: 12 };
+  function estadoAcumulado(bp, ate) {
+    const nk = (t) => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+    const out = { terms: [], notation: [], assumed: [], usados: [], origem: {} };
+    const maps = { terms: new Map(), notation: new Map(), assumed: new Map() };
+    (bp.units || []).slice(0, Math.max(0, ate)).forEach((u) => {
+      const f = ((bp.progress || {})[u.id] || {}).forNext || {};
+      Object.keys(maps).forEach((c) => (f[c] || []).forEach((t) => { const k = nk(t); if (!k) return; maps[c].delete(k); maps[c].set(k, t); if (c === 'terms' && !(k in out.origem)) out.origem[k] = u.id; }));
+      const mat = bp.material && bp.material.blocks || [];
+      mat.filter((b) => String(b.id || '').indexOf(u.id + '_b') === 0 && /^(exemplo|atividade|exercicios)$/.test(b.type)).forEach((b) => out.usados.push(b.title));
+    });
+    Object.keys(maps).forEach((c) => { out[c] = [...maps[c].values()].slice(-LIM_ACUM[c]); });
+    out.usados = out.usados.filter((t, i, a) => t && a.indexOf(t) === i).slice(-LIM_ACUM.usados);
+    return out;
+  }
+
   function buildUnitRequest(bp) {
     const e = estadoBlueprint(bp);
     if (!e.aprovado) return { ok: false, error: e.desatualizado ? 'A aprovação do plano está desatualizada. Aprove de novo.' : 'Aprove o plano antes de gerar unidades.' };
     const u = proximaUnidade(bp);
     if (!u) return { ok: false, error: 'Todas as unidades já foram geradas.' };
     const i = bp.units.indexOf(u);
-    const anterior = i > 0 ? (bp.progress[bp.units[i - 1].id] || {}).forNext : null;
-    const carry = anterior && (anterior.terms.length || anterior.notation.length || anterior.assumed.length)
-      ? ['Herdado da unidade anterior (use exatamente estes termos e notações):', anterior.terms.length ? 'Termos: ' + anterior.terms.join('; ') : null, anterior.notation.length ? 'Notação: ' + anterior.notation.join('; ') : null, anterior.assumed.length ? 'Já ensinado: ' + anterior.assumed.join('; ') : null].filter((x) => x !== null)
+    const ac = i > 0 ? estadoAcumulado(bp, i) : null;
+    const carry = ac && (ac.terms.length || ac.notation.length || ac.assumed.length || ac.usados.length)
+      ? ['Estado acumulado das unidades 1 a ' + i + ' (use exatamente estes termos e notações; não redefina o que já foi ensinado):',
+        ac.terms.length ? 'Termos já definidos: ' + ac.terms.join('; ') : null,
+        ac.notation.length ? 'Notação adotada: ' + ac.notation.join('; ') : null,
+        ac.assumed.length ? 'Já ensinado (pode pressupor): ' + ac.assumed.join('; ') : null,
+        ac.usados.length ? 'Exemplos e atividades já usados (traga outros): ' + ac.usados.join('; ') : null].filter((x) => x !== null)
       : [];
     const texto = [
       'Escreva SOMENTE a unidade ' + (i + 1) + ' de ' + bp.units.length + ' do plano aprovado "' + bp.title + '" (' + bp.discipline + ', ' + bp.level + ').',
@@ -953,6 +975,9 @@
     if (!blocos.length) return { ok: false, error: 'A unidade veio sem blocos com conteúdo.' };
     const descartados = (Array.isArray(d.blocks) ? d.blocks.length : 0) - blocos.length;
     if (descartados) warnings.push('Descartei ' + descartados + ' bloco(s) vazios ou inválidos.');
+    const iEsp = bp.units.indexOf(esperada), ac = estadoAcumulado(bp, iEsp);
+    const nk2 = (t) => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+    blocos.filter((b) => b.type === 'conceito').forEach((b) => { const o = ac.origem[nk2(b.title)]; if (o) warnings.push('O conceito "' + String(b.title).trim() + '" já foi definido na unidade ' + o + '. Confira se a unidade ' + esperada.id + ' não repete a definição.'); });
     const novo = clone(bp);
     if (!novo.material) novo.material = normalize({ title: novo.title, discipline: novo.discipline, level: novo.level, topic: novo.topic, duration: novo.duration, epistemicType: novo.epistemicType, objectives: novo.objectives, blocks: [], meta: { generatedBy: 'plano-por-unidades', planId: novo.id } });
     const nb = normalize({ blocks: blocos }).blocks.map((b, k) => Object.assign(b, { id: esperada.id + '_b' + (k + 1) }));
@@ -1229,5 +1254,5 @@
     });
   }
 
-  return { BLUEPRINT_SCHEMA, UNIT_SCHEMA, buildBlueprintRequest, normalizeBlueprint, importBlueprint, hashBlueprint, estadoBlueprint, approveBlueprint, proximaUnidade, buildUnitRequest, applyUnit, problemasParaReparo, buildRepairPrompt, applyRepair, REPAIR_SCHEMA, avisosDeImportacao, VERSION, SCHEMA, hashConteudo, estadoRevisao, DEFAULT_AUTHOR, REGISTROS, DESTINATARIOS, INTERIOR_STYLES, AVATAR_OPTIONS, LOGO_OPTIONS, BLOCK_PEDAGOGY, CONTENT_PROFILES, EPISTEMIC, BLOCK_TYPES, POSTER_THEMES, COVER_CSS, POSTER_CSS, DOC_CSS, VISUALS, esc, uid, wc, clone, detectType, sanitizeSvg, renderMarkdown, renderCleanCover, renderPoster, buildImagePrompt, buildRequestText, normalize, fromV2, parseModelJson, importFromText, audit, toMarkdown, toHTML, toApostila, CALLOUTS, scaffold, demo };
+  return { BLUEPRINT_SCHEMA, UNIT_SCHEMA, estadoAcumulado, buildBlueprintRequest, normalizeBlueprint, importBlueprint, hashBlueprint, estadoBlueprint, approveBlueprint, proximaUnidade, buildUnitRequest, applyUnit, problemasParaReparo, buildRepairPrompt, applyRepair, REPAIR_SCHEMA, avisosDeImportacao, VERSION, SCHEMA, hashConteudo, estadoRevisao, DEFAULT_AUTHOR, REGISTROS, DESTINATARIOS, INTERIOR_STYLES, AVATAR_OPTIONS, LOGO_OPTIONS, BLOCK_PEDAGOGY, CONTENT_PROFILES, EPISTEMIC, BLOCK_TYPES, POSTER_THEMES, COVER_CSS, POSTER_CSS, DOC_CSS, VISUALS, esc, uid, wc, clone, detectType, sanitizeSvg, renderMarkdown, renderCleanCover, renderPoster, buildImagePrompt, buildRequestText, normalize, fromV2, parseModelJson, importFromText, audit, toMarkdown, toHTML, toApostila, CALLOUTS, scaffold, demo };
 });

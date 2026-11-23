@@ -38,6 +38,10 @@ O contrato de troca é o `mathlab.material/2`, versão menor 2.1 (`docs/CONTRATO
 
 Só o site registra validação humana. Estado de revisão que venha em um JSON é ignorado, com aviso.
 
+### Memória acumulada entre unidades
+
+No plano por unidades, o pedido de cada unidade leva o que as anteriores já ensinaram: termos definidos, notação adotada, o que pode ser pressuposto e os títulos de exemplos e atividades já usados, para a IA trazer outros. A lista não repete itens (ignora maiúsculas e acentos), guarda só os mais recentes quando passa do teto (24 termos, 12 notações, 16 pressupostos, 12 exemplos) e aparece na tela antes de você copiar o pedido. Ao aplicar uma unidade, o site avisa se ela redefine um conceito que já foi definido antes.
+
 ## Pacotes de domínio (assuntos novos)
 
 Cada tipo de assunto tem um pacote de regras: blocos que não podem faltar, erros típicos de quem aprende, visuais que fazem sentido, cuidados de segurança e o que a auditoria deve conferir. Na aba **Criar**, o card "Regras do domínio" mostra o pacote em uso e o texto que vai junto com o pedido.

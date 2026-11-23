@@ -80,7 +80,7 @@ test('aplicar a unidade 1 acumula blocos e guarda o que passa para a 2', () => {
   const r = C.applyUnit(aprovado(), unidade('u1')); assert.strictEqual(r.ok, true); assert.strictEqual(r.added, 1); assert.strictEqual(r.completo, false);
   assert.strictEqual(r.blueprint.material.blocks[0].id, 'u1_b1');
   const p2 = C.buildUnitRequest(r.blueprint); assert.strictEqual(p2.unitId, 'u2');
-  assert.match(p2.texto, /Herdado da unidade anterior/); assert.match(p2.texto, /Termos: espaço amostral/); assert.match(p2.texto, /Notação: Ω/);
+  assert.match(p2.texto, /Estado acumulado das unidades 1 a 1/); assert.match(p2.texto, /Termos já definidos: espaço amostral/); assert.match(p2.texto, /Notação adotada: Ω/);
 });
 
 test('unidade fora de ordem é recusada', () => {
@@ -112,4 +112,36 @@ test('aplicar unidade não altera o plano original (imutável)', () => {
 
 test('a aprovação sobrevive ao progresso: gerar unidades não desatualiza o plano', () => {
   const r = C.applyUnit(aprovado(), unidade('u1')); assert.strictEqual(C.estadoBlueprint(r.blueprint).aprovado, true);
+});
+
+/* ---------- estado acumulado entre unidades ---------- */
+const plano3 = () => {
+  const bp = aprovado(); bp.units.push({ id: 'u3', title: 'Terceira', goal: 'g3', mustCover: [], blockTypes: [] });
+  const ap = C.approveBlueprint(bp, 'Alê'); return ap.ok ? ap.blueprint : bp;
+};
+test('estado acumulado reúne as unidades anteriores, sem repetição e na ordem', () => {
+  let bp = plano3();
+  bp = C.applyUnit(bp, unidade('u1', { forNextUnit: { terms: ['espaço amostral', 'evento'], notation: ['Ω'], assumed: ['listar resultados'] } })).blueprint;
+  bp = C.applyUnit(bp, unidade('u2', { forNextUnit: { terms: ['Espaço Amostral', 'probabilidade'], notation: ['P(A)'], assumed: [] } })).blueprint;
+  const ac = C.estadoAcumulado(bp, 2);
+  assert.deepStrictEqual(ac.terms, ['evento', 'Espaço Amostral', 'probabilidade']); assert.deepStrictEqual(ac.notation, ['Ω', 'P(A)']); assert.deepStrictEqual(ac.assumed, ['listar resultados']);
+  const r = C.buildUnitRequest(bp); assert.strictEqual(r.unitId, 'u3');
+  assert.match(r.texto, /Estado acumulado das unidades 1 a 2/); assert.match(r.texto, /Termos já definidos: .*probabilidade/); assert.match(r.texto, /Notação adotada: Ω; P\(A\)/);
+});
+test('estado acumulado tem teto e guarda os mais recentes', () => {
+  const bp = plano3(); bp.progress = { u1: { forNext: { terms: Array.from({ length: 40 }, (_, i) => 't' + i), notation: [], assumed: [] } } };
+  const ac = C.estadoAcumulado(bp, 3); assert.strictEqual(ac.terms.length, 24); assert.strictEqual(ac.terms[23], 't39');
+  assert.deepStrictEqual(C.estadoAcumulado(bp, 0).terms, []);
+});
+test('exemplos e atividades já usados entram no pedido para não se repetirem', () => {
+  let bp = plano3();
+  bp = C.applyUnit(bp, unidade('u1', { blocks: [{ type: 'exemplo', title: 'Lançar um dado', content: 'x' }, { type: 'conceito', title: 'C', content: 'y' }] })).blueprint;
+  const r = C.buildUnitRequest(bp); assert.match(r.texto, /já usados \(traga outros\): Lançar um dado/); assert.doesNotMatch(r.texto, /usados.*: C\b/);
+});
+test('aviso quando a nova unidade redefine um termo já ensinado', () => {
+  let bp = plano3();
+  bp = C.applyUnit(bp, unidade('u1', { forNextUnit: { terms: ['Espaço amostral'], notation: [], assumed: [] } })).blueprint;
+  const r = C.applyUnit(bp, unidade('u2', { blocks: [{ type: 'conceito', title: 'espaço  AMOSTRAL', content: 'de novo' }] }));
+  assert.ok(r.ok); assert.ok(r.warnings.some((w) => /já foi definido na unidade u1/.test(w)));
+  assert.ok(!C.applyUnit(bp, unidade('u2')).warnings.some((w) => /já foi definido/.test(w)));
 });
