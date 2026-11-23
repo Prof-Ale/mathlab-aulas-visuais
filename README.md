@@ -38,6 +38,12 @@ O contrato de troca é o `mathlab.material/2`, versão menor 2.1 (`docs/CONTRATO
 
 Só o site registra validação humana. Estado de revisão que venha em um JSON é ignorado, com aviso.
 
+## Pacotes de domínio (assuntos novos)
+
+Cada tipo de assunto tem um pacote de regras: blocos que não podem faltar, erros típicos de quem aprende, visuais que fazem sentido, cuidados de segurança e o que a auditoria deve conferir. Na aba **Criar**, o card "Regras do domínio" mostra o pacote em uso e o texto que vai junto com o pedido.
+
+Os 7 tipos de conhecimento já vêm prontos. Para um assunto que não cabe neles, como mecânica automotiva ou fotografia, abra "Assunto novo", copie o pedido de pacote, cole no Gem e traga a resposta de volta (formato `mathlab.domain/1`). O site normaliza o pacote, avisa o que descartou (bloco que não existe, visual fora do catálogo, regra contraditória) e guarda no seu navegador. Na aba **Auditoria**, um card novo confere o material contra as regras do pacote. A conferência olha tipos de bloco e palavras, então não substitui a leitura do professor. Planos e pacotes também entram no backup da Biblioteca.
+
 ## Instalar o Gem (Gemini Pro)
 
 1. Em gemini.google.com, abra **Gems → Novo Gem**.
