@@ -1,7 +1,7 @@
 /* MathLab Aulas Visuais — interface. Tudo roda no navegador; nada é enviado a servidor algum. */
 (function () {
   'use strict';
-  const C = window.MathLabCore, esc = C.esc;
+  const C = window.MathLabCore, esc = C.esc, D = window.MathLabDominios || null;
   const KEY = 'mathlab.lib.v2';
   const $ = (s, r) => (r || document).querySelector(s);
 
@@ -15,7 +15,7 @@
 
   const S = { tab: 'biblioteca', pid: null, mid: null, draft: null, dirty: false, showPrev: false, showVers: false, showArch: false,
     diario: (() => { try { return JSON.parse(localStorage.getItem('mathlab.diario.v1') || 'null'); } catch (e) { return null; } })(),
-    form: { author: C.DEFAULT_AUTHOR, discipline: '', level: '', topic: '', duration: '1 aula de 50 minutos', objectives: '', type: 'auto', contentProfile: 'completo', registro: 'escolar', destinatario: 'estudante', target: '', pasted: '' }, vis: { kind: 'numberLine', text: '-6, 6, -2, 5', title: '' } };
+    form: { author: C.DEFAULT_AUTHOR, discipline: '', level: '', topic: '', duration: '1 aula de 50 minutos', objectives: '', type: 'auto', contentProfile: 'completo', registro: 'escolar', destinatario: 'estudante', target: '', pasted: '', domainId: '', domainResp: '' }, vis: { kind: 'numberLine', text: '-6, 6, -2, 5', title: '' } };
 
   /* ---------- modelo: projetos > materiais > versões ---------- */
   const proj = (id) => lib.projects.find((p) => p.id === (id || S.pid));
@@ -169,6 +169,27 @@
       '<div class="card"><h3>Backup</h3><p class="muted">Seus dados ficam só neste navegador. Baixe um backup de vez em quando.</p><div class="btns"><button class="b ghost" data-a="backup">Baixar backup da biblioteca</button><label class="b ghost" style="display:inline-block;margin:0;cursor:pointer">Restaurar backup<input type="file" accept=".json,application/json" data-a="restore" style="display:none"></label></div></div>';
   }
 
+  /* ---------- Domínio do assunto (Passe 0) ---------- */
+  function tipoDoForm(f) { return f.type && f.type !== 'auto' && C.EPISTEMIC[f.type] ? f.type : C.detectType(f.discipline); }
+  function packDoForm(f) { return D ? D.achar(f.domainId, lib.domains, tipoDoForm(f)) : null; }
+  function cardDominio() {
+    if (!D) return '';
+    const f = S.form, packs = D.listar(lib.domains), p = packDoForm(f);
+    return '<div class="card" id="card-dominio"><h3>Regras do domínio</h3><p class="muted">O pedido leva as regras do tipo de assunto: blocos que não podem faltar, erros típicos e cuidados. Para um assunto fora dos 7 tipos (por exemplo mecânica automotiva), peça um pacote novo ao Gem.</p>' +
+      '<label for="dm-sel">Pacote em uso</label><select id="dm-sel" data-form="domainId"><option value=""' + (f.domainId ? '' : ' selected') + '>Automático: ' + esc((D.achar('', lib.domains, tipoDoForm(f)) || {}).nome || '') + '</option>' +
+      packs.map((x) => '<option value="' + esc(x.id) + '"' + (f.domainId === x.id ? ' selected' : '') + '>' + esc(x.nome) + (x.origem === 'meta-adaptador' ? ' (seu pacote)' : '') + '</option>').join('') + '</select>' +
+      (p ? '<details><summary>Ver as regras que vão no pedido</summary><pre style="white-space:pre-wrap">' + esc(D.regrasTexto(p)) + '</pre></details>' : '') +
+      '<details><summary>Assunto novo: pedir um pacote ao Gem</summary><div class="btns"><button class="b ghost" data-a="copydomainreq">Copiar pedido de pacote</button></div>' +
+      '<label for="dm-resp">Cole a resposta (formato ' + D.DOMAIN_SCHEMA + ')</label><textarea id="dm-resp" data-form="domainResp" rows="4">' + esc(f.domainResp || '') + '</textarea><div class="btns"><button class="b" data-a="importdomain">Importar pacote</button></div></details></div>';
+  }
+  function dominioAud(d) {
+    if (!D || !d) return '';
+    const f = { type: d.epistemicType, discipline: d.discipline, domainId: S.form.domainId }, p = D.achar(f.domainId, lib.domains, tipoDoForm(f));
+    if (!p) return '';
+    const L = D.auditar(d, p);
+    return '<div class="card"><h3>Regras do domínio: ' + esc(p.nome) + '</h3>' + (L.length ? L.map((x) => '<div class="find ' + (x.nivel === 'warn' ? 'warn' : 'info') + '">' + (x.nivel === 'warn' ? '⚠️' : 'ℹ️') + ' ' + esc(x.msg) + '</div>').join('') : '<p class="muted">O material atende às regras deste domínio.</p>') + '<p class="muted">São conferências por tipos de bloco e palavras. Não substituem a sua leitura.</p></div>';
+  }
+
   /* ---------- Criar ---------- */
   function vCriar() {
     const f = S.form;
@@ -181,6 +202,7 @@
       '<div><label for="cr-dest">Destinatário</label><select id="cr-dest" data-form="destinatario">' + Object.keys(C.DESTINATARIOS).map((k) => opt(k, C.DESTINATARIOS[k], f.destinatario === k)).join('') + '</select></div>' +
       '<div><label for="cr-target">Salvar no projeto</label><select id="cr-target" data-form="target">' + opt('', '(criar projeto novo)', !f.target) + lib.projects.filter((p) => !p.archived).map((p) => opt(p.id, p.name, f.target === p.id)).join('') + '</select></div></div>' +
       '<label for="cr-obj">Objetivos desejados (opcional)</label><textarea id="cr-obj" data-form="objectives" rows="2">' + esc(f.objectives) + '</textarea></div>' +
+      cardDominio() +
       '<div class="card steps"><h3>Caminho sem custo (recomendado)</h3>' +
       '<div class="step"><b>Copie o pedido</b> e cole no seu Gem do Gemini (ou no Claude com a skill instalada).<div class="btns"><button class="b gold" data-a="copyreq">Copiar pedido</button></div></div>' +
       '<div class="step"><b>Cole aqui o JSON</b> que ele devolveu e importe.<textarea data-form="pasted" rows="6" placeholder="Cole aqui o bloco JSON inteiro…">' + esc(f.pasted) + '</textarea><div class="btns"><button class="b" data-a="importjson">Importar material</button></div></div>' +
@@ -280,6 +302,7 @@
     return '<div class="card"><h2>Auditoria de qualidade</h2><div style="display:flex;gap:24px;align-items:center;flex-wrap:wrap"><div><div class="score">' + a.score + '</div><span class="muted">de 100 · ' + a.words + ' palavras</span></div><div>' + lvlPill(a.level) + '<p class="muted" style="max-width:520px">' + esc(a.note) + '</p></div></div></div>' +
       v2Html +
       (a.hard.length ? '<div class="card" style="border-color:var(--bad)"><h3 style="color:var(--bad)">Falhas graves (' + a.hard.length + ')</h3>' + a.hard.map((x) => '<div class="find hard">⛔ <b>' + esc(x.cat) + ':</b> ' + esc(x.msg) + '</div>').join('') + '</div>' : '') +
+      dominioAud(d) +
       '<div class="card"><h3>10 categorias</h3>' + a.categories.map((c) => '<div class="cat"><span>' + esc(c.name) + '</span><div class="bar"><i style="width:' + c.score * 10 + '%;background:' + (c.score >= 8 ? 'var(--ok)' : c.score >= 5 ? 'var(--warn)' : 'var(--bad)') + '"></i></div><b>' + c.score + '</b></div>' + c.findings.map((f) => '<div class="find ' + f.sev + '">' + (f.sev === 'hard' ? '⛔' : f.sev === 'warn' ? '⚠️' : 'ℹ️') + ' ' + esc(f.msg) + '</div>').join('')).join('') + '</div>' +
       '<div class="card"><h3>Revisão do professor</h3><p class="muted">A auditoria automática não confirma se o conteúdo está certo. Só você faz isso.</p><label><input type="checkbox" style="width:auto" data-a="review" ' + (tr && tr.done ? 'checked' : '') + '> Revisei o conteúdo e assumo a validação final' + (tr && tr.at ? ' (em ' + fmt(tr.at) + ')' : '') + '</label><p class="muted">Salve uma nova versão para registrar a revisão.</p></div>';
   }
@@ -382,15 +405,22 @@
     openmat: (el) => openMat(el.dataset.p, el.dataset.m),
     dupmat: (el) => { const p = proj(), r = p.materials.find((x) => x.id === el.dataset.m), c = C.clone(r); c.id = C.uid('m'); const d = curData(c); d.title += ' (cópia)'; p.materials.unshift(c); logp(p, 'Material duplicado'); persist(); render(); },
     delmat: (el) => { const p = proj(), r = p.materials.find((x) => x.id === el.dataset.m); if (!confirm('Excluir "' + curData(r).title + '" com todas as versões? Isso não pode ser desfeito.')) return; p.materials = p.materials.filter((x) => x !== r); if (S.mid === r.id) { S.draft = null; S.mid = null; S.dirty = false; } logp(p, 'Material excluído'); persist(); render(); },
-    backup: () => dl('mathlab-backup-' + new Date().toISOString().slice(0, 10) + '.json', 'application/json', JSON.stringify({ app: 'mathlab', version: 2, projects: lib.projects }, null, 2)),
+    backup: () => dl('mathlab-backup-' + new Date().toISOString().slice(0, 10) + '.json', 'application/json', JSON.stringify({ app: 'mathlab', version: 2, projects: lib.projects, plans: lib.plans || [], domains: lib.domains || [] }, null, 2)),
     restore: (el) => {
       const f = el.files[0]; if (!f) return;
       const rd = new FileReader(); rd.onload = () => {
-        try { const j = JSON.parse(rd.result); if (!Array.isArray(j.projects)) throw new Error('arquivo sem projetos'); let n = 0; j.projects.forEach((p) => { if (!lib.projects.some((x) => x.id === p.id)) { lib.projects.push(p); n++; } }); persist(); render(); toast(n + ' projeto(s) restaurado(s); os que já existiam foram mantidos.'); }
+        try { const j = JSON.parse(rd.result); if (!Array.isArray(j.projects)) throw new Error('arquivo sem projetos'); let n = 0; j.projects.forEach((p) => { if (!lib.projects.some((x) => x.id === p.id)) { lib.projects.push(p); n++; } });
+          ['plans', 'domains'].forEach((k) => { if (Array.isArray(j[k])) { lib[k] = lib[k] || []; j[k].forEach((o) => { if (o && o.id && !lib[k].some((x) => x.id === o.id)) lib[k].push(o); }); } }); persist(); render(); toast(n + ' projeto(s) restaurado(s); os que já existiam foram mantidos.'); }
         catch (e) { toast('Backup inválido: ' + e.message, true); }
       }; rd.readAsText(f);
     },
-    copyreq: async () => { const t = C.buildRequestText(S.form); toast((await copy(t)) ? 'Pedido copiado. Cole no seu Gem ou no Claude.' : 'Não consegui copiar automaticamente.', false); },
+    copyreq: async () => { const t = C.buildRequestText(S.form) + (D && packDoForm(S.form) ? '\n\n' + D.regrasTexto(packDoForm(S.form)) : ''); toast((await copy(t)) ? 'Pedido copiado. Cole no seu Gem ou no Claude.' : 'Não consegui copiar automaticamente.', false); },
+    copydomainreq: async () => { if (!D) return; toast((await copy(D.buildDomainRequest({ topic: S.form.topic, discipline: S.form.discipline, level: S.form.level }))) ? 'Pedido de pacote copiado. Cole no seu Gem.' : 'Não consegui copiar automaticamente.', false); },
+    importdomain: () => {
+      if (!D) return; const r = D.importDomain(S.form.domainResp); if (!r.ok) { toast(r.error, true); return; }
+      lib.domains = (lib.domains || []).filter((x) => x.id !== r.pack.id); lib.domains.unshift(r.pack); S.form.domainId = r.pack.id; S.form.domainResp = ''; persist();
+      toast('Pacote "' + r.pack.nome + '" importado e em uso.' + (r.warnings.length ? ' ' + r.warnings.join(' ') : ''), false); render();
+    },
     copyplanreq: async () => { toast((await copy(C.buildBlueprintRequest(S.form))) ? 'Pedido de plano copiado. Cole no seu Gem.' : 'Não consegui copiar automaticamente.', false); },
     importplan: () => {
       const r = C.importBlueprint(S.form.planoResp); if (!r.ok) { toast(r.error, true); return; }
