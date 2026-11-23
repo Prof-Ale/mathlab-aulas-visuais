@@ -1,0 +1,56 @@
+'use strict';
+/* O manifesto é a fonte única das versões. Se uma peça mudar sem o manifesto, estes testes quebram. */
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const root = path.join(__dirname, '..');
+const ler = (p) => fs.readFileSync(path.join(root, p), 'utf8');
+const M = JSON.parse(ler('manifest.json'));
+const C = require('../js/core.js');
+const D = require('../js/dominios.js');
+
+test('versão do pacote e do motor batem com package.json e core.js', () => {
+  assert.equal(M.pacote, JSON.parse(ler('package.json')).version);
+  assert.equal(M.motor, C.VERSION);
+});
+test('identificadores de contrato e formatos auxiliares batem com o código', () => {
+  assert.equal(M.contrato.schema, C.SCHEMA);
+  assert.equal(M.formatosAuxiliares.blueprint, C.BLUEPRINT_SCHEMA);
+  assert.equal(M.formatosAuxiliares.unidade, C.UNIT_SCHEMA);
+  assert.equal(M.formatosAuxiliares.reparo, C.REPAIR_SCHEMA);
+  assert.equal(M.formatosAuxiliares.dominio, D.DOMAIN_SCHEMA);
+});
+test('o schema JSON, o exemplo e a documentação falam a mesma versão de contrato', () => {
+  const sch = JSON.parse(ler(M.contrato.arquivo));
+  assert.equal(sch.properties.schema.const, M.contrato.schema);
+  assert.match(sch.title + sch.description, new RegExp(M.contrato.versao.replace('.', '\\.')));
+  assert.equal(JSON.parse(ler(M.contrato.exemplo)).contractVersion, M.contrato.versao);
+  assert.match(ler('docs/CONTRATO_MATERIAL_2.md'), new RegExp(M.contrato.versao.replace('.', '\\.')));
+});
+test('as três instruções (Skill, Gem, GPT) estão na versão do manifesto e na mesma versão entre si', () => {
+  const v = M.instrucoes.versao;
+  M.instrucoes.arquivos.forEach((a) => {
+    const t = ler(a);
+    assert.ok(t.includes('v' + v), a + ' não declara v' + v);
+    assert.ok(!/v1\.[0-5]\.\d/.test(t.split('\n').slice(0, 10).join('\n')), a + ' ainda cita versão antiga no cabeçalho');
+  });
+  assert.ok(ler('gemini/GEM_INSTRUCOES.md').includes('"version":"' + v + '"'));
+  assert.ok(ler('skill/SKILL.md').includes('"version": "' + v + '"'));
+});
+test('módulos de script: index.html, manifesto e build-standalone listam os mesmos, na mesma ordem', () => {
+  const html = [...ler('index.html').matchAll(/<script src="(js\/[^"]+)"/g)].map((m) => m[1]);
+  assert.deepEqual(html, M.modulos);
+  M.modulos.forEach((m) => assert.ok(fs.existsSync(path.join(root, m)), m + ' não existe'));
+  const build = ler('tools/build-standalone.js');
+  let ultimo = -1; M.modulos.forEach((m) => { const i = build.indexOf(m); assert.ok(i > ultimo, m + ' ausente ou fora de ordem no build'); ultimo = i; });
+});
+test('o standalone gerado carrega todos os módulos', () => {
+  const f = path.join(root, 'dist/mathlab-standalone.html'); if (!fs.existsSync(f)) return;
+  const t = fs.readFileSync(f, 'utf8');
+  ['MathLabCore', 'MathLabDominios', 'MathLabLivro', 'MathLabFontes'].forEach((k) => assert.ok(t.includes(k), k));
+});
+test('todo teste do diretório tests está no script npm test', () => {
+  const scripts = JSON.parse(ler('package.json')).scripts.test;
+  fs.readdirSync(path.join(root, 'tests')).filter((f) => f.endsWith('.test.js')).forEach((f) => assert.ok(scripts.includes('tests/' + f), f + ' fora do npm test'));
+});

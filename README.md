@@ -44,6 +44,12 @@ Na aba **Criar**, o card "Fontes do autor" guarda trechos de livros, normas ou a
 
 Na **Auditoria**, o card "Uso das fontes do autor" confere o resultado: marcador que não existe, fonte escolhida e nunca citada, e sequência de 12 palavras ou mais igual à da fonte (cópia literal). É conferência automática, não substitui a leitura.
 
+### Manifesto de versões
+
+O arquivo `manifest.json` é a fonte única das versões: pacote, motor, contrato (`mathlab.material/2`, versão menor 2.1), formatos auxiliares (`blueprint`, `unit`, `repair`, `domain`), instruções da Skill, do Gem e do GPT, e a lista de módulos de script. Os testes de `tests/manifesto.test.js` comparam o manifesto com `package.json`, `core.js`, o schema JSON, o exemplo, a documentação do contrato, as três instruções, o `index.html` e o `build-standalone.js`. Se uma peça mudar sem o manifesto, `npm test` falha. Também falha se um arquivo novo em `tests/` ficar fora do `npm test`.
+
+Para subir de versão, mude primeiro o `manifest.json` e depois as peças que o teste apontar.
+
 ### Memória acumulada entre unidades
 
 No plano por unidades, o pedido de cada unidade leva o que as anteriores já ensinaram: termos definidos, notação adotada, o que pode ser pressuposto e os títulos de exemplos e atividades já usados, para a IA trazer outros. A lista não repete itens (ignora maiúsculas e acentos), guarda só os mais recentes quando passa do teto (24 termos, 12 notações, 16 pressupostos, 12 exemplos) e aparece na tela antes de você copiar o pedido. Ao aplicar uma unidade, o site avisa se ela redefine um conceito que já foi definido antes.

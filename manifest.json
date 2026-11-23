@@ -1,0 +1,22 @@
+{
+  "manifesto": 1,
+  "projeto": "MathLab Aulas Visuais (site)",
+  "pacote": "1.6.0",
+  "motor": "2.0.0",
+  "contrato": { "schema": "mathlab.material/2", "versao": "2.1", "arquivo": "schema/mathlab.material.2.schema.json", "exemplo": "schema/exemplos/exemplo-material2-1.json" },
+  "formatosAuxiliares": {
+    "blueprint": "mathlab.blueprint/1",
+    "unidade": "mathlab.unit/1",
+    "reparo": "mathlab.repair/1",
+    "dominio": "mathlab.domain/1"
+  },
+  "instrucoes": {
+    "versao": "1.6.0",
+    "arquivos": ["skill/SKILL.md", "gemini/GEM_INSTRUCOES.md", "chatgpt/CHATGPT_GPT_INSTRUCOES.md"]
+  },
+  "modulos": ["js/racional.js", "js/auditar-v2.js", "js/portfolio.js", "js/core.js", "js/dominios.js", "js/livro.js", "js/fontes.js", "js/app.js"],
+  "compatibilidade": {
+    "appNode": "Troca de arquivos com o contrato mathlab.material/2 a partir da versão menor 2.1. O App confere isso em tools/conferir-contrato.mjs.",
+    "regra": "Subir a versão menor do contrato só quando se acrescenta campo opcional. Mudança que quebra leitores antigos exige mathlab.material/3."
+  }
+}
