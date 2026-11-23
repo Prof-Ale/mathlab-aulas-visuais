@@ -44,6 +44,16 @@ Cada tipo de assunto tem um pacote de regras: blocos que não podem faltar, erro
 
 Os 7 tipos de conhecimento já vêm prontos. Para um assunto que não cabe neles, como mecânica automotiva ou fotografia, abra "Assunto novo", copie o pedido de pacote, cole no Gem e traga a resposta de volta (formato `mathlab.domain/1`). O site normaliza o pacote, avisa o que descartou (bloco que não existe, visual fora do catálogo, regra contraditória) e guarda no seu navegador. Na aba **Auditoria**, um card novo confere o material contra as regras do pacote. A conferência olha tipos de bloco e palavras, então não substitui a leitura do professor. Planos e pacotes também entram no backup da Biblioteca.
 
+## Livro ou caderno (vários materiais em uma obra)
+
+A aba **Livro** junta materiais da biblioteca em uma obra só. Você marca os materiais, escolhe a ordem com as setas e define título, subtítulo e autor. A compilação gera capa, sumário com links, ficha de revisão, um capítulo por material, glossário consolidado, caderno de respostas e referências sem repetição.
+
+* **Caderno de respostas:** os blocos de gabarito saem do capítulo e vão para o fim. Desmarque a opção se preferir o gabarito no próprio capítulo
+* **Glossário:** reúne o título de cada bloco de conceito e os termos em negrito que aparecem em frases de definição. Ordem alfabética, sem repetição. Conferir as definições faz parte da revisão
+* **Honestidade:** a ficha de revisão mostra o estado real de cada capítulo. O livro só afirma validação quando todos os capítulos têm a validação do professor atualizada. Se um capítulo mudou depois de validado, ele aparece como desatualizado
+* **Avisos:** título repetido, capítulo sem blocos e exercícios sem gabarito aparecem antes de você baixar
+* **Saída:** HTML autocontido, sem recursos externos, ou impressão em PDF pelo navegador. O número de página não aparece no sumário, porque o navegador não calcula isso em HTML; os links do sumário funcionam
+
 ## Instalar o Gem (Gemini Pro)
 
 1. Em gemini.google.com, abra **Gems → Novo Gem**.

@@ -1,7 +1,7 @@
 /* MathLab Aulas Visuais — interface. Tudo roda no navegador; nada é enviado a servidor algum. */
 (function () {
   'use strict';
-  const C = window.MathLabCore, esc = C.esc, D = window.MathLabDominios || null;
+  const C = window.MathLabCore, esc = C.esc, D = window.MathLabDominios || null, LV = window.MathLabLivro || null;
   const KEY = 'mathlab.lib.v2';
   const $ = (s, r) => (r || document).querySelector(s);
 
@@ -15,6 +15,7 @@
 
   const S = { tab: 'biblioteca', pid: null, mid: null, draft: null, dirty: false, showPrev: false, showVers: false, showArch: false,
     diario: (() => { try { return JSON.parse(localStorage.getItem('mathlab.diario.v1') || 'null'); } catch (e) { return null; } })(),
+    book: { sel: [], title: '', subtitle: '', author: '', glossary: true, answers: true, references: true, show: false },
     form: { author: C.DEFAULT_AUTHOR, discipline: '', level: '', topic: '', duration: '1 aula de 50 minutos', objectives: '', type: 'auto', contentProfile: 'completo', registro: 'escolar', destinatario: 'estudante', target: '', pasted: '', domainId: '', domainResp: '' }, vis: { kind: 'numberLine', text: '-6, 6, -2, 5', title: '' } };
 
   /* ---------- modelo: projetos > materiais > versões ---------- */
@@ -102,12 +103,12 @@
   const lvlPill = (l) => '<span class="pill ' + (/Reprovado/.test(l) ? 'bad' : /Pronto/.test(l) ? 'ok' : 'warn') + '">' + esc(l) + '</span>';
 
   /* ---------- abas ---------- */
-  const TABS = [['biblioteca', '📚 Biblioteca'], ['criar', '✨ Criar'], ['plano', '🧭 Plano por unidades'], ['editor', '✏️ Editor'], ['poster', '🖼️ Capa (pôster)'], ['apostila', '📘 Apostila completa'], ['auditoria', '🔍 Auditoria'], ['exportar', '📤 Exportar'], ['diario', '📒 Diário & Portfólio'], ['ajuda', '❓ Ajuda']];
+  const TABS = [['biblioteca', '📚 Biblioteca'], ['criar', '✨ Criar'], ['plano', '🧭 Plano por unidades'], ['livro', '📖 Livro'], ['editor', '✏️ Editor'], ['poster', '🖼️ Capa (pôster)'], ['apostila', '📘 Apostila completa'], ['auditoria', '🔍 Auditoria'], ['exportar', '📤 Exportar'], ['diario', '📒 Diário & Portfólio'], ['ajuda', '❓ Ajuda']];
   const NEED = ['editor', 'poster', 'apostila', 'auditoria', 'exportar'];
 
   function render() {
     $('#tabs').innerHTML = TABS.map((t) => '<button id="tab-' + t[0] + '" role="tab" aria-selected="' + (S.tab === t[0] ? 'true' : 'false') + '" data-a="tab" data-t="' + t[0] + '" class="' + (S.tab === t[0] ? 'on' : '') + '">' + t[1] + '</button>').join('');
-    const v = { biblioteca: vBib, criar: vCriar, plano: vPlano, editor: vEditor, poster: vPoster, apostila: vApostila, auditoria: vAud, exportar: vExp, diario: vDiario, ajuda: vAjuda }[S.tab];
+    const v = { biblioteca: vBib, criar: vCriar, plano: vPlano, livro: vLivro, editor: vEditor, poster: vPoster, apostila: vApostila, auditoria: vAud, exportar: vExp, diario: vDiario, ajuda: vAjuda }[S.tab];
     const main = $('#main');
     main.setAttribute('role', 'tabpanel');
     main.setAttribute('aria-labelledby', 'tab-' + S.tab);
@@ -147,6 +148,26 @@
     }
     return h;
   }
+
+  /* ---------- Livro (compilador) ---------- */
+  function matsDaBiblioteca() { const L = []; lib.projects.filter((p) => !p.archived).forEach((p) => p.materials.forEach((r) => L.push({ key: p.id + '|' + r.id, pid: p.id, mid: r.id, proj: p.name, data: curData(r) }))); return L; }
+  function bookMats() { const all = matsDaBiblioteca(); return S.book.sel.map((k) => all.find((x) => x.key === k)).filter(Boolean); }
+  function vLivro() {
+    const b = S.book, all = matsDaBiblioteca(), sel = bookMats();
+    if (!LV) return '<div class="card"><p>O compilador de livro não foi carregado.</p></div>';
+    let h = '<div class="card"><h2>Compilar livro ou caderno</h2><p class="muted">Junte materiais já prontos em uma obra só: capa, sumário, capítulos na ordem que você escolher, glossário, caderno de respostas e referências. O livro mostra o estado real de revisão de cada capítulo e nunca se declara validado por conta própria.</p>';
+    h += all.length ? '<h3>Materiais da biblioteca</h3>' + all.map((x) => '<div class="list-item"><label style="display:flex;gap:8px;align-items:center"><input type="checkbox" style="width:auto" data-a="booktoggle" data-k="' + esc(x.key) + '"' + (b.sel.includes(x.key) ? ' checked' : '') + '> <span><b>' + esc(x.data.title) + '</b><br><span class="muted">' + esc(x.proj) + '</span></span></label></div>').join('')
+      : '<p class="muted">A biblioteca está vazia. Crie ou importe materiais primeiro.</p>';
+    h += '</div>';
+    if (!sel.length) return h;
+    h += '<div class="card"><h3>Ordem dos capítulos</h3><ol>' + sel.map((x, i) => '<li>' + esc(x.data.title) + ' <span class="btns" style="display:inline-flex"><button class="b ghost sm" data-a="bookup" data-i="' + i + '" aria-label="Subir">↑</button><button class="b ghost sm" data-a="bookdown" data-i="' + i + '" aria-label="Descer">↓</button></span></li>').join('') + '</ol>' +
+      '<div class="row"><div><label for="bk-t">Título do livro</label><input id="bk-t" data-book="title" value="' + esc(b.title) + '" placeholder="Ex.: Caderno do 8º ano"></div><div><label for="bk-s">Subtítulo</label><input id="bk-s" data-book="subtitle" value="' + esc(b.subtitle) + '"></div><div><label for="bk-a">Autor</label><input id="bk-a" data-book="author" value="' + esc(b.author) + '" placeholder="' + esc(C.DEFAULT_AUTHOR) + '"></div></div>' +
+      '<label><input type="checkbox" style="width:auto" data-a="bookopt" data-o="glossary"' + (b.glossary ? ' checked' : '') + '> Glossário</label> <label><input type="checkbox" style="width:auto" data-a="bookopt" data-o="answers"' + (b.answers ? ' checked' : '') + '> Caderno de respostas</label> <label><input type="checkbox" style="width:auto" data-a="bookopt" data-o="references"' + (b.references ? ' checked' : '') + '> Referências</label>' +
+      '<div class="btns"><button class="b gold" data-a="bookprev">👁️ Compilar e ver</button><button class="b" data-a="dlbook2">⬇️ Baixar HTML</button><button class="b ghost" data-a="printbook2">🖨️ Imprimir / salvar PDF</button></div></div>';
+    if (b.show) { const r = compilar(); h += r.ok ? '<div class="card"><h3>Prévia</h3>' + (r.warnings.length ? '<div class="find warn">' + r.warnings.map((w) => '⚠️ ' + esc(w)).join('<br>') + '</div>' : '') + '<p class="muted">' + r.chapters + ' capítulo(s) · ' + r.glossary.length + ' termo(s) no glossário · ' + r.validated + ' de ' + r.chapters + ' com validação do professor</p><iframe title="Prévia do livro" style="width:100%;height:70vh;border:0;border-radius:10px;background:#e9edf5" srcdoc="' + esc(r.html) + '"></iframe></div>' : '<div class="card"><p>' + esc(r.error) + '</p></div>'; }
+    return h;
+  }
+  function compilar() { const b = S.book; return LV.compileBook(bookMats().map((x) => x.data), { title: b.title, subtitle: b.subtitle, author: b.author, glossary: b.glossary, answers: b.answers, references: b.references }); }
 
   /* ---------- Biblioteca ---------- */
   function vBib() {
@@ -415,6 +436,13 @@
       }; rd.readAsText(f);
     },
     copyreq: async () => { const t = C.buildRequestText(S.form) + (D && packDoForm(S.form) ? '\n\n' + D.regrasTexto(packDoForm(S.form)) : ''); toast((await copy(t)) ? 'Pedido copiado. Cole no seu Gem ou no Claude.' : 'Não consegui copiar automaticamente.', false); },
+    booktoggle: (el) => { const k = el.dataset.k, a = S.book.sel; if (el.checked) { if (!a.includes(k)) a.push(k); } else S.book.sel = a.filter((x) => x !== k); S.book.show = false; render(); },
+    bookopt: (el) => { S.book[el.dataset.o] = el.checked; S.book.show = false; },
+    bookup: (el) => { const i = +el.dataset.i, a = S.book.sel; if (i > 0) { [a[i - 1], a[i]] = [a[i], a[i - 1]]; S.book.show = false; render(); } },
+    bookdown: (el) => { const i = +el.dataset.i, a = S.book.sel; if (i < a.length - 1) { [a[i + 1], a[i]] = [a[i], a[i + 1]]; S.book.show = false; render(); } },
+    bookprev: () => { S.book.show = true; render(); },
+    dlbook2: () => { const r = compilar(); if (!r.ok) { toast(r.error, true); return; } dl(slug(r.title) + '-livro.html', 'text/html', r.html); },
+    printbook2: () => { const r = compilar(); if (!r.ok) { toast(r.error, true); return; } printHTML(r.html); },
     copydomainreq: async () => { if (!D) return; toast((await copy(D.buildDomainRequest({ topic: S.form.topic, discipline: S.form.discipline, level: S.form.level }))) ? 'Pedido de pacote copiado. Cole no seu Gem.' : 'Não consegui copiar automaticamente.', false); },
     importdomain: () => {
       if (!D) return; const r = D.importDomain(S.form.domainResp); if (!r.ok) { toast(r.error, true); return; }
@@ -527,6 +555,7 @@
       const bp = curPlan(); const [i, k] = el.dataset.pu.split('.'); if (bp && bp.units[+i]) { bp.units[+i][k] = el.value; persist(); const st = $('#plano-estado'); if (st) { const e2 = C.estadoBlueprint(bp); st.textContent = e2.texto; st.className = 'pill ' + (e2.aprovado ? 'ok' : 'warn'); } }
       return;
     }
+    if (el.dataset.book) { S.book[el.dataset.book] = el.value; return; }
     if (el.dataset.form) { S.form[el.dataset.form] = el.value; return; }
     if (el.dataset.vis) { if (el.dataset.vis !== 'kind') S.vis[el.dataset.vis] = el.value; return; }
     if (el.dataset.f) {
