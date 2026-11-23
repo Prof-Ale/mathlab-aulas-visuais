@@ -2058,10 +2058,130 @@ function montarHtml(d, cfg) {
 
 </script>
 <script>
+/* MathLab Aulas Visuais: compilador de livro ou caderno.
+   Junta materiais prontos em uma obra só: capa, ficha de revisão, sumário, capítulos,
+   glossário consolidado, caderno de respostas e referências. Lógica pura: recebe materiais, devolve HTML e dados.
+   Honestidade: o livro nunca se declara validado. Ele lista o estado real de cada capítulo. */
+(function (root, factory) {
+  if (typeof module === 'object' && module.exports) module.exports = factory(require('./core.js'));
+  else root.MathLabLivro = factory(root.MathLabCore);
+})(typeof self !== 'undefined' ? self : this, function (C) {
+  'use strict';
+  const esc = C.esc;
+  const strip = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const plano = (md) => String(md || '').replace(/```[\s\S]*?```/g, ' ').replace(/[#>*_`|]/g, ' ').replace(/!\[[^\]]*\]\([^)]*\)/g, ' ').replace(/\[([^\]]+)\]\([^)]*\)/g, '$1').replace(/\s+/g, ' ').trim();
+  const primeiraFrase = (t, n) => { const m = plano(t).match(/^.{12,}?[.!?](\s|$)/); const f = (m ? m[0] : plano(t)).trim(); return f.length > (n || 220) ? f.slice(0, (n || 220) - 1).trimEnd() + '…' : f; };
+
+  /* Glossário: título de cada bloco "conceito" mais termos em negrito dentro de frases que definem. */
+  function glossario(caps) {
+    const mapa = new Map();
+    const add = (termo, def, cap) => {
+      const t = String(termo || '').replace(/[:.\s]+$/g, '').trim();
+      if (t.length < 3 || t.length > 60 || !def) return;
+      const k = strip(t);
+      if (!mapa.has(k)) mapa.set(k, { termo: t, def, cap });
+    };
+    caps.forEach((m, ci) => m.blocks.filter((b) => b.type === 'conceito').forEach((b) => {
+      add(b.title, primeiraFrase(b.content), ci + 1);
+      const frases = plano(String(b.content).replace(/\*\*([^*]+)\*\*/g, '@@$1@@')).split(/(?<=[.!?])\s+/);
+      frases.forEach((f) => { const t = f.match(/@@([^@]{3,60})@@/); if (t && /\b(é|são|chama|chamam|define|denomina|significa)\b/i.test(f)) add(t[1], f.replace(/@@/g, '').trim().slice(0, 220), ci + 1); });
+    }));
+    return [...mapa.values()].sort((a, b) => a.termo.localeCompare(b.termo, 'pt-BR'));
+  }
+
+  function referencias(caps) {
+    const mapa = new Map();
+    caps.forEach((m) => m.references.forEach((r) => {
+      const k = strip([r.authors, r.title, r.year].join('|'));
+      const atual = mapa.get(k);
+      if (!atual) mapa.set(k, Object.assign({}, r));
+      else if (r.verified && !atual.verified) mapa.set(k, Object.assign({}, r));
+    }));
+    return [...mapa.values()].sort((a, b) => strip(a.authors || a.title).localeCompare(strip(b.authors || b.title), 'pt-BR'));
+  }
+
+  const CSS = [
+    'body{font-family:"Segoe UI",Arial,sans-serif;color:#1d2433;line-height:1.55;margin:0;background:#eef1f7}',
+    '.pg{max-width:820px;margin:0 auto;background:#fff;padding:36px 44px;box-sizing:border-box}',
+    '.capa{min-height:260mm;display:flex;flex-direction:column;justify-content:center;border:10px solid #14264f;padding:40px;text-align:center}',
+    '.capa h1{font-size:2.4em;color:#14264f;margin:.2em 0}.capa .sub{font-size:1.3em;color:#55607a}.capa .aut{margin-top:2em;font-weight:700}',
+    '.pg h1.cap{color:#14264f;border-bottom:4px solid #f2b705;padding-bottom:8px;margin-top:0}.pg h2{color:#14264f}',
+    '.meta{color:#55607a;font-size:.92em;margin-bottom:14px}',
+    '.sec{border-left:6px solid #14264f;background:#f7f9fd;border-radius:0 10px 10px 0;padding:6px 18px 10px;margin:16px 0;break-inside:avoid}.sec>h3{margin:.5em 0 .3em;font-size:1.15em;color:#14264f}',
+    '.b-exemplo{border-color:#22a559;background:#f1faf4}.b-atividade{border-color:#f28a1f;background:#fff7ee}.b-exercicios{border-color:#7a4bd1;background:#f7f3ff}',
+    '.b-nota{border-color:#d6453d;background:#fff3f2}.b-acessibilidade{border-color:#0e8f8f;background:#effafa}.b-problematizacao{border-color:#f2b705;background:#fffbe6}',
+    '.fig{text-align:center;margin:10px 0}.fig svg{max-width:100%;height:auto}',
+    'table{border-collapse:collapse;margin:8px 0}th,td{border:1px solid #b9c3d9;padding:4px 10px}th{background:#e8edf8}',
+    'blockquote{border-left:4px solid #f2b705;margin:8px 0;padding:2px 12px;color:#44506b}',
+    '.toc a{color:#14264f;text-decoration:none}.toc li{margin:4px 0}.estado{font-size:.85em;padding:1px 8px;border-radius:10px;background:#fff3cd}.estado.ok{background:#d9f2e3}',
+    'dl.gl dt{font-weight:700;margin-top:8px}dl.gl dd{margin:0 0 0 16px}dl.gl small{color:#55607a}',
+    '.aviso{border:2px dashed #d6453d;padding:8px 14px;border-radius:8px;background:#fff3f2}',
+    '@page{size:A4;margin:14mm}',
+    '@media print{body{background:#fff}.pg{max-width:none;padding:0}.quebra{break-before:page}}',
+  ].join('\n');
+
+  /* opts: { title, subtitle, author, glossary:true, answers:true, references:true } */
+  function compileBook(materiais, opts) {
+    opts = opts || {};
+    const warnings = [];
+    const caps = (Array.isArray(materiais) ? materiais : []).filter((m) => m && typeof m === 'object').map((m) => C.normalize(m));
+    if (!caps.length) return { ok: false, error: 'Escolha ao menos um material para compilar.' };
+    const titulo = String(opts.title || '').trim() || (caps.length === 1 ? caps[0].title : 'Caderno de ' + (caps[0].discipline || 'estudos'));
+    const autor = String(opts.author || '').trim() || caps[0].author || C.DEFAULT_AUTHOR;
+    const subt = String(opts.subtitle || '').trim() || [...new Set(caps.map((m) => m.discipline).filter(Boolean))].join(' · ');
+    const usaGlossario = opts.glossary !== false, usaRespostas = opts.answers !== false, usaRefs = opts.references !== false;
+
+    const vistos = new Map();
+    caps.forEach((m, i) => {
+      const k = strip(m.title);
+      if (vistos.has(k)) warnings.push('Os capítulos ' + vistos.get(k) + ' e ' + (i + 1) + ' têm o mesmo título ("' + m.title + '"). Confira se não é o mesmo material duas vezes.');
+      else vistos.set(k, i + 1);
+      if (!m.blocks.length) warnings.push('O capítulo ' + (i + 1) + ' ("' + m.title + '") não tem blocos.');
+      if (m.blocks.some((b) => b.type === 'exercicios') && !m.blocks.some((b) => b.type === 'gabarito')) warnings.push('O capítulo ' + (i + 1) + ' tem exercícios, mas nenhum gabarito. O caderno de respostas ficará sem ele.');
+    });
+
+    const estados = caps.map((m) => C.estadoRevisao(m));
+    const validados = estados.filter((e) => e.validado).length;
+    const gloss = usaGlossario ? glossario(caps) : [];
+    const refs = usaRefs ? referencias(caps) : [];
+    const respostas = usaRespostas ? caps.map((m, i) => ({ cap: i + 1, titulo: m.title, blocos: m.blocks.filter((b) => b.type === 'gabarito') })).filter((x) => x.blocos.length) : [];
+
+    const toc = caps.map((m, i) => ({ href: '#cap-' + (i + 1), label: 'Capítulo ' + (i + 1) + '. ' + m.title }));
+    if (gloss.length) toc.push({ href: '#glossario', label: 'Glossário' });
+    if (respostas.length) toc.push({ href: '#respostas', label: 'Caderno de respostas' });
+    if (refs.length) toc.push({ href: '#referencias', label: 'Referências' });
+
+    const h = [];
+    h.push('<div class="pg capa"><div class="sub">' + esc(subt) + '</div><h1>' + esc(titulo) + '</h1><div class="aut">' + esc(autor) + '</div><div class="meta">' + caps.length + (caps.length === 1 ? ' capítulo' : ' capítulos') + '</div></div>');
+    h.push('<div class="pg quebra"><h2>Sumário</h2><ol class="toc" style="list-style:none;padding:0">' + toc.map((t) => '<li><a href="' + t.href + '">' + esc(t.label) + '</a></li>').join('') + '</ol>' +
+      '<h2>Ficha de revisão</h2><p class="meta">Estado real de cada capítulo. A compilação não valida nada: só o professor valida, no Editor de cada material.</p><table><tr><th>Capítulo</th><th>Estado</th></tr>' +
+      caps.map((m, i) => '<tr><td>' + (i + 1) + '. ' + esc(m.title) + '</td><td><span class="estado' + (estados[i].validado ? ' ok' : '') + '">' + esc(estados[i].texto) + '</span></td></tr>').join('') + '</table>' +
+      '<p class="' + (validados === caps.length ? 'meta' : 'aviso') + '">' + (validados === caps.length ? 'Todos os capítulos têm validação do professor atualizada.' : 'Atenção: ' + validados + ' de ' + caps.length + ' capítulos têm validação do professor. Este livro ainda não é uma obra validada.') + '</p></div>');
+    caps.forEach((m, i) => {
+      let s = '<div class="pg quebra" id="cap-' + (i + 1) + '"><h1 class="cap">Capítulo ' + (i + 1) + '. ' + esc(m.title) + '</h1><div class="meta">' + [m.discipline, m.level, m.duration].filter(Boolean).map(esc).join(' · ') + '</div>';
+      if (m.objectives.length) s += '<div class="sec b-conceito"><h3>🎯 Objetivos de aprendizagem</h3><ul>' + m.objectives.map((x) => '<li>' + esc(x) + '</li>').join('') + '</ul></div>';
+      m.blocks.filter((b) => !(usaRespostas && b.type === 'gabarito')).forEach((b) => {
+        s += '<section class="sec b-' + b.type + '"><h3>' + esc(C.BLOCK_TYPES[b.type][1]) + ' ' + esc(b.title) + '</h3>' + C.renderMarkdown(b.content) + (b.svg ? '<div class="fig">' + C.sanitizeSvg(b.svg) + '</div>' : '') + '</section>';
+      });
+      if (m.limitations.length) s += '<div class="sec"><h3>Limitações declaradas</h3><ul>' + m.limitations.map((x) => '<li>' + esc(x) + '</li>').join('') + '</ul></div>';
+      h.push(s + '</div>');
+    });
+    if (gloss.length) h.push('<div class="pg quebra" id="glossario"><h2>Glossário</h2><p class="meta">Termos reunidos dos blocos de conceito. Conferir as definições faz parte da revisão.</p><dl class="gl">' + gloss.map((g) => '<dt>' + esc(g.termo) + '</dt><dd>' + esc(g.def) + ' <small>(cap. ' + g.cap + ')</small></dd>').join('') + '</dl></div>');
+    if (respostas.length) h.push('<div class="pg quebra" id="respostas"><h2>Caderno de respostas</h2>' + respostas.map((r) => '<h3>Capítulo ' + r.cap + '. ' + esc(r.titulo) + '</h3>' + r.blocos.map((b) => '<section class="sec b-gabarito">' + C.renderMarkdown(b.content) + (b.svg ? '<div class="fig">' + C.sanitizeSvg(b.svg) + '</div>' : '') + '</section>').join('')).join('') + '</div>');
+    if (refs.length) h.push('<div class="pg quebra" id="referencias"><h2>Referências</h2><ul>' + refs.map((r) => '<li>' + esc([r.authors, r.title, r.year, r.venue].filter(Boolean).join('. ')) + (r.doi ? ' DOI ' + esc(r.doi) + '.' : '') + (r.url ? ' ' + esc(r.url) : '') + ' <small>(' + (r.verified ? 'conferida' : 'não conferida') + ')</small></li>').join('') + '</ul></div>');
+    const html = '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + esc(titulo) + '</title><style>\n' + CSS + '\n</style></head><body>' + h.join('\n') + '</body></html>';
+    return { ok: true, html, title: titulo, chapters: caps.length, validated: validados, toc, glossary: gloss, answers: respostas, references: refs, warnings };
+  }
+
+  return { compileBook, glossario, referencias };
+});
+
+</script>
+<script>
 /* MathLab Aulas Visuais — interface. Tudo roda no navegador; nada é enviado a servidor algum. */
 (function () {
   'use strict';
-  const C = window.MathLabCore, esc = C.esc, D = window.MathLabDominios || null;
+  const C = window.MathLabCore, esc = C.esc, D = window.MathLabDominios || null, LV = window.MathLabLivro || null;
   const KEY = 'mathlab.lib.v2';
   const $ = (s, r) => (r || document).querySelector(s);
 
@@ -2075,6 +2195,7 @@ function montarHtml(d, cfg) {
 
   const S = { tab: 'biblioteca', pid: null, mid: null, draft: null, dirty: false, showPrev: false, showVers: false, showArch: false,
     diario: (() => { try { return JSON.parse(localStorage.getItem('mathlab.diario.v1') || 'null'); } catch (e) { return null; } })(),
+    book: { sel: [], title: '', subtitle: '', author: '', glossary: true, answers: true, references: true, show: false },
     form: { author: C.DEFAULT_AUTHOR, discipline: '', level: '', topic: '', duration: '1 aula de 50 minutos', objectives: '', type: 'auto', contentProfile: 'completo', registro: 'escolar', destinatario: 'estudante', target: '', pasted: '', domainId: '', domainResp: '' }, vis: { kind: 'numberLine', text: '-6, 6, -2, 5', title: '' } };
 
   /* ---------- modelo: projetos > materiais > versões ---------- */
@@ -2162,12 +2283,12 @@ function montarHtml(d, cfg) {
   const lvlPill = (l) => '<span class="pill ' + (/Reprovado/.test(l) ? 'bad' : /Pronto/.test(l) ? 'ok' : 'warn') + '">' + esc(l) + '</span>';
 
   /* ---------- abas ---------- */
-  const TABS = [['biblioteca', '📚 Biblioteca'], ['criar', '✨ Criar'], ['plano', '🧭 Plano por unidades'], ['editor', '✏️ Editor'], ['poster', '🖼️ Capa (pôster)'], ['apostila', '📘 Apostila completa'], ['auditoria', '🔍 Auditoria'], ['exportar', '📤 Exportar'], ['diario', '📒 Diário & Portfólio'], ['ajuda', '❓ Ajuda']];
+  const TABS = [['biblioteca', '📚 Biblioteca'], ['criar', '✨ Criar'], ['plano', '🧭 Plano por unidades'], ['livro', '📖 Livro'], ['editor', '✏️ Editor'], ['poster', '🖼️ Capa (pôster)'], ['apostila', '📘 Apostila completa'], ['auditoria', '🔍 Auditoria'], ['exportar', '📤 Exportar'], ['diario', '📒 Diário & Portfólio'], ['ajuda', '❓ Ajuda']];
   const NEED = ['editor', 'poster', 'apostila', 'auditoria', 'exportar'];
 
   function render() {
     $('#tabs').innerHTML = TABS.map((t) => '<button id="tab-' + t[0] + '" role="tab" aria-selected="' + (S.tab === t[0] ? 'true' : 'false') + '" data-a="tab" data-t="' + t[0] + '" class="' + (S.tab === t[0] ? 'on' : '') + '">' + t[1] + '</button>').join('');
-    const v = { biblioteca: vBib, criar: vCriar, plano: vPlano, editor: vEditor, poster: vPoster, apostila: vApostila, auditoria: vAud, exportar: vExp, diario: vDiario, ajuda: vAjuda }[S.tab];
+    const v = { biblioteca: vBib, criar: vCriar, plano: vPlano, livro: vLivro, editor: vEditor, poster: vPoster, apostila: vApostila, auditoria: vAud, exportar: vExp, diario: vDiario, ajuda: vAjuda }[S.tab];
     const main = $('#main');
     main.setAttribute('role', 'tabpanel');
     main.setAttribute('aria-labelledby', 'tab-' + S.tab);
@@ -2207,6 +2328,26 @@ function montarHtml(d, cfg) {
     }
     return h;
   }
+
+  /* ---------- Livro (compilador) ---------- */
+  function matsDaBiblioteca() { const L = []; lib.projects.filter((p) => !p.archived).forEach((p) => p.materials.forEach((r) => L.push({ key: p.id + '|' + r.id, pid: p.id, mid: r.id, proj: p.name, data: curData(r) }))); return L; }
+  function bookMats() { const all = matsDaBiblioteca(); return S.book.sel.map((k) => all.find((x) => x.key === k)).filter(Boolean); }
+  function vLivro() {
+    const b = S.book, all = matsDaBiblioteca(), sel = bookMats();
+    if (!LV) return '<div class="card"><p>O compilador de livro não foi carregado.</p></div>';
+    let h = '<div class="card"><h2>Compilar livro ou caderno</h2><p class="muted">Junte materiais já prontos em uma obra só: capa, sumário, capítulos na ordem que você escolher, glossário, caderno de respostas e referências. O livro mostra o estado real de revisão de cada capítulo e nunca se declara validado por conta própria.</p>';
+    h += all.length ? '<h3>Materiais da biblioteca</h3>' + all.map((x) => '<div class="list-item"><label style="display:flex;gap:8px;align-items:center"><input type="checkbox" style="width:auto" data-a="booktoggle" data-k="' + esc(x.key) + '"' + (b.sel.includes(x.key) ? ' checked' : '') + '> <span><b>' + esc(x.data.title) + '</b><br><span class="muted">' + esc(x.proj) + '</span></span></label></div>').join('')
+      : '<p class="muted">A biblioteca está vazia. Crie ou importe materiais primeiro.</p>';
+    h += '</div>';
+    if (!sel.length) return h;
+    h += '<div class="card"><h3>Ordem dos capítulos</h3><ol>' + sel.map((x, i) => '<li>' + esc(x.data.title) + ' <span class="btns" style="display:inline-flex"><button class="b ghost sm" data-a="bookup" data-i="' + i + '" aria-label="Subir">↑</button><button class="b ghost sm" data-a="bookdown" data-i="' + i + '" aria-label="Descer">↓</button></span></li>').join('') + '</ol>' +
+      '<div class="row"><div><label for="bk-t">Título do livro</label><input id="bk-t" data-book="title" value="' + esc(b.title) + '" placeholder="Ex.: Caderno do 8º ano"></div><div><label for="bk-s">Subtítulo</label><input id="bk-s" data-book="subtitle" value="' + esc(b.subtitle) + '"></div><div><label for="bk-a">Autor</label><input id="bk-a" data-book="author" value="' + esc(b.author) + '" placeholder="' + esc(C.DEFAULT_AUTHOR) + '"></div></div>' +
+      '<label><input type="checkbox" style="width:auto" data-a="bookopt" data-o="glossary"' + (b.glossary ? ' checked' : '') + '> Glossário</label> <label><input type="checkbox" style="width:auto" data-a="bookopt" data-o="answers"' + (b.answers ? ' checked' : '') + '> Caderno de respostas</label> <label><input type="checkbox" style="width:auto" data-a="bookopt" data-o="references"' + (b.references ? ' checked' : '') + '> Referências</label>' +
+      '<div class="btns"><button class="b gold" data-a="bookprev">👁️ Compilar e ver</button><button class="b" data-a="dlbook2">⬇️ Baixar HTML</button><button class="b ghost" data-a="printbook2">🖨️ Imprimir / salvar PDF</button></div></div>';
+    if (b.show) { const r = compilar(); h += r.ok ? '<div class="card"><h3>Prévia</h3>' + (r.warnings.length ? '<div class="find warn">' + r.warnings.map((w) => '⚠️ ' + esc(w)).join('<br>') + '</div>' : '') + '<p class="muted">' + r.chapters + ' capítulo(s) · ' + r.glossary.length + ' termo(s) no glossário · ' + r.validated + ' de ' + r.chapters + ' com validação do professor</p><iframe title="Prévia do livro" style="width:100%;height:70vh;border:0;border-radius:10px;background:#e9edf5" srcdoc="' + esc(r.html) + '"></iframe></div>' : '<div class="card"><p>' + esc(r.error) + '</p></div>'; }
+    return h;
+  }
+  function compilar() { const b = S.book; return LV.compileBook(bookMats().map((x) => x.data), { title: b.title, subtitle: b.subtitle, author: b.author, glossary: b.glossary, answers: b.answers, references: b.references }); }
 
   /* ---------- Biblioteca ---------- */
   function vBib() {
@@ -2475,6 +2616,13 @@ function montarHtml(d, cfg) {
       }; rd.readAsText(f);
     },
     copyreq: async () => { const t = C.buildRequestText(S.form) + (D && packDoForm(S.form) ? '\n\n' + D.regrasTexto(packDoForm(S.form)) : ''); toast((await copy(t)) ? 'Pedido copiado. Cole no seu Gem ou no Claude.' : 'Não consegui copiar automaticamente.', false); },
+    booktoggle: (el) => { const k = el.dataset.k, a = S.book.sel; if (el.checked) { if (!a.includes(k)) a.push(k); } else S.book.sel = a.filter((x) => x !== k); S.book.show = false; render(); },
+    bookopt: (el) => { S.book[el.dataset.o] = el.checked; S.book.show = false; },
+    bookup: (el) => { const i = +el.dataset.i, a = S.book.sel; if (i > 0) { [a[i - 1], a[i]] = [a[i], a[i - 1]]; S.book.show = false; render(); } },
+    bookdown: (el) => { const i = +el.dataset.i, a = S.book.sel; if (i < a.length - 1) { [a[i + 1], a[i]] = [a[i], a[i + 1]]; S.book.show = false; render(); } },
+    bookprev: () => { S.book.show = true; render(); },
+    dlbook2: () => { const r = compilar(); if (!r.ok) { toast(r.error, true); return; } dl(slug(r.title) + '-livro.html', 'text/html', r.html); },
+    printbook2: () => { const r = compilar(); if (!r.ok) { toast(r.error, true); return; } printHTML(r.html); },
     copydomainreq: async () => { if (!D) return; toast((await copy(D.buildDomainRequest({ topic: S.form.topic, discipline: S.form.discipline, level: S.form.level }))) ? 'Pedido de pacote copiado. Cole no seu Gem.' : 'Não consegui copiar automaticamente.', false); },
     importdomain: () => {
       if (!D) return; const r = D.importDomain(S.form.domainResp); if (!r.ok) { toast(r.error, true); return; }
@@ -2587,6 +2735,7 @@ function montarHtml(d, cfg) {
       const bp = curPlan(); const [i, k] = el.dataset.pu.split('.'); if (bp && bp.units[+i]) { bp.units[+i][k] = el.value; persist(); const st = $('#plano-estado'); if (st) { const e2 = C.estadoBlueprint(bp); st.textContent = e2.texto; st.className = 'pill ' + (e2.aprovado ? 'ok' : 'warn'); } }
       return;
     }
+    if (el.dataset.book) { S.book[el.dataset.book] = el.value; return; }
     if (el.dataset.form) { S.form[el.dataset.form] = el.value; return; }
     if (el.dataset.vis) { if (el.dataset.vis !== 'kind') S.vis[el.dataset.vis] = el.value; return; }
     if (el.dataset.f) {
