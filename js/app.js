@@ -141,7 +141,7 @@
       '<div class="row"><div><label for="pl-quem">Quem aprova (pessoa)</label><input id="pl-quem" data-form="planoQuem" value="' + esc(f.planoQuem || '') + '" placeholder="Nome do professor"></div><div class="btns"><button class="b" data-a="approveplan">Aprovar plano</button></div></div></div>';
     if (e.aprovado) {
       h += '<div class="card"><h3>Gerar por unidade</h3>' + (prox
-        ? '<p>Próxima: <b>' + esc(prox.id) + '</b> ' + esc(prox.title) + '</p><div class="btns"><button class="b gold" data-a="copyunitreq">Copiar pedido da unidade</button></div>' +
+        ? '<p>Próxima: <b>' + esc(prox.id) + '</b> ' + esc(prox.title) + '</p>' + estadoAcumHtml(bp, prox) + '<div class="btns"><button class="b gold" data-a="copyunitreq">Copiar pedido da unidade</button></div>' +
           '<label for="pl-ures">Cole a resposta do Gem (formato ' + C.UNIT_SCHEMA + ')</label><textarea id="pl-ures" data-form="unidadeResp" rows="5">' + esc(f.unidadeResp || '') + '</textarea><div class="btns"><button class="b" data-a="applyunit">Aplicar unidade</button></div>'
         : '<p>Todas as unidades foram geradas.</p>') +
         (bp.material && bp.material.blocks.length ? '<div class="btns"><button class="b" data-a="openplanmat">Abrir o material montado no editor</button></div><p class="muted">' + bp.material.blocks.length + ' blocos até agora.</p>' : '') + '</div>';
@@ -168,6 +168,13 @@
     return h;
   }
   function compilar() { const b = S.book; return LV.compileBook(bookMats().map((x) => x.data), { title: b.title, subtitle: b.subtitle, author: b.author, glossary: b.glossary, answers: b.answers, references: b.references }); }
+
+  function estadoAcumHtml(bp, prox) {
+    const i = bp.units.indexOf(prox); if (i < 1) return '';
+    const a = C.estadoAcumulado(bp, i), n = a.terms.length + a.notation.length + a.assumed.length + a.usados.length; if (!n) return '';
+    return '<details id="plano-acum"><summary>O que as unidades 1 a ' + i + ' já ensinaram (vai junto com o pedido)</summary><ul>' +
+      [['Termos', a.terms], ['Notação', a.notation], ['Já ensinado', a.assumed], ['Exemplos e atividades usados', a.usados]].filter((x) => x[1].length).map((x) => '<li><b>' + x[0] + ':</b> ' + esc(x[1].join('; ')) + '</li>').join('') + '</ul></details>';
+  }
 
   /* ---------- Biblioteca ---------- */
   function vBib() {
