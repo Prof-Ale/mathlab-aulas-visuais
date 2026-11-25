@@ -54,6 +54,12 @@ test('PDF da apostila: uma folha por página, sem corte, sem rede, byte a byte r
   assert.deepStrictEqual(r1.paginasCortadas, []);
   assert.deepStrictEqual(r1.bloqueados, []);
   assert.deepStrictEqual(fs.readFileSync(path.join(dir, 'a.pdf')), fs.readFileSync(path.join(dir, 'b.pdf')));
+  const ac = r1.acessibilidade;
+  assert.ok(ac.marcado && ac.estrutura, 'PDF sem marcação de acessibilidade');
+  assert.strictEqual(ac.idioma, 'pt-BR');
+  assert.ok(ac.marcadores, 'PDF sem marcadores de navegação');
+  assert.ok(ac.titulos >= 3, 'títulos sem marcação H1 a H6');
+  assert.ok(ac.figuras > 0 && ac.figurasComTextoAlternativo === ac.figuras, 'figura sem texto alternativo');
   const txt = fs.readFileSync(path.join(dir, 'a.pdf')).toString('latin1');
   for (const fam of ['Fredoka', 'Nunito', 'Caveat']) assert.ok(new RegExp('/BaseFont\\s*/[A-Z]{6}\\+' + fam).test(txt), fam + ' não está embutida no PDF');
   assert.ok(!/\+Inter-|\+LiberationSans/.test(txt), 'caiu em fonte do sistema');
@@ -69,4 +75,12 @@ test('arquivo real do App Node vira PDF sem transbordo, sem corte e reproduzíve
   assert.strictEqual(a.paginasNoPdf, a.paginasNoDom);
   assert.deepStrictEqual(a.paginasCortadas, []);
   assert.deepStrictEqual(fs.readFileSync(path.join(dir, 'a.pdf')), fs.readFileSync(path.join(dir, 'b.pdf')));
+});
+
+test('acessibilidadePdf: reconhece PDF marcado e PDF comum', async () => {
+  const { acessibilidadePdf } = await ferramenta();
+  const bom = acessibilidadePdf('/MarkInfo << /Marked true >> /StructTreeRoot 9 0 R /Lang (pt-BR) /Outlines 5 0 R /S /H1 /S /Figure /Alt (Mascote)');
+  assert.deepStrictEqual(bom, { marcado: true, estrutura: true, idioma: 'pt-BR', marcadores: true, titulos: 1, figuras: 1, figurasComTextoAlternativo: 1 });
+  const ruim = acessibilidadePdf('%PDF-1.4 /Type /Catalog');
+  assert.strictEqual(ruim.marcado, false); assert.strictEqual(ruim.idioma, null);
 });
