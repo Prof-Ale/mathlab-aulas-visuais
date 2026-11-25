@@ -832,12 +832,11 @@ function montarHtml(d, cfg) {
   };
 
   const AVATAR_OPTIONS = {
+    none: 'Sem foto (apenas emblema editorial da área)',
     'avatar-prof-ale-1.jpg': 'Prof. Alê — Jaleco e Livro (Pesquisa)',
     'avatar-prof-ale-2.jpg': 'Prof. Alê — Moletom MathLab',
     'avatar-prof-ale-3.jpg': 'Prof. Alê — Camisa Marinho MathLab',
     'avatar-prof-ale-4.jpg': 'Prof. Alê — Camisa Branca e Logo',
-    svg: 'Emblema editorial da área (SVG offline)',
-    none: 'Sem foto (apenas emblema editorial)',
   };
 
   const LOGO_OPTIONS = {
@@ -1168,34 +1167,80 @@ function montarHtml(d, cfg) {
 
   /* ---------- Emblema geométrico/tipográfico editorial por área epistêmica ---------- */
   const EMBLEM_META = {
-    formal: { tag: 'FORMAL', accent: '#1e6fd9', glyph: '<line x1="24" y1="68" x2="96" y2="68" stroke="#14264f" stroke-width="2.2"/><line x1="60" y1="26" x2="60" y2="94" stroke="#14264f" stroke-width="2.2"/><path d="M28 84 Q48 28 60 60 T92 34" fill="none" stroke="#1e6fd9" stroke-width="3.5" stroke-linecap="round"/><circle cx="60" cy="60" r="4.5" fill="#f2b705" stroke="#14264f" stroke-width="2"/><polygon points="96,68 90,64 90,72" fill="#14264f"/><polygon points="60,26 56,32 64,32" fill="#14264f"/>' },
-    empirica: { tag: 'EMPÍRICA', accent: '#22a559', glyph: '<ellipse cx="60" cy="60" rx="32" ry="13" fill="none" stroke="#14264f" stroke-width="2.4" transform="rotate(-30 60 60)"/><ellipse cx="60" cy="60" rx="32" ry="13" fill="none" stroke="#22a559" stroke-width="2.4" transform="rotate(30 60 60)"/><ellipse cx="60" cy="60" rx="32" ry="13" fill="none" stroke="#1e6fd9" stroke-width="2.2" transform="rotate(90 60 60)"/><circle cx="60" cy="60" r="7" fill="#f2b705" stroke="#14264f" stroke-width="2.4"/>' },
-    interpretativa: { tag: 'INTERPRETATIVA', accent: '#7a4bd1', glyph: '<polygon points="60,26 92,84 28,84" fill="none" stroke="#14264f" stroke-width="2.8" stroke-linejoin="round"/><polygon points="60,40 80,78 40,78" fill="#7a4bd1" opacity=".16"/><line x1="26" y1="54" x2="94" y2="54" stroke="#7a4bd1" stroke-width="2.4" stroke-dasharray="4 3"/><circle cx="60" cy="54" r="5.5" fill="#f2b705" stroke="#14264f" stroke-width="2.2"/>' },
-    historica: { tag: 'HISTÓRICA', accent: '#c97a16', glyph: '<circle cx="60" cy="60" r="28" fill="none" stroke="#14264f" stroke-width="2.4"/><polygon points="60,28 66,54 92,60 66,66 60,92 54,66 28,60 54,54" fill="#c97a16" opacity=".22" stroke="#14264f" stroke-width="2"/><line x1="34" y1="60" x2="86" y2="60" stroke="#14264f" stroke-width="2.2"/><circle cx="44" cy="60" r="3.5" fill="#f2b705" stroke="#14264f" stroke-width="1.8"/><circle cx="60" cy="60" r="4.5" fill="#14264f"/><circle cx="76" cy="60" r="3.5" fill="#f2b705" stroke="#14264f" stroke-width="1.8"/>' },
-    linguistica: { tag: 'LINGUÍSTICA', accent: '#d6456b', glyph: '<path d="M36 86 L56 30 L84 30 L64 86 Z" fill="#d6456b" opacity=".14" stroke="#14264f" stroke-width="2.6" stroke-linejoin="round"/><line x1="45" y1="64" x2="73" y2="64" stroke="#14264f" stroke-width="2.6"/><path d="M30 42 Q44 32 54 42" fill="none" stroke="#d6456b" stroke-width="2.6" stroke-linecap="round"/><circle cx="78" cy="78" r="6" fill="#f2b705" stroke="#14264f" stroke-width="2.2"/>' },
-    pratica: { tag: 'PRÁTICA', accent: '#0e8f8f', glyph: '<rect x="28" y="32" width="24" height="18" rx="4" fill="#0e8f8f" opacity=".2" stroke="#14264f" stroke-width="2.4"/><rect x="68" y="32" width="24" height="18" rx="4" fill="#f2b705" opacity=".35" stroke="#14264f" stroke-width="2.4"/><rect x="46" y="68" width="28" height="20" rx="4" fill="#1e6fd9" opacity=".18" stroke="#14264f" stroke-width="2.4"/><path d="M52 41 H68 M80 50 V60 H60 V68 M40 50 V60 H60" fill="none" stroke="#14264f" stroke-width="2.4" stroke-linecap="round"/>' },
-    geral: { tag: 'MATHLAB', accent: '#14264f', glyph: '<rect x="30" y="30" width="26" height="26" rx="5" fill="#1e6fd9" opacity=".18" stroke="#14264f" stroke-width="2.4"/><rect x="64" y="30" width="26" height="26" rx="5" fill="#f2b705" opacity=".38" stroke="#14264f" stroke-width="2.4"/><rect x="30" y="64" width="26" height="26" rx="5" fill="#22a559" opacity=".2" stroke="#14264f" stroke-width="2.4"/><rect x="64" y="64" width="26" height="26" rx="5" fill="#7a4bd1" opacity=".18" stroke="#14264f" stroke-width="2.4"/>' },
+    formal: {
+      tag: 'FORMAL', area: 'Área Formal (Matemática, Lógica, Estatística)',
+      glyph: '<polygon points="60,24 92,80 28,80" fill="none" stroke="var(--tt,#14264f)" stroke-width="2.6" stroke-linejoin="round"/>' +
+        '<polygon points="60,34 83,75 37,75" fill="var(--c1,#1e6fd9)" opacity=".14"/>' +
+        '<text x="60" y="71" text-anchor="middle" font-family="Georgia,Times New Roman,serif" font-size="34" font-weight="700" fill="var(--tt,#14264f)">Σ</text>' +
+        '<circle cx="60" cy="24" r="3.5" fill="var(--ac,#f2b705)" stroke="var(--tt,#14264f)" stroke-width="1.8"/>'
+    },
+    empirica: {
+      tag: 'EMPÍRICA', area: 'Área Empírica (Física, Química, Biologia, Ciências)',
+      glyph: '<polygon points="60,25 88,41 88,73 60,89 32,73 32,41" fill="var(--c2,#22a559)" opacity=".12" stroke="var(--tt,#14264f)" stroke-width="2.4" stroke-linejoin="round"/>' +
+        '<ellipse cx="60" cy="57" rx="26" ry="10.5" fill="none" stroke="var(--tt,#14264f)" stroke-width="2.1" transform="rotate(-30 60 57)"/>' +
+        '<ellipse cx="60" cy="57" rx="26" ry="10.5" fill="none" stroke="var(--c2,#22a559)" stroke-width="2.1" transform="rotate(30 60 57)"/>' +
+        '<circle cx="60" cy="57" r="6" fill="var(--ac,#f2b705)" stroke="var(--tt,#14264f)" stroke-width="2.2"/>'
+    },
+    interpretativa: {
+      tag: 'INTERPRETATIVA', area: 'Área Interpretativa (Filosofia, Sociologia, Literatura, Artes)',
+      glyph: '<path d="M28 58 A32 32 0 0 1 92 58" fill="none" stroke="var(--c5,#7a4bd1)" stroke-width="2.2" stroke-dasharray="4 3"/>' +
+        '<path d="M36 74 A26 26 0 0 0 84 74" fill="none" stroke="var(--tt,#14264f)" stroke-width="2"/>' +
+        '<text x="45" y="70" text-anchor="middle" font-family="Georgia,Times New Roman,serif" font-size="44" font-weight="700" fill="var(--tt,#14264f)">“</text>' +
+        '<text x="75" y="76" text-anchor="middle" font-family="Georgia,Times New Roman,serif" font-size="44" font-weight="700" fill="var(--c5,#7a4bd1)">”</text>' +
+        '<circle cx="60" cy="30" r="4" fill="var(--ac,#f2b705)" stroke="var(--tt,#14264f)" stroke-width="1.8"/>'
+    },
+    historica: {
+      tag: 'HISTÓRICA', area: 'Área Histórica (História, Geografia humana)',
+      glyph: '<rect x="44" y="28" width="32" height="6" rx="2" fill="var(--tt,#14264f)"/>' +
+        '<rect x="48" y="34" width="6" height="32" fill="var(--c3,#c97a16)" opacity=".3" stroke="var(--tt,#14264f)" stroke-width="2"/>' +
+        '<rect x="57" y="34" width="6" height="32" fill="var(--c3,#c97a16)" opacity=".3" stroke="var(--tt,#14264f)" stroke-width="2"/>' +
+        '<rect x="66" y="34" width="6" height="32" fill="var(--c3,#c97a16)" opacity=".3" stroke="var(--tt,#14264f)" stroke-width="2"/>' +
+        '<rect x="42" y="66" width="36" height="5" rx="2" fill="var(--tt,#14264f)"/>' +
+        '<line x1="26" y1="80" x2="94" y2="80" stroke="var(--tt,#14264f)" stroke-width="2.4"/>' +
+        '<circle cx="38" cy="80" r="3.8" fill="var(--ac,#f2b705)" stroke="var(--tt,#14264f)" stroke-width="1.8"/>' +
+        '<circle cx="60" cy="80" r="4.5" fill="var(--tt,#14264f)"/>' +
+        '<circle cx="82" cy="80" r="3.8" fill="var(--ac,#f2b705)" stroke="var(--tt,#14264f)" stroke-width="1.8"/>'
+    },
+    linguistica: {
+      tag: 'LINGUÍSTICA', area: 'Área Linguística (Português, Línguas, Redação)',
+      glyph: '<line x1="28" y1="78" x2="92" y2="78" stroke="var(--c4,#e0457b)" stroke-width="2.4"/>' +
+        '<line x1="34" y1="84" x2="86" y2="84" stroke="var(--tt,#14264f)" stroke-width="1.6" stroke-dasharray="3 3"/>' +
+        '<text x="60" y="71" text-anchor="middle" font-family="Georgia,Times New Roman,serif" font-size="40" font-weight="700" fill="var(--tt,#14264f)">Aa</text>' +
+        '<circle cx="86" cy="36" r="5" fill="var(--ac,#f2b705)" stroke="var(--tt,#14264f)" stroke-width="2"/>'
+    },
+    pratica: {
+      tag: 'PRÁTICA', area: 'Área Prática (Ed. Física, Informática, Técnicos, Música)',
+      glyph: '<circle cx="52" cy="54" r="18" fill="var(--c1,#1e6fd9)" opacity=".14" stroke="var(--tt,#14264f)" stroke-width="2.6" stroke-dasharray="7 4"/>' +
+        '<circle cx="52" cy="54" r="7.5" fill="var(--ac,#f2b705)" stroke="var(--tt,#14264f)" stroke-width="2.2"/>' +
+        '<path d="M72 44 H88 V66 H74" fill="none" stroke="var(--tt,#14264f)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>' +
+        '<polygon points="72,66 79,61 79,71" fill="var(--tt,#14264f)"/>' +
+        '<line x1="30" y1="82" x2="90" y2="82" stroke="var(--c2,#22a559)" stroke-width="2.4" stroke-linecap="round"/>'
+    },
+    geral: {
+      tag: 'MATHLAB', area: 'Área Geral / Mista (MathLab Editorial)',
+      glyph: '<polygon points="60,24 90,41 90,73 60,90 30,73 30,41" fill="var(--c1,#1e6fd9)" opacity=".12" stroke="var(--tt,#14264f)" stroke-width="2.4"/>' +
+        '<text x="60" y="71" text-anchor="middle" font-family="Fredoka,Georgia,serif" font-size="38" font-weight="700" fill="var(--tt,#14264f)">M</text>' +
+        '<circle cx="60" cy="24" r="3.8" fill="var(--ac,#f2b705)" stroke="var(--tt,#14264f)" stroke-width="1.8"/>'
+    },
   };
 
-  function epistemicEmblemSvg(type, size) {
-    const k = EMBLEM_META[type] ? type : 'geral';
+  function emblemFor(tipo, size) {
+    const k = EMBLEM_META[tipo] ? tipo : 'geral';
     const meta = EMBLEM_META[k];
     const sz = size ? ' width="' + size + '" height="' + size + '"' : '';
-    return '<svg viewBox="0 0 120 120"' + sz + ' role="img" aria-label="Emblema editorial ' + esc(meta.tag) + '"><title>Emblema ' + esc(meta.tag) + '</title>' +
-      '<circle cx="60" cy="60" r="55" fill="#ffffff" stroke="#14264f" stroke-width="3.5"/>' +
-      '<circle cx="60" cy="60" r="47" fill="none" stroke="' + meta.accent + '" stroke-width="1.8" stroke-dasharray="5 3"/>' +
+    return '<svg viewBox="0 0 120 120"' + sz + ' role="img" aria-label="Emblema editorial — ' + esc(meta.area) + '"><title>' + esc(meta.area) + '</title>' +
+      '<circle cx="60" cy="60" r="55" fill="#ffffff" stroke="var(--tt,#14264f)" stroke-width="3.4"/>' +
+      '<circle cx="60" cy="60" r="47" fill="none" stroke="var(--ac,#f2b705)" stroke-width="2" stroke-dasharray="5 3"/>' +
       meta.glyph +
-      '<rect x="24" y="96" width="72" height="16" rx="8" fill="#14264f"/>' +
-      '<text x="60" y="107.5" text-anchor="middle" font-family="Nunito,Segoe UI,Arial,sans-serif" font-size="8.5" font-weight="800" letter-spacing="1.1" fill="#f2b705">' + esc(meta.tag) + '</text></svg>';
+      '<rect x="20" y="95" width="80" height="17" rx="8.5" fill="var(--tt,#14264f)"/>' +
+      '<text x="60" y="107" text-anchor="middle" font-family="Nunito,Segoe UI,Arial,sans-serif" font-size="8.2" font-weight="800" letter-spacing="1.05" fill="var(--ac,#f2b705)">' + esc(meta.tag) + '</text></svg>';
   }
 
-  const MASCOT_SVG = epistemicEmblemSvg('geral');
-
   const BOOKS_ICON_SVG = '<svg viewBox="0 0 90 90" width="72" height="72" role="img" aria-label="Selo editorial MathLab"><title>Selo MathLab</title>' +
-    '<circle cx="45" cy="45" r="40" fill="#14264f" stroke="#f2b705" stroke-width="3.5"/>' +
-    '<circle cx="45" cy="45" r="32" fill="none" stroke="#f2b705" stroke-width="1.2" stroke-dasharray="3 3"/>' +
+    '<circle cx="45" cy="45" r="40" fill="var(--tt,#14264f)" stroke="var(--ac,#f2b705)" stroke-width="3.5"/>' +
+    '<circle cx="45" cy="45" r="32" fill="none" stroke="var(--ac,#f2b705)" stroke-width="1.2" stroke-dasharray="3 3"/>' +
     '<text x="45" y="42" text-anchor="middle" font-family="Fredoka,Segoe UI,Arial,sans-serif" font-size="16" font-weight="700" fill="#ffffff">ML</text>' +
-    '<text x="45" y="58" text-anchor="middle" font-family="Nunito,Segoe UI,Arial,sans-serif" font-size="7.5" font-weight="800" letter-spacing="1" fill="#f2b705">EDITORIAL</text></svg>';
+    '<text x="45" y="58" text-anchor="middle" font-family="Nunito,Segoe UI,Arial,sans-serif" font-size="7.5" font-weight="800" letter-spacing="1" fill="var(--ac,#f2b705)">EDITORIAL</text></svg>';
 
   const FONTS_LINK = '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Fredoka:wght@600;700&family=Nunito:wght@400;600;700;800&family=Patrick+Hand&display=swap" rel="stylesheet">';
 
@@ -1223,7 +1268,7 @@ function montarHtml(d, cfg) {
     '.mlp{--c1:#1e6fd9;--c2:#22a559;--c3:#f28a1f;--c4:#e0457b;--c5:#7a4bd1;--bg:#fff8e6;--tt:#1b2a6b;--ac:#ffd23f;box-sizing:border-box;max-width:794px;margin:0 auto;padding:20px;background:radial-gradient(rgba(27,42,107,.07) 1.5px,transparent 1.5px) 0 0/18px 18px,var(--bg);border:4px solid var(--tt);border-radius:18px;font-family:"Patrick Hand","Trebuchet MS","Segoe UI",Arial,sans-serif;color:#1d2433;-webkit-print-color-adjust:exact;print-color-adjust:exact}',
     '.mlp *{box-sizing:border-box}',
     '.mlp-head{display:flex;align-items:center;gap:14px;margin-bottom:14px;background:rgba(255,255,255,.72);border:3px solid var(--tt);border-radius:16px;padding:10px 14px;box-shadow:4px 4px 0 var(--tt)}',
-    '.mlp-mascot{flex:0 0 112px;text-align:center}.mlp-mascot svg{width:112px;height:auto}.mlp-mascot img{width:104px;height:104px;border-radius:50%;object-fit:cover;object-position:top center;border:3px solid var(--tt);box-shadow:3px 3px 0 var(--ac)}',
+    '.mlp-emblema{flex:0 0 104px;text-align:center}.mlp-emblema svg{width:96px;height:96px;display:block;margin:0 auto}',
     '.mlp-deco{flex:0 0 84px;text-align:right}.mlp-deco img{max-width:84px;max-height:74px;object-fit:contain;border-radius:8px}@media(max-width:620px){.mlp-deco{display:none}}',
     '.mlp-title{margin:0;font-family:"Fredoka",Impact,"Arial Black",sans-serif;font-weight:700;font-size:40px;line-height:1.02;color:var(--ac);-webkit-text-stroke:3px var(--tt);paint-order:stroke fill;text-shadow:3px 3px 0 var(--tt);letter-spacing:.4px;text-transform:none}',
     '.mlp-sub{display:inline-block;margin:8px 0 0;padding:4px 14px;background:#fff;border:2.5px solid var(--tt);border-radius:12px;font-family:"Caveat","Patrick Hand",cursive,sans-serif;font-size:22px;font-weight:700;color:var(--tt);line-height:1.15}',
@@ -1257,11 +1302,14 @@ function montarHtml(d, cfg) {
     return 'assets/' + esc(file);
   }
 
+  function hasAuthorPhoto(choice) {
+    return !!(choice && choice !== 'none' && choice !== 'svg' && AVATAR_OPTIONS[choice]);
+  }
+
   function avatarHtml(choice, cls, epistemicType) {
-    const c = choice || 'avatar-prof-ale-1.jpg';
-    if (c === 'none') return '';
-    if (c === 'svg' || !AVATAR_OPTIONS[c]) return epistemicEmblemSvg(epistemicType || 'geral');
-    return '<img class="' + (cls || 'ml-av') + '" src="' + assetSrc(c) + '" alt="Autoria docente">';
+    if (choice === 'none') return '';
+    if (!hasAuthorPhoto(choice)) return emblemFor(epistemicType || 'geral', 96);
+    return '<img class="' + (cls || 'ml-av') + '" src="' + assetSrc(choice) + '" alt="Foto do autor">';
   }
 
   function logoHtml(choice, cls) {
@@ -1277,7 +1325,9 @@ function montarHtml(d, cfg) {
     const title = (p && p.title) || m.title || 'Material Didático';
     const sub = (p && p.subtitle) || (m.topic && m.topic !== title ? m.topic : 'Material didático visual');
     const lg = logoHtml(p.logoChoice, 'mlclean-logo');
-    const emblem = epistemicEmblemSvg(m.epistemicType || 'geral', 112);
+    const coverVisual = hasAuthorPhoto(p.avatarChoice)
+      ? '<img class="mlclean-avatar" src="' + assetSrc(p.avatarChoice) + '" alt="' + esc(auth) + '">'
+      : '<div class="mlclean-emblem" style="width:116px;height:116px">' + emblemFor(m.epistemicType || 'geral', 116) + '</div>';
     const profLabel = m.contentProfile === 'expositivo' ? 'Expositivo' : m.contentProfile === 'expositivo_visual' ? 'Expositivo Visual' : m.contentProfile === 'pratica' ? 'Prática' : 'Completo';
     const pills = [m.discipline, m.level, profLabel].filter(Boolean).map((x) => '<span>' + esc(x) + '</span>').join('');
     return '<article class="mlclean" style="' + themeStyle(p.theme) + '">' +
@@ -1285,7 +1335,7 @@ function montarHtml(d, cfg) {
       '<section class="mlclean-mid"><div class="mlclean-pills">' + pills + '</div>' +
       '<h1 class="mlclean-title">' + esc(title) + '</h1>' +
       '<p class="mlclean-sub">' + esc(sub) + '</p>' +
-      '<div class="mlclean-avatar-wrap"><div class="mlclean-emblem" style="width:112px;height:112px">' + emblem + '</div>' +
+      '<div class="mlclean-avatar-wrap">' + coverVisual +
       '<div class="mlclean-author">' + esc(auth) + '</div><div class="mlclean-role">Autoria Docente · Epistemologia da disciplina &amp; Mediação Histórico-Cultural</div></div></section>' +
       '<footer class="mlclean-bot"><span>' + (m.duration ? '⏱️ ' + esc(m.duration) : 'Material de Apoio Pedagógico') + '</span><span>' + esc(estadoRevisao(m).texto) + '</span></footer>' +
       '</article>';
@@ -1294,7 +1344,7 @@ function montarHtml(d, cfg) {
   function renderPoster(p, author, epistemicType) {
     if (!p) return '';
     const auth = String(p.author || author || DEFAULT_AUTHOR).trim();
-    const av = epistemicEmblemSvg(epistemicType || 'geral', 96);
+    const emb = emblemFor(epistemicType || 'geral', 96);
     const lg = logoHtml(p.logoChoice);
     const secs = (p.sections || []).map((s, i) =>
       '<div class="mlp-card" style="--c:var(--c' + ((i % 5) + 1) + ')"><div class="mlp-tag"><span class="mlp-num">' + (i + 1) + '</span>' + esc(s.label || '') + '</div>' +
@@ -1304,7 +1354,7 @@ function montarHtml(d, cfg) {
     if (p.didYouKnow) extra.push('<div class="mlp-box mlp-know"><h4>VOCÊ SABIA?</h4>' + esc(p.didYouKnow) + '</div>');
     if (p.attention) extra.push('<div class="mlp-box mlp-warn"><h4>⚠️ ATENÇÃO AOS DETALHES!</h4>' + esc(p.attention) + '</div>');
     const sum = (p.summary || []).map((s) => '<div class="mlp-item"><i>' + esc(s.icon || '⭐') + '</i><strong>' + esc(s.label) + '</strong>' + esc(s.text || '') + '</div>').join('');
-    return '<article class="mlp" style="' + themeStyle(p.theme) + '"><header class="mlp-head"><div class="mlp-mascot">' + av + '</div><div style="flex:1"><h1 class="mlp-title">' + esc(p.title || '') + '</h1>' +
+    return '<article class="mlp" style="' + themeStyle(p.theme) + '"><header class="mlp-head"><div class="mlp-emblema">' + emb + '</div><div style="flex:1"><h1 class="mlp-title">' + esc(p.title || '') + '</h1>' +
       '<div>' + (p.subtitle ? '<span class="mlp-sub">' + esc(p.subtitle) + '</span>' : '') +
       (auth ? '<span class="mlp-author">✍️ ' + esc(auth) + '</span>' : '') + '</div></div><div class="mlp-deco">' + (lg || BOOKS_ICON_SVG) + '</div></header><section class="mlp-grid">' + secs + '</section>' +
       (extra.length ? '<section class="mlp-extras">' + extra.join('') + '</section>' : '') +
@@ -1316,12 +1366,12 @@ function montarHtml(d, cfg) {
     const p = m.poster; if (!p) return '';
     const auth = String(p.author || m.author || DEFAULT_AUTHOR).trim();
     const L = [];
-    L.push('Crie uma apostila visual em forma de pôster infográfico educativo colorido, em página única, com ilustração estilo cartoon 3D vibrante, letras manuscritas/arredondadas estilo HQ e acabamento profissional.');
+    L.push('Crie uma apostila visual em forma de pôster infográfico educativo em página única, com acabamento editorial limpo, tipografia legível, diagramas geométricos e hierarquia profissional.');
     L.push('Assunto: ' + (m.topic || m.title || p.title) + (m.discipline ? ' (' + m.discipline + (m.level ? ', ' + m.level : '') + ')' : '') + '.');
-    L.push('TÍTULO grande no topo, em letras 3D arredondadas e divertidas, cor amarela com contorno azul-marinho e sombra sólida: "' + p.title + '".');
-    if (p.subtitle) L.push('Subtítulo em faixa clara estilo manuscrito logo abaixo: "' + p.subtitle + '".');
+    L.push('TÍTULO grande no topo, em tipografia forte, cor amarela com contorno azul-marinho e sombra sólida: "' + p.title + '".');
+    if (p.subtitle) L.push('Subtítulo em faixa clara logo abaixo: "' + p.subtitle + '".');
     if (auth) L.push('Assinatura/Selo de autoria visível na capa: "' + auth + '".');
-    L.push('ELEMENTO VISUAL CENTRAL: ' + (p.mascot || 'emblema editorial geométrico e diagramas próprios da disciplina (' + (m.discipline || 'tema da aula') + '), sem mascote genérico infantilizado') + ' — identidade editorial limpa, expressiva e coerente com a etapa de ensino.');
+    L.push('IDENTIDADE VISUAL: Sem personagem ou mascote. Emblema geométrico da área, selo MathLab, capa editorial limpa.' + (p.mascot ? ' Detalhe visual complementar: ' + p.mascot + '.' : ''));
     L.push('CAIXAS NUMERADAS, cada uma com cor própria, borda grossa, sombra sólida, número em círculo e rótulo em destaque (escreva o texto exatamente como abaixo):');
     (p.sections || []).forEach((s, i) => L.push((i + 1) + ') ' + String(s.label || '').toUpperCase() + (s.title ? ' — ' + s.title : '') + ': "' + s.text + '"'));
     const ex = [];
@@ -2024,7 +2074,7 @@ function montarHtml(d, cfg) {
     '.mlbook.ml-ed .mlco.gold{background:#fff8db;border-left-color:#eab308}.mlbook.ml-ed .mlco.know{background:#e0f2fe;border-left-color:#0284c7}.mlbook.ml-ed .mlco.warn{background:#fee2e2;border-left-color:#dc2626}.mlbook.ml-ed .mlco.prova{background:#f3e8ff;border-left-color:#7c3aed}',
     '.mlbook.ml-ed .mlc .fig{border:1px solid #dbe4f0;background:#fafcff;padding:14px;margin:14px 0}',
     '.mled-guide{display:grid;grid-template-columns:130px 1fr;gap:18px;align-items:center;border:2px solid var(--c2);border-left:0;border-radius:0 18px 18px 0;padding:16px 18px 16px 0;margin:14px 0}',
-    '.mled-guide-av{text-align:center}.mled-guide-av img{width:108px;height:108px;border-radius:50%;object-fit:cover;object-position:top center;border:3px solid var(--c2)}.mled-guide-av svg{width:100px;height:auto}',
+    '.mled-guide-emblema{text-align:center}.mled-guide-emblema svg{width:92px;height:92px;display:block;margin:0 auto}',
     '.mlvid{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#e8f2dc;border:2px solid var(--c2);border-radius:12px;padding:10px 16px;margin:12px 0;text-decoration:none;color:var(--tt)}',
     '.mlvid strong{display:block;font-family:"Fredoka",sans-serif;font-size:15px}.mlvid span{font-size:12.5px;color:#334155}',
     '.mlauthor-box{display:flex;gap:14px;align-items:center;background:#f8fafc;border:1.5px solid #cbd5e1;border-radius:12px;padding:12px 16px;margin:12px 0}',
@@ -2050,9 +2100,9 @@ function montarHtml(d, cfg) {
     const BUDGET = isEd ? 640 : 580;
     const pages = []; /* cada página: { kind, html, title } */
     const lg = m.poster ? logoHtml(m.poster.logoChoice) : '';
-    const emblemSmall = epistemicEmblemSvg(m.epistemicType || 'geral', 40);
-    const emblemGuide = epistemicEmblemSvg(m.epistemicType || 'geral', 84);
-    const av = m.poster ? avatarHtml(m.poster.avatarChoice, 'ml-av', m.epistemicType) : '';
+    const emblemSmall = emblemFor(m.epistemicType || 'geral', 40);
+    const emblemGuide = emblemFor(m.epistemicType || 'geral', 84);
+    const av = m.poster && hasAuthorPhoto(m.poster.avatarChoice) ? avatarHtml(m.poster.avatarChoice, 'ml-av', m.epistemicType) : '';
     const head = (pn) => isEd
       ? '<div class="mlph"><div class="mlph-left">' + (lg || emblemSmall) + '<div><b>' + esc(m.title) + '</b><small>' + [m.discipline, m.level].filter(Boolean).map(esc).join(' · ') + '</small></div></div><span class="mlph-pg">' + (pn || '') + '</span></div>'
       : '<div class="mlph"><div class="mlph-left">' + (lg || emblemSmall) + '<div><b>' + esc(m.title) + '</b><small>' + [m.discipline, m.level].filter(Boolean).map(esc).join(' · ') + '</small></div></div><span class="mlph-badge">' + esc(m.author || DEFAULT_AUTHOR) + '</span></div>';
@@ -2062,7 +2112,7 @@ function montarHtml(d, cfg) {
     const profLabel = m.contentProfile === 'expositivo' ? 'Expositivo' : m.contentProfile === 'expositivo_visual' ? 'Expositivo Visual' : m.contentProfile === 'pratica' ? 'Prática' : 'Completo';
     let intro = '<div id="ml-toc"></div>@@HEAD@@<h2 class="mlh2">Antes de começar</h2><p class="mlsub-hand">Percurso de mediação — dos conhecimentos cotidianos aos científicos</p><div class="mlinfo">' +
       [m.discipline, m.level, m.duration && '⏱️ ' + m.duration, '📘 ' + profLabel, '🧠 ' + (EPISTEMIC[m.epistemicType] ? EPISTEMIC[m.epistemicType].label.split(' (')[0] : 'Geral'), '🤝 Mediação PHC'].filter(Boolean).map((x) => '<span>' + esc(x) + '</span>').join('') + '</div>';
-    if (isEd) intro += '<div class="mled-guide mlmove"><div class="mled-guide-av">' + emblemGuide + '</div><div>@@TOC@@</div></div>';
+    if (isEd) intro += '<div class="mled-guide mlmove"><div class="mled-guide-emblema">' + emblemGuide + '</div><div>@@TOC@@</div></div>';
     if (m.poster && m.poster.videoUrl && /^https?:\/\//i.test(m.poster.videoUrl)) {
       intro += '<a class="mlvid mlmove" href="' + esc(m.poster.videoUrl) + '" target="_blank" rel="noopener"><div><strong>▶ Videoaula complementar</strong><span>' + esc(m.poster.videoTitle || m.title) + '</span></div><span>Abrir ↗</span></a>';
     }
@@ -2175,7 +2225,7 @@ function montarHtml(d, cfg) {
       references: [],
       limitations: ['Material de demonstração: nenhuma fonte externa foi consultada na geração.', 'Conteúdo elementar de conhecimento consolidado; o professor deve conferir com o livro didático adotado.'],
       poster: {
-        title: 'Soma de Números Inteiros', subtitle: 'Aprenda a somar positivos e negativos sem medo!', mascot: 'um estudante sorridente de mochila azul segurando uma reta numérica',
+        title: 'Soma de Números Inteiros', subtitle: 'Aprenda a somar positivos e negativos sem medo!', mascot: '',
         sections: [
           { label: 'Conceito', title: '', text: 'Os inteiros são positivos, negativos e o zero. Somar é andar na reta numérica.' },
           { label: 'Desenvolvimento', title: '', text: 'Mesmo sinal: soma os módulos e mantém o sinal. Sinais diferentes: subtrai os módulos e fica o sinal do maior.' },
@@ -2190,7 +2240,7 @@ function montarHtml(d, cfg) {
     });
   }
 
-  return { BLUEPRINT_SCHEMA, UNIT_SCHEMA, estadoAcumulado, buildBlueprintRequest, normalizeBlueprint, importBlueprint, hashBlueprint, estadoBlueprint, approveBlueprint, proximaUnidade, buildUnitRequest, applyUnit, problemasParaReparo, buildRepairPrompt, applyRepair, REPAIR_SCHEMA, avisosDeImportacao, VERSION, SCHEMA, hashConteudo, estadoRevisao, DEFAULT_AUTHOR, REGISTROS, DESTINATARIOS, INTERIOR_STYLES, AVATAR_OPTIONS, LOGO_OPTIONS, BLOCK_PEDAGOGY, CONTENT_PROFILES, SECTION_CATALOG, PROFILE_SECTIONS, STAGE_PROFILES, calibrateStage, epistemicEmblemSvg, EPISTEMIC, BLOCK_TYPES, POSTER_THEMES, COVER_CSS, POSTER_CSS, DOC_CSS, VISUALS, esc, uid, wc, clone, detectType, sanitizeSvg, renderMarkdown, renderCleanCover, renderPoster, buildImagePrompt, buildRequestText, normalize, fromV2, parseModelJson, importFromText, audit, toMarkdown, toHTML, toApostila, CALLOUTS, scaffold, demo };
+  return { BLUEPRINT_SCHEMA, UNIT_SCHEMA, estadoAcumulado, buildBlueprintRequest, normalizeBlueprint, importBlueprint, hashBlueprint, estadoBlueprint, approveBlueprint, proximaUnidade, buildUnitRequest, applyUnit, problemasParaReparo, buildRepairPrompt, applyRepair, REPAIR_SCHEMA, avisosDeImportacao, VERSION, SCHEMA, hashConteudo, estadoRevisao, DEFAULT_AUTHOR, REGISTROS, DESTINATARIOS, INTERIOR_STYLES, AVATAR_OPTIONS, LOGO_OPTIONS, BLOCK_PEDAGOGY, CONTENT_PROFILES, SECTION_CATALOG, PROFILE_SECTIONS, STAGE_PROFILES, calibrateStage, emblemFor, epistemicEmblemSvg: emblemFor, EPISTEMIC, BLOCK_TYPES, POSTER_THEMES, COVER_CSS, POSTER_CSS, DOC_CSS, VISUALS, esc, uid, wc, clone, detectType, sanitizeSvg, renderMarkdown, renderCleanCover, renderPoster, buildImagePrompt, buildRequestText, normalize, fromV2, parseModelJson, importFromText, audit, toMarkdown, toHTML, toApostila, CALLOUTS, scaffold, demo };
 });
 
 </script>
@@ -3000,7 +3050,7 @@ function montarHtml(d, cfg) {
     const L = C.EPISTEMIC[d.epistemicType].labels;
     return '<div class="two"><div class="card"><h2>Capa Clean & Folha de Rosto</h2><p class="muted">A Capa Clean abre a apostila (título, subtítulo, logo, avatar e autor); a Folha de Rosto traz o mapa visual com caixas curtas (até 25 palavras).</p>' +
       '<label><input type="checkbox" style="width:auto" data-f="poster.coverClean"' + (p.coverClean !== false ? ' checked' : '') + '> Incluir Capa Clean (Página 1) antes da Folha de Rosto</label>' +
-      '<label for="ps-avatar">Foto na seção “Sobre o Autor”</label><select id="ps-avatar" data-f="poster.avatarChoice">' + Object.keys(C.AVATAR_OPTIONS).map((k) => '<option value="' + k + '"' + ((p.avatarChoice || 'avatar-prof-ale-1.jpg') === k ? ' selected' : '') + '>' + esc(C.AVATAR_OPTIONS[k]) + '</option>').join('') + '</select>' +
+      '<label for="ps-avatar">Foto do autor na Capa Clean e em “Sobre o Autor”</label><select id="ps-avatar" data-f="poster.avatarChoice">' + Object.keys(C.AVATAR_OPTIONS).map((k) => '<option value="' + k + '"' + ((p.avatarChoice || 'none') === k ? ' selected' : '') + '>' + esc(C.AVATAR_OPTIONS[k]) + '</option>').join('') + '</select>' +
       '<label for="ps-logo">Logo MathLab</label><select id="ps-logo" data-f="poster.logoChoice">' + Object.keys(C.LOGO_OPTIONS).map((k) => '<option value="' + k + '"' + ((p.logoChoice || 'logo-mathlab-clean.jpg') === k ? ' selected' : '') + '>' + esc(C.LOGO_OPTIONS[k]) + '</option>').join('') + '</select>' +
       '<label for="ps-theme">Tema de cores</label><select id="ps-theme" data-f="poster.theme">' + Object.keys(C.POSTER_THEMES).map((k) => '<option value="' + k + '"' + (p.theme === k ? ' selected' : '') + '>' + esc(C.POSTER_THEMES[k].nome) + '</option>').join('') + '</select>' +
       inp('poster.title', 'Título do pôster') + inp('poster.subtitle', 'Subtítulo') + inp('poster.author', 'Autor na capa', C.DEFAULT_AUTHOR) + inp('poster.videoTitle', 'Videoaula complementar (título opcional)', 'Ex.: Aula em vídeo — Prof. Alê') + inp('poster.videoUrl', 'Link da videoaula (opcional)', 'https://youtube.com/...') + inp('poster.mascot', 'Elemento visual (descrição opcional para a IA de imagem)', 'Ex.: emblema geométrico ou diagrama próprio da disciplina') +
@@ -3041,7 +3091,7 @@ function montarHtml(d, cfg) {
     const pg = (C.toApostila(d).match(/class="mlpage/g) || []).length;
     return '<div class="card"><h2>Apostila completa</h2><p class="muted">Capa Clean + Folha de Rosto + miolo em páginas A4 (' + pg + ' páginas neste material). O arquivo HTML baixado embute as imagens para funcionar offline. Para PDF, use “Imprimir / salvar PDF”.</p>' +
       '<div class="style-grid">' +
-      '<button type="button" class="style-opt' + (style === 'editorial' ? ' on' : '') + '" data-a="setstyle" data-v="editorial"><b>📄 Editorial Clean (padrão)</b><small>Cabeçalho com pílula de página, guia com avatar, caixas suaves e colofão.</small></button>' +
+      '<button type="button" class="style-opt' + (style === 'editorial' ? ' on' : '') + '" data-a="setstyle" data-v="editorial"><b>📄 Editorial Clean (padrão)</b><small>Cabeçalho com pílula de página, guia com emblema da área, caixas suaves e colofão.</small></button>' +
       '<button type="button" class="style-opt' + (style === 'ludico' ? ' on' : '') + '" data-a="setstyle" data-v="ludico"><b>🎨 Lúdico / HQ</b><small>Caixas coloridas numeradas estilo pôster em todo o miolo.</small></button></div>' +
       '<div class="btns"><button class="b gold" data-a="dlbook">📘 Baixar apostila (HTML autocontido)</button><button class="b" data-a="printbook">🖨️ Imprimir / salvar PDF</button></div></div>' +
       '<div class="card"><iframe id="bookFrame" title="Prévia da apostila completa" style="width:100%;height:78vh;border:0;border-radius:10px;background:#e9edf5" srcdoc="' + esc(C.toApostila(d)) + '"></iframe></div>';
