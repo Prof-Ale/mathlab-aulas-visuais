@@ -2,9 +2,17 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>MathLab Aulas Visuais v2.0 — Prof. Alê Barbosa</title>
-<meta name="description" content="Ferramenta de autoria docente: crie, edite, audite e exporte aulas e apostilas visuais de qualquer disciplina.">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>MathLab Aulas Visuais — Prof. Alê Barbosa</title>
+<meta name="description" content="Crie, edite, audite e exporte apostilas visuais completas a partir de um pedido — com revisão e validação do professor. Tudo local no navegador, sem conta.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="MathLab Aulas Visuais — Autoria Docente">
+<meta property="og:description" content="Crie apostilas visuais completas a partir de um pedido — quem valida é você. Tudo local no navegador, sem servidor e sem conta.">
+<meta property="og:locale" content="pt_BR">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="MathLab Aulas Visuais — Autoria Docente">
+<meta name="twitter:description" content="Crie, edite, audite e exporte aulas e apostilas visuais de qualquer disciplina, 100% local.">
 <link rel="icon" type="image/jpeg" href="assets/logo-mathlab-selo.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,12 +22,46 @@
 <body>
 <a class="skip" href="#main">Ir para o conteúdo principal</a>
 <header class="top">
-  <div class="brand"><img class="logo-img" src="assets/logo-mathlab-selo.jpg" alt="MathLab Educação"><div><strong>MathLab</strong> <span class="gold">Aulas Visuais</span> <span class="gold">v2.0</span><small>Psicologia Histórico-Cultural · Prof. Alê Barbosa</small></div></div>
-  <nav id="tabs" role="tablist" aria-label="Seções"></nav>
+  <div class="brand">
+    <img class="logo-img" src="assets/logo-mathlab-selo.jpg" alt="MathLab Educação" width="42" height="42">
+    <div>
+      <strong>MathLab</strong> <span class="gold">Aulas Visuais</span>
+      <small>Psicologia Histórico-Cultural · Prof. Alê Barbosa</small>
+    </div>
+  </div>
+  <div class="top-tools">
+    <span class="local-chip">Tudo local · sem conta</span>
+    <span class="ver-chip" id="verTop" title="Versão unificada lida do manifest.json">v2.0.0</span>
+    <button class="top-btn" id="themeBtn" type="button" aria-label="Alternar tema claro e escuro" title="Alternar tema">◐ <span>Tema</span></button>
+    <button class="top-btn" id="helpTopBtn" type="button" data-a="tab" data-t="ajuda">❓ <span>Ajuda</span></button>
+  </div>
 </header>
-<main id="main" tabindex="-1"></main>
+
+<section class="intro wrap" aria-labelledby="pageTitle">
+  <h1 id="pageTitle">Crie apostilas visuais completas a partir de um pedido — quem valida é você.</h1>
+  <button class="b ghost sm" type="button" id="heroExampleBtn" data-a="previewdemo">👁️ Ver exemplo completo</button>
+</section>
+
+<div class="navzone wrap" id="navzone">
+  <div id="groups" class="groups" role="tablist" aria-label="Grupos de ferramentas"></div>
+  <p id="groupDesc" class="group-desc"></p>
+  <div class="subtabs-wrap">
+    <nav id="tabs" class="subtabs" role="tablist" aria-label="Ferramentas do grupo"></nav>
+    <div class="scroll-hint" aria-hidden="true"></div>
+  </div>
+</div>
+
+<main id="main" tabindex="-1">
+  <div class="card">
+    <h2>Carregando ambiente de autoria…</h2>
+    <p class="muted">1. Descreva a aula e gere o pedido · 2. Gere o JSON com seu Gem/Claude · 3. Importe, audite e valide antes de exportar.</p>
+    <noscript><p class="find hard">O MathLab Aulas Visuais precisa de JavaScript habilitado no navegador para funcionar localmente (nenhum dado é enviado a servidores).</p></noscript>
+  </div>
+</main>
+
 <div id="toast" role="status" aria-live="polite"></div>
-<footer class="foot">MathLab Aulas Visuais <span id="ver"></span> · Seus dados ficam só neste navegador · O professor valida o material antes de usar</footer>
+<footer class="foot">MathLab Aulas Visuais <span id="ver">v2.0.0</span> · Seus dados ficam só neste navegador · O professor valida o material antes de usar</footer>
+
 <script src="js/racional.js"></script>
 <script src="js/auditar-v2.js"></script>
 <script src="js/portfolio.js"></script>

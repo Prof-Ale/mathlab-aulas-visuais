@@ -13,10 +13,10 @@
     catch (e) { toast('Não consegui salvar no navegador (espaço cheio ou bloqueado). Baixe um backup na Biblioteca.', true); return false; }
   }
 
-  const S = { tab: 'biblioteca', pid: null, mid: null, draft: null, dirty: false, showPrev: false, showVers: false, showArch: false,
+  const S = { tab: lib.projects.length ? 'biblioteca' : 'criar', pid: null, mid: null, draft: null, dirty: false, isPreviewExample: false, flowStep: 1, libQuery: '', showPrev: false, showVers: false, showArch: false,
     diario: (() => { try { return JSON.parse(localStorage.getItem('mathlab.diario.v1') || 'null'); } catch (e) { return null; } })(),
     book: { sel: [], title: '', subtitle: '', author: '', glossary: true, answers: true, references: true, show: false },
-    form: { author: C.DEFAULT_AUTHOR, discipline: '', level: '', topic: '', duration: '1 aula de 50 minutos', objectives: '', type: 'auto', contentProfile: 'completo', registro: 'escolar', destinatario: 'estudante', target: '', pasted: '', domainId: '', domainResp: '', srcSel: [], srcDraft: { title: '', authors: '', year: '', venue: '', url: '', text: '', access: 'PARTIAL' } }, vis: { kind: 'numberLine', text: '-6, 6, -2, 5', title: '' } };
+    form: { author: C.DEFAULT_AUTHOR, discipline: '', level: '', topic: '', duration: '1 aula de 50 minutos', objectives: '', type: 'auto', contentProfile: 'completo', registro: 'escolar', destinatario: 'estudante', target: '', pasted: '', lastPedido: '', domainId: '', domainResp: '', srcSel: [], srcDraft: { title: '', authors: '', year: '', venue: '', url: '', text: '', access: 'PARTIAL' } }, vis: { kind: 'numberLine', text: '-6, 6, -2, 5', title: '' } };
 
   /* ---------- modelo: projetos > materiais > versões ---------- */
   const proj = (id) => lib.projects.find((p) => p.id === (id || S.pid));
@@ -42,7 +42,7 @@
   }
   function openMat(pid, mid) {
     if (S.dirty && !confirm('Há alterações não salvas no material aberto. Descartar e abrir outro?')) return;
-    S.pid = pid; S.mid = mid; S.draft = C.clone(curData(proj(pid).materials.find((m) => m.id === mid))); S.dirty = false; S.tab = 'editor'; render();
+    S.pid = pid; S.mid = mid; S.isPreviewExample = false; S.draft = C.clone(curData(proj(pid).materials.find((m) => m.id === mid))); S.dirty = false; S.tab = 'editor'; render();
   }
   let autoTimer = null;
   function scheduleAutosave() {
@@ -54,6 +54,7 @@
     }, 1200);
   }
   function saveDraft() {
+    if (S.isPreviewExample && S.draft) { A.savepreviewdemo(); return; }
     const rec = mat(); if (!rec) return;
     S.draft = C.normalize(S.draft); pushVersion(rec, S.draft, 'Edição ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }));
     logp(proj(), 'Nova versão salva: ' + S.draft.title); if (persist()) toast('Versão salva. As anteriores continuam disponíveis em "Versões".');
@@ -102,18 +103,81 @@
   const area = (path, label, rows, lines) => '<label for="' + fid(path) + '">' + label + '</label><textarea id="' + fid(path) + '" rows="' + (rows || 4) + '" data-f="' + path + '"' + (lines ? ' data-lines="1"' : '') + '>' + esc(lines ? (get(path) || []).join('\n') : get(path)) + '</textarea>';
   const lvlPill = (l) => '<span class="pill ' + (/Reprovado/.test(l) ? 'bad' : /Pronto/.test(l) ? 'ok' : 'warn') + '">' + esc(l) + '</span>';
 
-  /* ---------- abas ---------- */
-  const TABS = [['biblioteca', '📚 Biblioteca'], ['criar', '✨ Criar'], ['plano', '🧭 Plano por unidades'], ['livro', '📖 Livro'], ['editor', '✏️ Editor'], ['poster', '🖼️ Capa (pôster)'], ['apostila', '📘 Apostila completa'], ['auditoria', '🔍 Auditoria'], ['exportar', '📤 Exportar'], ['diario', '📒 Diário & Portfólio'], ['ajuda', '❓ Ajuda']];
+  /* ---------- navegação em 3 grupos + estados vazios que ensinam ---------- */
+  const GROUPS = {
+    criar: {
+      label: 'Criar',
+      desc: '<strong>Criar</strong> — monte o pedido, gere com a IA externa e importe o JSON. As abas de Revisar abrem quando houver um material.',
+      tabs: [['criar', '✨ Criar'], ['plano', '🧭 Plano por unidades']]
+    },
+    revisar: {
+      label: 'Revisar',
+      desc: '<strong>Revisar</strong> — ferramentas sobre o material aberto (edição, capa, apostila A4, auditoria e exportação).',
+      tabs: [['editor', '✏️ Editor'], ['poster', '🖼️ Capa (pôster)'], ['apostila', '📘 Apostila completa'], ['auditoria', '🔍 Auditoria'], ['exportar', '📤 Exportar']]
+    },
+    organizar: {
+      label: 'Organizar',
+      desc: '<strong>Organizar</strong> — sua biblioteca de projetos, compilação de livros e diário docente.',
+      tabs: [['biblioteca', '📚 Biblioteca'], ['livro', '📖 Livro'], ['diario', '📒 Diário & Portfólio']]
+    }
+  };
   const NEED = ['editor', 'poster', 'apostila', 'auditoria', 'exportar'];
+  const EMPTY_HELP = {
+    editor: ['O Editor', 'organiza o material em blocos editáveis, histórico de versões e validação humana do professor.'],
+    poster: ['A Capa (pôster)', 'monta a capa visual da apostila com caixas numeradas, destaque e prompt de imagem.'],
+    apostila: ['A Apostila completa', 'junta capa e miolo paginado em A4 com sumário, blocos didáticos e referências.'],
+    auditoria: ['A Auditoria', 'confere o material em 10 categorias e aponta o que verificar — sem nunca aprovar por você.'],
+    exportar: ['Exportar', 'gera HTML, JSON (mathlab.material/2), Markdown e SVGs diretamente no navegador.']
+  };
+  function groupOf(tab) {
+    if (tab === 'criar' || tab === 'plano') return 'criar';
+    if (NEED.includes(tab)) return 'revisar';
+    return 'organizar';
+  }
+  function emptyStateFor(tab) {
+    const info = EMPTY_HELP[tab] || ['Esta ferramenta', 'trabalha sobre um material aberto.'];
+    return '<div class="card empty"><h2>Nenhum material aberto</h2><p><b>' + info[0] + '</b> ' + info[1] + '</p>' +
+      '<div class="btns"><button class="b gold" data-a="previewdemo">👁️ Ver exemplo completo (sem salvar)</button><button class="b ghost" data-a="tab" data-t="criar">Ir para Criar</button><button class="b ghost" data-a="tab" data-t="biblioteca">Biblioteca</button></div></div>';
+  }
+  function exampleBannerHtml() {
+    if (!S.isPreviewExample || !S.draft) return '';
+    return '<div class="example-banner" role="status"><p>👁️ Você está explorando o <b>exemplo completo</b> sem alterar sua Biblioteca. Salve se quiser transformar em projeto seu.</p>' +
+      '<div class="btns" style="margin:0"><button class="b sm gold" data-a="savepreviewdemo">Salvar na minha Biblioteca</button><button class="b sm ghost" data-a="exitpreviewdemo">Sair do exemplo</button></div></div>';
+  }
+  function continueStripHtml() {
+    if (S.draft && S.tab !== 'editor') {
+      return '<div class="continue-strip"><p><b>Continuar de onde parei:</b> “' + esc(S.draft.title) + '” está aberto' + (S.isPreviewExample ? ' (exemplo)' : '') + '.</p><button class="b sm" data-a="tab" data-t="editor">Continuar no Editor</button></div>';
+    }
+    if (!S.draft && S.form.lastPedido && S.tab !== 'criar') {
+      return '<div class="continue-strip"><p><b>Continuar de onde parei:</b> seu último pedido está salvo na aba Criar esperando o JSON da IA.</p><button class="b sm gold" data-a="tab" data-t="criar">Voltar ao pedido</button></div>';
+    }
+    if (!S.draft && lib.projects.length && lib.projects[0].materials.length && S.tab === 'criar') {
+      const p0 = lib.projects[0], m0 = p0.materials[0], d0 = curData(m0);
+      return '<div class="continue-strip"><p><b>Último material da Biblioteca:</b> “' + esc(d0.title) + '” (' + esc(p0.name) + ').</p><button class="b sm" data-a="openmat" data-p="' + p0.id + '" data-m="' + m0.id + '">Continuar no Editor</button></div>';
+    }
+    return '';
+  }
 
   function render() {
-    $('#tabs').innerHTML = TABS.map((t) => '<button id="tab-' + t[0] + '" role="tab" aria-selected="' + (S.tab === t[0] ? 'true' : 'false') + '" data-a="tab" data-t="' + t[0] + '" class="' + (S.tab === t[0] ? 'on' : '') + '">' + t[1] + '</button>').join('');
+    const activeGroup = groupOf(S.tab);
+    const gEl = $('#groups');
+    if (gEl) {
+      gEl.innerHTML = Object.keys(GROUPS).map((g) => '<button class="group-btn" type="button" role="tab" aria-selected="' + (activeGroup === g && S.tab !== 'ajuda' ? 'true' : 'false') + '" data-a="group" data-g="' + g + '">' + GROUPS[g].label + ' <span class="gcount">' + GROUPS[g].tabs.length + '</span></button>').join('');
+    }
+    const gdEl = $('#groupDesc');
+    if (gdEl) gdEl.innerHTML = S.tab === 'ajuda' ? '<strong>Ajuda</strong> — como instalar o Gem/Skill, gerar PDF acessível e usar o contrato mathlab.material/2.' : GROUPS[activeGroup].desc;
+
+    $('#tabs').innerHTML = GROUPS[activeGroup].tabs.map((t) => {
+      const locked = NEED.includes(t[0]) && !S.draft;
+      return '<button id="tab-' + t[0] + '" class="subtab' + (S.tab === t[0] ? ' on' : '') + (locked ? ' locked' : '') + '" role="tab" aria-selected="' + (S.tab === t[0] ? 'true' : 'false') + '" data-a="tab" data-t="' + t[0] + '"' + (locked ? ' title="Precisa de um material aberto — clique para ver o que faz ou abrir o exemplo"' : '') + '>' + t[1] + (locked ? ' 🔒' : '') + '</button>';
+    }).join('');
+
     const v = { biblioteca: vBib, criar: vCriar, plano: vPlano, livro: vLivro, editor: vEditor, poster: vPoster, apostila: vApostila, auditoria: vAud, exportar: vExp, diario: vDiario, ajuda: vAjuda }[S.tab];
     const main = $('#main');
     main.setAttribute('role', 'tabpanel');
     main.setAttribute('aria-labelledby', 'tab-' + S.tab);
-    main.innerHTML = NEED.includes(S.tab) && !S.draft
-      ? '<div class="card empty"><h2>Nenhum material aberto</h2><p>Abra um material na <b>Biblioteca</b> ou crie um em <b>Criar</b>.</p><button class="b gold" data-a="tab" data-t="biblioteca">Ir para a Biblioteca</button></div>' : v();
+    const body = NEED.includes(S.tab) && !S.draft ? emptyStateFor(S.tab) : v();
+    main.innerHTML = exampleBannerHtml() + continueStripHtml() + body;
   }
 
   /* ---------- Plano por unidades ---------- */
@@ -188,13 +252,16 @@
         }).join('') : '<p class="muted">Nenhum material ainda. Vá em <b>Criar</b>.</p>') + '</div>' +
         '<div class="card"><details><summary>Histórico do projeto</summary>' + p.log.slice().reverse().slice(0, 40).map((l) => '<div class="muted">' + fmt(l.at) + ' — ' + esc(l.msg) + '</div>').join('') + '</details></div>';
     }
-    const vis = lib.projects.filter((x) => S.showArch || !x.archived);
-    return '<div class="card"><h2>Seus projetos</h2>' + (vis.length ? vis.map((x) =>
-      '<div class="list-item"><div><b>' + esc(x.name) + '</b> ' + (x.archived ? '<span class="pill">arquivado</span>' : '') + '<br><span class="muted">' + esc([x.discipline, x.level].filter(Boolean).join(' · ')) + ' · ' + x.materials.length + ' material(is)</span></div><div class="btns"><button class="b sm" data-a="openproj" data-id="' + x.id + '">Abrir</button></div></div>').join('')
-      : '<p class="muted">Nenhum projeto ainda. Crie o primeiro abaixo ou carregue o exemplo.</p>') +
+    const q = (S.libQuery || '').trim().toLowerCase();
+    const vis = lib.projects.filter((x) => (S.showArch || !x.archived) && (!q || [x.name, x.discipline, x.level].concat(x.materials.map((m) => curData(m).title)).join(' ').toLowerCase().includes(q)));
+    return '<div class="card"><h2>Seus projetos</h2>' +
+      (lib.projects.length ? '<div class="search-row"><input id="libSearch" type="search" data-libsearch="1" value="' + esc(S.libQuery) + '" placeholder="Buscar por projeto, disciplina, etapa ou título do material…" aria-label="Buscar na biblioteca"></div>' : '') +
+      (vis.length ? vis.map((x) =>
+        '<div class="list-item"><div><b>' + esc(x.name) + '</b> ' + (x.archived ? '<span class="pill">arquivado</span>' : '') + '<br><span class="muted">' + esc([x.discipline, x.level].filter(Boolean).join(' · ')) + ' · ' + x.materials.length + ' material(is)</span></div><div class="btns"><button class="b sm" data-a="openproj" data-id="' + x.id + '">Abrir</button></div></div>').join('')
+        : (q ? '<p class="muted">Nenhum projeto corresponde a “' + esc(S.libQuery) + '”.</p>' : '<p class="muted">Nenhum projeto ainda. Crie o primeiro abaixo ou explore o exemplo completo.</p>')) +
       '<label><input type="checkbox" data-a="toggleArch" ' + (S.showArch ? 'checked' : '') + ' style="width:auto"> mostrar arquivados</label></div>' +
-      '<div class="card"><h3>Novo projeto</h3><div class="row"><div><label for="np-name">Nome</label><input id="np-name" placeholder="Ex.: 7º ano — Matemática"></div><div><label for="np-disc">Disciplina</label><input id="np-disc" placeholder="Ex.: Matemática"></div><div><label for="np-level">Etapa de ensino</label><input id="np-level" placeholder="Ex.: 7º ano do Ensino Fundamental"></div></div><div class="btns"><button class="b gold" data-a="newproj">Criar projeto</button><button class="b ghost" data-a="demo">Carregar exemplo completo</button></div></div>' +
-      '<div class="card"><h3>Backup</h3><p class="muted">Seus dados ficam só neste navegador. Baixe um backup de vez em quando.</p><div class="btns"><button class="b ghost" data-a="backup">Baixar backup da biblioteca</button><label class="b ghost" style="display:inline-block;margin:0;cursor:pointer">Restaurar backup<input type="file" accept=".json,application/json" data-a="restore" style="display:none"></label></div></div>';
+      '<div class="card"><h3>Novo projeto</h3><div class="row"><div><label for="np-name">Nome</label><input id="np-name" placeholder="Ex.: 7º ano — Matemática"></div><div><label for="np-disc">Disciplina</label><input id="np-disc" placeholder="Ex.: Matemática"></div><div><label for="np-level">Etapa de ensino</label><input id="np-level" placeholder="Ex.: 7º ano do Ensino Fundamental"></div></div><div class="btns"><button class="b gold" data-a="newproj">Criar projeto</button><button class="b ghost" data-a="previewdemo">👁️ Ver exemplo completo</button></div></div>' +
+      '<div class="card"><h3>Backup da Biblioteca</h3><p class="muted">Seus dados ficam só neste navegador. Baixe um backup periodicamente ou restaure um arquivo JSON anterior.</p><div class="btns"><button class="b" data-a="backup">⬇️ Baixar backup da biblioteca</button><label class="b" style="display:inline-flex;align-items:center;margin:0;cursor:pointer">⬆️ Restaurar backup<input type="file" accept=".json,application/json" data-a="restore" style="display:none"></label></div></div>';
   }
 
   /* ---------- Fontes do autor (base obrigatória do pedido) ---------- */
@@ -251,11 +318,13 @@
       '<label for="cr-obj">Objetivos desejados (opcional)</label><textarea id="cr-obj" data-form="objectives" rows="2">' + esc(f.objectives) + '</textarea></div>' +
       cardDominio() +
       cardFontes() +
-      '<div class="card steps"><h3>Caminho sem custo (recomendado)</h3>' +
-      '<div class="step"><b>Copie o pedido</b> e cole no seu Gem do Gemini (ou no Claude com a skill instalada).<div class="btns"><button class="b gold" data-a="copyreq">Copiar pedido</button></div></div>' +
-      '<div class="step"><b>Cole aqui o JSON</b> que ele devolveu e importe.<textarea data-form="pasted" rows="6" placeholder="Cole aqui o bloco JSON inteiro…">' + esc(f.pasted) + '</textarea><div class="btns"><button class="b" data-a="importjson">Importar material</button></div></div>' +
-      '<div class="step">Revise no <b>Editor</b>, ajuste a <b>Apostila visual</b>, rode a <b>Auditoria</b> e exporte.</div></div>' +
-      '<div class="card"><h3>Outras opções</h3><div class="btns"><button class="b ghost" data-a="scaffold">Criar esqueleto offline (sem IA)</button><button class="b ghost" data-a="demo">Carregar exemplo completo</button></div><p class="muted">O esqueleto offline só monta a estrutura certa para o tipo de conhecimento, com marcadores [PREENCHER]. Ele não escreve conteúdo e a auditoria o reprova até você preencher.</p></div>';
+      '<div class="card steps" id="card-fluxo-ia"><h3>Fluxo com IA externa (sem custo · 4 passos)</h3>' +
+      '<div class="step' + (S.flowStep === 1 ? ' now' : S.flowStep > 1 ? ' done' : '') + '"><b>1. Gerar e copiar o pedido</b> — monta o texto completo com tema, regras do domínio e fontes marcadas.<div class="btns"><button class="b gold" data-a="copyreq">📋 Copiar pedido</button></div>' +
+      (f.lastPedido ? '<details class="pedido-box"' + (S.flowStep === 2 ? ' open' : '') + '><summary>Rascunho do último pedido salvo (' + f.lastPedido.length + ' caracteres)</summary><pre>' + esc(f.lastPedido) + '</pre></details>' : '') + '</div>' +
+      '<div class="step' + (S.flowStep === 2 ? ' now' : S.flowStep > 2 ? ' done' : '') + '"><b>2. Executar na IA externa</b> — cole o pedido no seu Gem do Gemini ou no Claude (com a skill <code>mathlab-aulas-visuais</code>) e copie o JSON devolvido.<div class="ext-links"><a class="b ghost sm" href="https://gemini.google.com/" target="_blank" rel="noopener noreferrer">Abrir Gemini ↗</a><a class="b ghost sm" href="https://claude.ai/" target="_blank" rel="noopener noreferrer">Abrir Claude ↗</a><button class="b sm" data-a="gotostep3">Já copiei o JSON, continuar ↓</button></div></div>' +
+      '<div class="step' + (S.flowStep === 3 ? ' now' : S.flowStep > 3 ? ' done' : '') + '"><b>3. Colar o JSON de volta e importar</b><textarea id="cr-pasted" data-form="pasted" rows="6" placeholder="Cole aqui o bloco JSON inteiro devolvido pela IA…">' + esc(f.pasted) + '</textarea><div class="btns"><button class="b" data-a="importjson">Importar material</button></div></div>' +
+      '<div class="step' + (S.flowStep === 4 ? ' now' : '') + '"><b>4. Revisar e validar</b> — revise no <b>Editor</b>, ajuste a <b>Capa</b> e a <b>Apostila</b>, rode a <b>Auditoria</b> e valide como professor.' + (S.draft ? '<div class="btns"><button class="b sm gold" data-a="tab" data-t="editor">Abrir no Editor →</button></div>' : '') + '</div></div>' +
+      '<div class="card"><h3>Outras opções</h3><div class="btns"><button class="b ghost" data-a="scaffold">Criar esqueleto offline (sem IA)</button><button class="b ghost" data-a="previewdemo">👁️ Ver exemplo completo (sem salvar)</button><button class="b ghost" data-a="demo">Salvar exemplo na Biblioteca</button></div><p class="muted">O esqueleto offline só monta a estrutura certa para o tipo de conhecimento, com marcadores [PREENCHER]. Ele não escreve conteúdo e a auditoria o reprova até você preencher.</p></div>';
   }
 
   /* ---------- Editor ---------- */
@@ -434,7 +503,23 @@
 
   /* ---------- ações ---------- */
   const A = {
+    group: (el) => { const g = GROUPS[el.dataset.g]; if (!g) return; if (!g.tabs.some((t) => t[0] === S.tab)) S.tab = g.tabs[0][0]; render(); },
     tab: (el) => { S.tab = el.dataset.t; render(); },
+    previewdemo: () => {
+      if (S.dirty && !S.isPreviewExample && !confirm('Há alterações não salvas no material aberto. Abrir o exemplo assim mesmo?')) return;
+      S.pid = null; S.mid = null; S.isPreviewExample = true; S.draft = C.clone(C.demo()); S.dirty = false; S.tab = 'editor'; render();
+      toast('Exemplo completo aberto em modo prévia (sua Biblioteca não foi alterada).');
+    },
+    savepreviewdemo: () => {
+      if (!S.draft) return;
+      let p = lib.projects.find((x) => x.name === 'Exemplos');
+      if (!p) p = newProject('Exemplos', S.draft.discipline || 'Matemática', S.draft.level || '7º ano');
+      const rec = addMaterial(p, C.normalize(S.draft), 'Exemplo salvo da prévia');
+      S.pid = p.id; S.mid = rec.id; S.isPreviewExample = false; S.dirty = false; render();
+      toast('Exemplo salvo na sua Biblioteca (projeto "Exemplos").');
+    },
+    exitpreviewdemo: () => { S.draft = null; S.pid = null; S.mid = null; S.isPreviewExample = false; S.dirty = false; S.tab = lib.projects.length ? 'biblioteca' : 'criar'; render(); },
+    gotostep3: () => { S.flowStep = 3; render(); const ta = $('[data-form="pasted"]'); if (ta) { ta.focus(); ta.scrollIntoView({ behavior: 'smooth', block: 'center' }); } },
     openproj: (el) => { S.pid = el.dataset.id; render(); },
     closeproj: () => { S.pid = null; render(); },
     toggleArch: (el) => { S.showArch = el.checked; render(); },
@@ -463,7 +548,12 @@
         catch (e) { toast('Backup inválido: ' + e.message, true); }
       }; rd.readAsText(f);
     },
-    copyreq: async () => { const t = C.buildRequestText(S.form) + (D && packDoForm(S.form) ? '\n\n' + D.regrasTexto(packDoForm(S.form)) : '') + (FT && fontesEscolhidas().length ? '\n\n' + FT.blocoDeFontes(fontesEscolhidas()).texto : ''); toast((await copy(t)) ? 'Pedido copiado. Cole no seu Gem ou no Claude.' : 'Não consegui copiar automaticamente.', false); },
+    copyreq: async () => {
+      const t = C.buildRequestText(S.form) + (D && packDoForm(S.form) ? '\n\n' + D.regrasTexto(packDoForm(S.form)) : '') + (FT && fontesEscolhidas().length ? '\n\n' + FT.blocoDeFontes(fontesEscolhidas()).texto : '');
+      S.form.lastPedido = t; S.flowStep = 2;
+      const ok = await copy(t); render();
+      toast(ok ? 'Pedido copiado e salvo abaixo. Cole no seu Gem ou no Claude.' : 'Pedido salvo abaixo. Copie manualmente do rascunho.', !ok);
+    },
     booktoggle: (el) => { const k = el.dataset.k, a = S.book.sel; if (el.checked) { if (!a.includes(k)) a.push(k); } else S.book.sel = a.filter((x) => x !== k); S.book.show = false; render(); },
     bookopt: (el) => { S.book[el.dataset.o] = el.checked; S.book.show = false; },
     bookup: (el) => { const i = +el.dataset.i, a = S.book.sel; if (i > 0) { [a[i - 1], a[i]] = [a[i], a[i - 1]]; S.book.show = false; render(); } },
@@ -521,7 +611,7 @@
     importjson: () => {
       const r = C.importFromText(S.form.pasted); if (!r.ok) { toast(r.error, true); return; }
       const m = r.material; const p = (S.form.target && proj(S.form.target)) || newProject(m.discipline || m.title, m.discipline, m.level);
-      const rec = addMaterial(p, m, 'Importado da skill'); toast('Material importado.' + (r.warnings.length ? ' ' + r.warnings.join(' ') : '')); S.form.pasted = ''; S.dirty = false; openMat(p.id, rec.id); S.avisosImport = { mid: rec.id, list: r.warnings.filter((w) => !/^O JSON não declara/.test(w)) }; render();
+      const rec = addMaterial(p, m, 'Importado da skill'); toast('Material importado.' + (r.warnings.length ? ' ' + r.warnings.join(' ') : '')); S.form.pasted = ''; S.flowStep = 4; S.dirty = false; openMat(p.id, rec.id); S.avisosImport = { mid: rec.id, list: r.warnings.filter((w) => !/^O JSON não declara/.test(w)) }; render();
     },
     scaffold: () => {
       if (!S.form.topic.trim()) { toast('Preencha ao menos o tema.', true); return; }
@@ -586,6 +676,11 @@
   document.addEventListener('change', (e) => { const el = e.target; if (el.dataset.formPlan) { S.planId = el.value; render(); return; } if ((el.type === 'checkbox' || el.type === 'file') && el.dataset.a && A[el.dataset.a]) A[el.dataset.a](el, e); else if (el.dataset.vis === 'kind') { S.vis.kind = el.value; S.vis.text = { numberLine: '-6, 6, -2, 5', timeline: '1789 | Revolução Francesa\n1822 | Independência do Brasil', flow: 'Observar\nFormular hipótese\nTestar\nConcluir', conceptMap: 'Tema central\nConceito A\nConceito B\nConceito C' }[el.value]; render(); } });
   document.addEventListener('input', (e) => {
     const el = e.target;
+    if (el.dataset.libsearch) {
+      const pos = el.selectionStart; S.libQuery = el.value; render();
+      const inp2 = $('#libSearch'); if (inp2) { inp2.focus(); try { inp2.setSelectionRange(pos, pos); } catch (_) { /* ignora */ } }
+      return;
+    }
     if (el.dataset.pu) {
       const bp = curPlan(); const [i, k] = el.dataset.pu.split('.'); if (bp && bp.units[+i]) { bp.units[+i][k] = el.value; persist(); const st = $('#plano-estado'); if (st) { const e2 = C.estadoBlueprint(bp); st.textContent = e2.texto; st.className = 'pill ' + (e2.aprovado ? 'ok' : 'warn'); } }
       return;
@@ -608,8 +703,46 @@
   });
   window.addEventListener('beforeunload', (e) => { if (S.dirty) { e.preventDefault(); e.returnValue = ''; } });
 
+  /* ---------- tema claro/escuro (respeita prefers-color-scheme; toggle na sessão) ---------- */
+  function applyTheme(t) {
+    if (t === 'dark' || t === 'light') document.documentElement.setAttribute('data-theme', t);
+    else document.documentElement.removeAttribute('data-theme');
+    const btn = $('#themeBtn');
+    if (btn) {
+      const isDark = t === 'dark' || (!t && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      btn.setAttribute('aria-pressed', isDark ? 'true' : 'false');
+      btn.innerHTML = (isDark ? '☀️' : '🌙') + ' <span>' + (isDark ? 'Claro' : 'Escuro') + '</span>';
+    }
+  }
+  try { applyTheme(sessionStorage.getItem('mathlab.theme') || ''); } catch (e) { applyTheme(''); }
+  const themeBtn = $('#themeBtn');
+  if (themeBtn) {
+    themeBtn.addEventListener('click', () => {
+      const cur = document.documentElement.getAttribute('data-theme');
+      const sysDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const next = cur ? (cur === 'dark' ? 'light' : 'dark') : (sysDark ? 'light' : 'dark');
+      try { sessionStorage.setItem('mathlab.theme', next); } catch (e) { /* ignora */ }
+      applyTheme(next);
+    });
+  }
+
+  /* ---------- versão unificada a partir do manifest.json ---------- */
+  function setVersionText(verTopText, verFootText) {
+    const vt = $('#verTop'), vf = $('#ver');
+    if (vt) vt.textContent = verTopText;
+    if (vf) vf.textContent = verFootText;
+  }
+  setVersionText('v' + C.VERSION, 'v' + C.VERSION);
+  if (typeof fetch === 'function') {
+    fetch('manifest.json').then((r) => (r.ok ? r.json() : null)).then((m) => {
+      if (!m || !m.motor) return;
+      const top = 'v' + m.motor;
+      const foot = 'v' + m.motor + (m.pacote ? ' · pacote ' + m.pacote : '') + (m.contrato && m.contrato.schema ? ' · ' + m.contrato.schema : '');
+      setVersionText(top, foot);
+    }).catch(() => { /* offline / standalone usa C.VERSION */ });
+  }
+
   const st = document.createElement('style'); st.textContent = C.COVER_CSS + '\n' + C.POSTER_CSS; document.head.appendChild(st);
-  $('#ver').textContent = 'v' + C.VERSION;
   render();
   window.__mathlab = { S, lib: () => lib, A, render };
 })();

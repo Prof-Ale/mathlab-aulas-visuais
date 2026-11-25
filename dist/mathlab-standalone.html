@@ -2,84 +2,232 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>MathLab Aulas Visuais v2.0 — Prof. Alê Barbosa</title>
-<meta name="description" content="Ferramenta de autoria docente: crie, edite, audite e exporte aulas e apostilas visuais de qualquer disciplina.">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>MathLab Aulas Visuais — Prof. Alê Barbosa</title>
+<meta name="description" content="Crie, edite, audite e exporte apostilas visuais completas a partir de um pedido — com revisão e validação do professor. Tudo local no navegador, sem conta.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="MathLab Aulas Visuais — Autoria Docente">
+<meta property="og:description" content="Crie apostilas visuais completas a partir de um pedido — quem valida é você. Tudo local no navegador, sem servidor e sem conta.">
+<meta property="og:locale" content="pt_BR">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="MathLab Aulas Visuais — Autoria Docente">
+<meta name="twitter:description" content="Crie, edite, audite e exporte aulas e apostilas visuais de qualquer disciplina, 100% local.">
 <link rel="icon" type="image/jpeg" href="assets/logo-mathlab-selo.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Fredoka:wght@600;700&family=Nunito:wght@400;600;700;800&family=Patrick+Hand&display=swap" rel="stylesheet">
 <style>
-:root{--navy:#14264f;--navy2:#1d3770;--gold:#f2b705;--bg:#f2f4f9;--card:#fff;--line:#d6dcea;--ink:#1d2433;--mut:#5a6682;--ok:#1d8f4e;--bad:#c9382f;--warn:#b7791f}
+:root{
+  --navy:#14264f; --navy2:#1d3770; --gold:#f2b705; --gold-soft:#ffe9a8;
+  --bg:#edf1f6; --bg2:#e3eaf3; --card:#ffffff; --surface2:#f6f8fc;
+  --line:#d2dceb; --line-strong:#b4c3dc;
+  --ink:#14264f; --ink2:#36486e; --mut:#4d5d7e;
+  --ok:#147041; --ok-bg:#dcf5e6; --bad:#b3261e; --bad-bg:#fde3e1; --warn:#8f5400; --warn-bg:#fff1d1;
+  --shadow:0 4px 16px rgba(20,38,79,.08);
+  --header-h:62px;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0b1224; --bg2:#101a33; --card:#14203d; --surface2:#19284b;
+    --line:#28385f; --line-strong:#3c5080;
+    --ink:#eef2fb; --ink2:#c6d1ea; --mut:#9cb0d4;
+    --ok:#4cd48d; --ok-bg:#123324; --bad:#ff948a; --bad-bg:#3e1915; --warn:#f5c459; --warn-bg:#3a2b09;
+    --shadow:0 6px 20px rgba(0,0,0,.4);
+  }
+}
+:root[data-theme="light"]{
+  --bg:#edf1f6; --bg2:#e3eaf3; --card:#ffffff; --surface2:#f6f8fc;
+  --line:#d2dceb; --line-strong:#b4c3dc;
+  --ink:#14264f; --ink2:#36486e; --mut:#4d5d7e;
+  --ok:#147041; --ok-bg:#dcf5e6; --bad:#b3261e; --bad-bg:#fde3e1; --warn:#8f5400; --warn-bg:#fff1d1;
+  --shadow:0 4px 16px rgba(20,38,79,.08);
+}
+:root[data-theme="dark"]{
+  --bg:#0b1224; --bg2:#101a33; --card:#14203d; --surface2:#19284b;
+  --line:#28385f; --line-strong:#3c5080;
+  --ink:#eef2fb; --ink2:#c6d1ea; --mut:#9cb0d4;
+  --ok:#4cd48d; --ok-bg:#123324; --bad:#ff948a; --bad-bg:#3e1915; --warn:#f5c459; --warn-bg:#3a2b09;
+  --shadow:0 6px 20px rgba(0,0,0,.4);
+}
 *{box-sizing:border-box}
-body{margin:0;font-family:"Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5}
-.top{background:var(--navy);color:#fff;padding:10px 18px;display:flex;flex-wrap:wrap;gap:10px 24px;align-items:center;position:sticky;top:0;z-index:20;box-shadow:0 2px 8px rgba(0,0,0,.25)}
-.brand{display:flex;gap:10px;align-items:center;font-size:1.15rem}.brand small{display:block;font-size:.72rem;color:#b9c6e6}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important;animation:none!important}}
+body{margin:0;font-family:"Nunito","Segoe UI",system-ui,-apple-system,Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.55}
+section,[id],.card{scroll-margin-top:calc(var(--header-h) + 86px)}
+.wrap{max-width:1120px;margin:0 auto;padding:0 16px}
+
+/* Cabeçalho fixo enxuto */
+.top{background:var(--navy);color:#fff;padding:8px 18px;min-height:var(--header-h);display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;position:sticky;top:0;z-index:30;box-shadow:0 2px 10px rgba(0,0,0,.28)}
+.brand{display:flex;gap:10px;align-items:center;font-size:1.12rem;min-width:0}
+.brand small{display:block;font-size:.74rem;color:#c3d0ee}
 .logo{display:grid;place-items:center;width:40px;height:40px;border-radius:10px;background:var(--gold);color:var(--navy);font-weight:900;font-size:1.5rem}
-.logo-img{width:42px;height:42px;border-radius:10px;object-fit:cover;border:2px solid var(--gold);background:#fff}
+.logo-img{width:40px;height:40px;border-radius:10px;object-fit:cover;border:2px solid var(--gold);background:#fff;flex:none}
 .gold{color:var(--gold)}
-nav{display:flex;flex-wrap:wrap;gap:4px}
-nav button{background:transparent;border:0;color:#cfd9f2;padding:8px 12px;border-radius:8px;cursor:pointer;font:inherit;font-size:.92rem}
-nav button:hover{background:var(--navy2)}nav button.on{background:var(--gold);color:var(--navy);font-weight:700}
-main{max-width:1100px;margin:18px auto;padding:0 14px 40px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:14px}
-h2{margin:.2em 0 .5em;color:var(--navy)}h3{margin:.2em 0 .4em;color:var(--navy2)}
-label{display:block;font-size:.82rem;font-weight:600;color:var(--mut);margin:8px 0 3px}
-input,select,textarea{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font:inherit;background:#fff;color:var(--ink)}
-textarea{resize:vertical;min-height:70px}
-input:focus,select:focus,textarea:focus,button:focus-visible{outline:3px solid #f2b70588;outline-offset:1px}
+.top-tools{margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.local-chip{font-size:.76rem;font-weight:800;background:rgba(242,183,5,.16);border:1px solid rgba(242,183,5,.5);color:var(--gold-soft);padding:5px 10px;border-radius:999px;white-space:nowrap}
+.ver-chip{font-size:.76rem;font-weight:800;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#edf2ff;padding:5px 10px;border-radius:999px;white-space:nowrap}
+.top-btn{background:transparent;border:1px solid rgba(255,255,255,.28);color:#fff;border-radius:9px;padding:7px 11px;min-height:40px;font:inherit;font-size:.86rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.top-btn:hover{background:rgba(255,255,255,.14)}
+
+/* Intro com H1 real */
+.intro{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding:18px 16px 4px}
+.intro h1{margin:0;font-family:"Fredoka","Nunito",sans-serif;font-size:clamp(1.25rem,2.4vw,1.65rem);line-height:1.22;color:var(--ink);font-weight:600}
+.intro .b{margin-left:auto}
+
+/* Navegação em 3 grupos + subabas */
+.navzone{padding-top:10px;padding-bottom:6px}
+.groups{display:inline-flex;gap:5px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:4px;box-shadow:var(--shadow);max-width:100%}
+.group-btn{border:0;background:transparent;color:var(--mut);padding:8px 14px;min-height:42px;border-radius:9px;font:inherit;font-size:.9rem;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+.group-btn .gcount{font-size:.74rem;background:var(--bg2);color:var(--ink2);border-radius:999px;padding:1px 7px;font-weight:800}
+.group-btn[aria-selected="true"]{background:var(--navy);color:#fff}
+.group-btn[aria-selected="true"] .gcount{background:rgba(255,255,255,.2);color:#fff}
+:root[data-theme="dark"] .group-btn[aria-selected="true"]{background:var(--gold);color:var(--navy)}
+:root[data-theme="dark"] .group-btn[aria-selected="true"] .gcount{background:rgba(20,38,79,.18);color:var(--navy)}
+.group-desc{margin:6px 0 4px;font-size:.86rem;color:var(--mut)}
+.group-desc strong{color:var(--ink2)}
+.subtabs-wrap{position:relative}
+.subtabs{display:flex;flex-wrap:nowrap;gap:7px;overflow-x:auto;padding:4px 2px 6px;scrollbar-width:thin}
+.subtab{flex:none;background:var(--card);border:1.5px solid var(--line);color:var(--ink2);padding:8px 13px;min-height:42px;border-radius:999px;cursor:pointer;font:inherit;font-size:.88rem;font-weight:700;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.subtab:hover{border-color:var(--navy2);color:var(--ink)}
+.subtab.on{background:var(--gold);border-color:var(--gold);color:var(--navy);font-weight:800}
+.subtab.locked{opacity:.72;border-style:dashed}
+.scroll-hint{position:absolute;right:0;top:0;bottom:6px;width:36px;pointer-events:none;background:linear-gradient(to right,transparent,var(--bg));display:none}
+
+/* Faixas de contexto (Continuar / Exemplo) */
+.continue-strip{display:flex;flex-wrap:wrap;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-left:5px solid var(--gold);border-radius:12px;padding:11px 14px;margin-bottom:14px;box-shadow:var(--shadow)}
+.continue-strip p{margin:0;font-size:.9rem;color:var(--ink2);flex:1 1 240px}
+.example-banner{display:flex;flex-wrap:wrap;align-items:center;gap:10px;background:var(--warn-bg);border:1px solid var(--warn);color:var(--warn);border-radius:12px;padding:11px 14px;margin-bottom:14px;font-size:.9rem;font-weight:700}
+.example-banner p{margin:0;flex:1 1 260px}
+
+main{max-width:1120px;margin:10px auto 24px;padding:0 16px 40px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin-bottom:14px;box-shadow:var(--shadow)}
+h2{margin:.1em 0 .45em;color:var(--ink);font-family:"Fredoka","Nunito",sans-serif;font-weight:600}
+h3{margin:.15em 0 .4em;color:var(--ink2)}
+label{display:block;font-size:.84rem;font-weight:700;color:var(--ink2);margin:8px 0 3px}
+input,select,textarea{width:100%;padding:9px 11px;min-height:42px;border:1.5px solid var(--line);border-radius:9px;font:inherit;background:var(--surface2);color:var(--ink)}
+input[type="checkbox"]{min-height:auto;width:auto}
+input::placeholder,textarea::placeholder{color:var(--mut);opacity:.85}
+textarea{resize:vertical;min-height:74px}
+input:focus,select:focus,textarea:focus,button:focus-visible,a:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 .row{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
-.btns{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
-button.b{background:var(--navy);color:#fff;border:0;padding:9px 14px;border-radius:8px;cursor:pointer;font:inherit;font-weight:600}
-button.b:hover{background:var(--navy2)}button.gold{background:var(--gold);color:var(--navy)}
-button.ghost{background:#fff;color:var(--navy);border:1px solid var(--navy)}button.danger{background:var(--bad)}
-button.sm{padding:4px 9px;font-size:.82rem}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0;align-items:center}
+button.b,label.b{background:var(--navy);color:#fff;border:1.5px solid transparent;padding:9px 15px;min-height:42px;border-radius:9px;cursor:pointer;font:inherit;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none}
+button.b:hover,label.b:hover{background:var(--navy2)}
+button.b.gold{background:var(--gold);color:var(--navy)}
+button.b.gold:hover{filter:brightness(1.04)}
+button.b.ghost,label.b.ghost{background:var(--surface2);color:var(--ink);border:1.5px solid var(--line-strong)}
+button.b.ghost:hover,label.b.ghost:hover{border-color:var(--ink2)}
+button.b.danger{background:var(--bad);color:#fff}
+button.b.sm{padding:6px 11px;min-height:38px;font-size:.84rem}
+button.b:disabled{opacity:1;background:var(--surface2);color:var(--mut);border:1.5px dashed var(--line-strong);cursor:not-allowed}
 .muted{color:var(--mut);font-size:.88rem}
-.pill{display:inline-block;padding:2px 10px;border-radius:99px;font-size:.78rem;font-weight:700;background:#e8edf8;color:var(--navy)}
-.pill.ok{background:#dcf5e6;color:#126134}.pill.bad{background:#fde3e1;color:#a8241c}.pill.warn{background:#fff1d1;color:#7a4e08}
+.pill{display:inline-block;padding:3px 10px;border-radius:99px;font-size:.78rem;font-weight:700;background:var(--bg2);color:var(--ink)}
+.pill.ok{background:var(--ok-bg);color:var(--ok)}.pill.bad{background:var(--bad-bg);color:var(--bad)}.pill.warn{background:var(--warn-bg);color:var(--warn)}
 .style-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin:10px 0}
-.style-opt{text-align:left;padding:12px 14px;border:2px solid var(--line);border-radius:12px;background:#fff;cursor:pointer;font:inherit;color:var(--ink)}
-.style-opt.on{border-color:var(--navy);background:#eef4ff;box-shadow:0 0 0 2px #14264f22}
-.style-opt b{display:block;color:var(--navy);margin-bottom:2px}
+.style-opt{text-align:left;padding:12px 14px;border:2px solid var(--line);border-radius:12px;background:var(--surface2);cursor:pointer;font:inherit;color:var(--ink)}
+.style-opt.on{border-color:var(--gold);background:var(--card);box-shadow:0 0 0 2px rgba(242,183,5,.35)}
+.style-opt b{display:block;color:var(--ink);margin-bottom:2px}
 .style-opt small{display:block;color:var(--mut);font-size:.82rem}
-.skip{position:absolute;left:-9999px;top:0;background:var(--gold);color:var(--navy);padding:8px 14px;font-weight:700;z-index:100;border-radius:0 0 8px 0}.skip:focus{left:8px;top:8px}
-.ctx-bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;background:#f3f6fc;border:1px solid var(--line);border-left:5px solid var(--gold);border-radius:10px;padding:10px 12px;margin-bottom:12px}
-.list-item{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:8px 0;background:#fafbfe}
-.blk{border:1px solid var(--line);border-left:6px solid var(--navy);border-radius:10px;padding:10px 12px;margin:10px 0;background:#fcfdff}
+.skip{position:absolute;left:-9999px;top:0;background:var(--gold);color:var(--navy);padding:10px 16px;font-weight:800;z-index:100;border-radius:0 0 8px 0}.skip:focus{left:8px;top:8px}
+.ctx-bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;background:var(--surface2);border:1px solid var(--line);border-left:5px solid var(--gold);border-radius:10px;padding:10px 12px;margin-bottom:12px}
+.list-item{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:8px 0;background:var(--surface2)}
+.blk{border:1px solid var(--line);border-left:6px solid var(--navy);border-radius:10px;padding:12px 14px;margin:10px 0;background:var(--surface2)}
 .blk .head{display:grid;grid-template-columns:200px 1fr auto;gap:8px;align-items:end}
 @media(max-width:700px){.blk .head{grid-template-columns:1fr}}
 .dirty{color:var(--warn);font-weight:700}
 .two{display:grid;grid-template-columns:minmax(280px,1fr) minmax(320px,1.1fr);gap:16px;align-items:start}
 @media(max-width:900px){.two{grid-template-columns:1fr}}
-.preview{border:1px dashed var(--line);border-radius:12px;padding:10px;background:#fff;overflow:auto}
+.preview{border:1px dashed var(--line-strong);border-radius:12px;padding:10px;background:#fff;color:#14264f;overflow:auto}
 iframe.pv{width:100%;height:560px;border:1px solid var(--line);border-radius:10px;background:#fff}
-.bar{height:12px;background:#e6eaf4;border-radius:99px;overflow:hidden}.bar i{display:block;height:100%;background:var(--ok)}
-.score{font-size:3rem;font-weight:800;color:var(--navy);line-height:1}
+.bar{height:12px;background:var(--bg2);border-radius:99px;overflow:hidden}.bar i{display:block;height:100%;background:var(--ok)}
+.score{font-size:3rem;font-weight:800;color:var(--ink);line-height:1}
 .cat{display:grid;grid-template-columns:200px 1fr 40px;gap:8px;align-items:center;margin:6px 0;font-size:.9rem}
 @media(max-width:600px){.cat{grid-template-columns:1fr 60px}.cat span:first-child{grid-column:1/-1}}
-.find{font-size:.88rem;margin:2px 0 2px 12px}.find.hard{color:var(--bad);font-weight:600}.find.warn{color:var(--warn)}.find.info{color:var(--mut)}
-pre.code{background:#0f1b38;color:#e7edff;padding:12px;border-radius:10px;overflow:auto;font-size:.82rem;white-space:pre-wrap;max-height:260px}
-details{margin:6px 0}summary{cursor:pointer;color:var(--navy2);font-weight:600}
-#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(80px);background:var(--navy);color:#fff;padding:10px 18px;border-radius:10px;opacity:0;transition:.25s;z-index:50;max-width:92vw}
+.find{font-size:.88rem;margin:4px 0 4px 12px}.find.hard{color:var(--bad);font-weight:700}.find.warn{color:var(--warn)}.find.info{color:var(--mut)}
+pre.code,.pedido-box{background:var(--surface2);color:var(--ink);border:1.5px dashed var(--line-strong);padding:12px;border-radius:10px;overflow:auto;font-size:.83rem;white-space:pre-wrap;max-height:220px;margin:8px 0}
+pre.code{background:#0f1b38;color:#e7edff;border-style:solid;border-color:#23345f}
+details{margin:8px 0}summary{cursor:pointer;color:var(--ink2);font-weight:700;min-height:36px;display:flex;align-items:center}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(80px);background:var(--navy);color:#fff;padding:11px 18px;border-radius:10px;opacity:0;transition:.25s;z-index:60;max-width:92vw;font-weight:700;box-shadow:var(--shadow)}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}#toast.err{background:var(--bad)}
-.foot{text-align:center;color:var(--mut);font-size:.8rem;padding:14px}
-.step{counter-increment:s;position:relative;padding-left:38px;margin:10px 0}
-.step:before{content:counter(s);position:absolute;left:0;top:0;width:28px;height:28px;border-radius:50%;background:var(--gold);color:var(--navy);display:grid;place-items:center;font-weight:800}
+.foot{text-align:center;color:var(--mut);font-size:.82rem;padding:18px 14px 28px;border-top:1px solid var(--line)}
+
+/* Stepper persistente de 4 passos (Criar -> IA externa -> Importar -> Revisar) */
+.step{counter-increment:s;position:relative;padding-left:42px;margin:14px 0;padding-bottom:6px}
+.step:before{content:counter(s);position:absolute;left:0;top:0;width:30px;height:30px;border-radius:50%;background:var(--bg2);border:2px solid var(--line-strong);color:var(--mut);display:grid;place-items:center;font-weight:800;font-size:.86rem}
+.step.now:before{background:var(--gold);border-color:#c78f00;color:var(--navy)}
+.step.done:before{content:"✓";background:var(--ok-bg);border-color:var(--ok);color:var(--ok)}
 .steps{counter-reset:s}
-.empty{text-align:center;padding:30px;color:var(--mut)}
-@media print{.top,.foot,#toast{display:none}}
+.ext-links{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.ext-link{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;min-height:42px;border-radius:9px;border:1.5px solid var(--line-strong);background:var(--surface2);color:var(--ink);text-decoration:none;font-weight:700;font-size:.86rem}
+.ext-link:hover{border-color:var(--gold)}
+
+/* Busca na Biblioteca */
+.search-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0}
+.search-row input{flex:1 1 220px}
+
+.empty{text-align:center;padding:28px 20px;color:var(--mut);border:1.5px dashed var(--line-strong);border-radius:14px;background:var(--surface2)}
+.empty h2,.empty h3{color:var(--ink)}
+.empty .btns{justify-content:center}
+
+@media (max-width:640px){
+  .wrap,main{padding-left:12px;padding-right:12px}
+  .brand small,.local-chip,.ver-chip,.top-btn span{display:none}
+  .intro .b{margin-left:0}
+  .groups{width:100%}
+  .group-btn{flex:1;justify-content:center;padding:8px 6px;font-size:.84rem}
+  .scroll-hint{display:block}
+  .card{padding:14px}
+  button.b,label.b,.subtab,.group-btn,.top-btn{min-height:44px}
+  section,[id],.card{scroll-margin-top:calc(var(--header-h) + 120px)}
+}
+@media print{.top,.intro,.navzone,.continue-strip,.example-banner,.foot,#toast{display:none!important}}
 
 </style>
 </head>
 <body>
 <a class="skip" href="#main">Ir para o conteúdo principal</a>
 <header class="top">
-  <div class="brand"><img class="logo-img" src="assets/logo-mathlab-selo.jpg" alt="MathLab Educação"><div><strong>MathLab</strong> <span class="gold">Aulas Visuais</span> <span class="gold">v2.0</span><small>Psicologia Histórico-Cultural · Prof. Alê Barbosa</small></div></div>
-  <nav id="tabs" role="tablist" aria-label="Seções"></nav>
+  <div class="brand">
+    <img class="logo-img" src="assets/logo-mathlab-selo.jpg" alt="MathLab Educação" width="42" height="42">
+    <div>
+      <strong>MathLab</strong> <span class="gold">Aulas Visuais</span>
+      <small>Psicologia Histórico-Cultural · Prof. Alê Barbosa</small>
+    </div>
+  </div>
+  <div class="top-tools">
+    <span class="local-chip">Tudo local · sem conta</span>
+    <span class="ver-chip" id="verTop" title="Versão unificada lida do manifest.json">v2.0.0</span>
+    <button class="top-btn" id="themeBtn" type="button" aria-label="Alternar tema claro e escuro" title="Alternar tema">◐ <span>Tema</span></button>
+    <button class="top-btn" id="helpTopBtn" type="button" data-a="tab" data-t="ajuda">❓ <span>Ajuda</span></button>
+  </div>
 </header>
-<main id="main" tabindex="-1"></main>
+
+<section class="intro wrap" aria-labelledby="pageTitle">
+  <h1 id="pageTitle">Crie apostilas visuais completas a partir de um pedido — quem valida é você.</h1>
+  <button class="b ghost sm" type="button" id="heroExampleBtn" data-a="previewdemo">👁️ Ver exemplo completo</button>
+</section>
+
+<div class="navzone wrap" id="navzone">
+  <div id="groups" class="groups" role="tablist" aria-label="Grupos de ferramentas"></div>
+  <p id="groupDesc" class="group-desc"></p>
+  <div class="subtabs-wrap">
+    <nav id="tabs" class="subtabs" role="tablist" aria-label="Ferramentas do grupo"></nav>
+    <div class="scroll-hint" aria-hidden="true"></div>
+  </div>
+</div>
+
+<main id="main" tabindex="-1">
+  <div class="card">
+    <h2>Carregando ambiente de autoria…</h2>
+    <p class="muted">1. Descreva a aula e gere o pedido · 2. Gere o JSON com seu Gem/Claude · 3. Importe, audite e valide antes de exportar.</p>
+    <noscript><p class="find hard">O MathLab Aulas Visuais precisa de JavaScript habilitado no navegador para funcionar localmente (nenhum dado é enviado a servidores).</p></noscript>
+  </div>
+</main>
+
 <div id="toast" role="status" aria-live="polite"></div>
-<footer class="foot">MathLab Aulas Visuais <span id="ver"></span> · Seus dados ficam só neste navegador · O professor valida o material antes de usar</footer>
+<footer class="foot">MathLab Aulas Visuais <span id="ver">v2.0.0</span> · Seus dados ficam só neste navegador · O professor valida o material antes de usar</footer>
+
 <script>
 /* Gerado automaticamente a partir de tools/*.mjs */
 (function (root, factory) {
@@ -2300,10 +2448,10 @@ function montarHtml(d, cfg) {
     catch (e) { toast('Não consegui salvar no navegador (espaço cheio ou bloqueado). Baixe um backup na Biblioteca.', true); return false; }
   }
 
-  const S = { tab: 'biblioteca', pid: null, mid: null, draft: null, dirty: false, showPrev: false, showVers: false, showArch: false,
+  const S = { tab: lib.projects.length ? 'biblioteca' : 'criar', pid: null, mid: null, draft: null, dirty: false, isPreviewExample: false, flowStep: 1, libQuery: '', showPrev: false, showVers: false, showArch: false,
     diario: (() => { try { return JSON.parse(localStorage.getItem('mathlab.diario.v1') || 'null'); } catch (e) { return null; } })(),
     book: { sel: [], title: '', subtitle: '', author: '', glossary: true, answers: true, references: true, show: false },
-    form: { author: C.DEFAULT_AUTHOR, discipline: '', level: '', topic: '', duration: '1 aula de 50 minutos', objectives: '', type: 'auto', contentProfile: 'completo', registro: 'escolar', destinatario: 'estudante', target: '', pasted: '', domainId: '', domainResp: '', srcSel: [], srcDraft: { title: '', authors: '', year: '', venue: '', url: '', text: '', access: 'PARTIAL' } }, vis: { kind: 'numberLine', text: '-6, 6, -2, 5', title: '' } };
+    form: { author: C.DEFAULT_AUTHOR, discipline: '', level: '', topic: '', duration: '1 aula de 50 minutos', objectives: '', type: 'auto', contentProfile: 'completo', registro: 'escolar', destinatario: 'estudante', target: '', pasted: '', lastPedido: '', domainId: '', domainResp: '', srcSel: [], srcDraft: { title: '', authors: '', year: '', venue: '', url: '', text: '', access: 'PARTIAL' } }, vis: { kind: 'numberLine', text: '-6, 6, -2, 5', title: '' } };
 
   /* ---------- modelo: projetos > materiais > versões ---------- */
   const proj = (id) => lib.projects.find((p) => p.id === (id || S.pid));
@@ -2329,7 +2477,7 @@ function montarHtml(d, cfg) {
   }
   function openMat(pid, mid) {
     if (S.dirty && !confirm('Há alterações não salvas no material aberto. Descartar e abrir outro?')) return;
-    S.pid = pid; S.mid = mid; S.draft = C.clone(curData(proj(pid).materials.find((m) => m.id === mid))); S.dirty = false; S.tab = 'editor'; render();
+    S.pid = pid; S.mid = mid; S.isPreviewExample = false; S.draft = C.clone(curData(proj(pid).materials.find((m) => m.id === mid))); S.dirty = false; S.tab = 'editor'; render();
   }
   let autoTimer = null;
   function scheduleAutosave() {
@@ -2341,6 +2489,7 @@ function montarHtml(d, cfg) {
     }, 1200);
   }
   function saveDraft() {
+    if (S.isPreviewExample && S.draft) { A.savepreviewdemo(); return; }
     const rec = mat(); if (!rec) return;
     S.draft = C.normalize(S.draft); pushVersion(rec, S.draft, 'Edição ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }));
     logp(proj(), 'Nova versão salva: ' + S.draft.title); if (persist()) toast('Versão salva. As anteriores continuam disponíveis em "Versões".');
@@ -2389,18 +2538,81 @@ function montarHtml(d, cfg) {
   const area = (path, label, rows, lines) => '<label for="' + fid(path) + '">' + label + '</label><textarea id="' + fid(path) + '" rows="' + (rows || 4) + '" data-f="' + path + '"' + (lines ? ' data-lines="1"' : '') + '>' + esc(lines ? (get(path) || []).join('\n') : get(path)) + '</textarea>';
   const lvlPill = (l) => '<span class="pill ' + (/Reprovado/.test(l) ? 'bad' : /Pronto/.test(l) ? 'ok' : 'warn') + '">' + esc(l) + '</span>';
 
-  /* ---------- abas ---------- */
-  const TABS = [['biblioteca', '📚 Biblioteca'], ['criar', '✨ Criar'], ['plano', '🧭 Plano por unidades'], ['livro', '📖 Livro'], ['editor', '✏️ Editor'], ['poster', '🖼️ Capa (pôster)'], ['apostila', '📘 Apostila completa'], ['auditoria', '🔍 Auditoria'], ['exportar', '📤 Exportar'], ['diario', '📒 Diário & Portfólio'], ['ajuda', '❓ Ajuda']];
+  /* ---------- navegação em 3 grupos + estados vazios que ensinam ---------- */
+  const GROUPS = {
+    criar: {
+      label: 'Criar',
+      desc: '<strong>Criar</strong> — monte o pedido, gere com a IA externa e importe o JSON. As abas de Revisar abrem quando houver um material.',
+      tabs: [['criar', '✨ Criar'], ['plano', '🧭 Plano por unidades']]
+    },
+    revisar: {
+      label: 'Revisar',
+      desc: '<strong>Revisar</strong> — ferramentas sobre o material aberto (edição, capa, apostila A4, auditoria e exportação).',
+      tabs: [['editor', '✏️ Editor'], ['poster', '🖼️ Capa (pôster)'], ['apostila', '📘 Apostila completa'], ['auditoria', '🔍 Auditoria'], ['exportar', '📤 Exportar']]
+    },
+    organizar: {
+      label: 'Organizar',
+      desc: '<strong>Organizar</strong> — sua biblioteca de projetos, compilação de livros e diário docente.',
+      tabs: [['biblioteca', '📚 Biblioteca'], ['livro', '📖 Livro'], ['diario', '📒 Diário & Portfólio']]
+    }
+  };
   const NEED = ['editor', 'poster', 'apostila', 'auditoria', 'exportar'];
+  const EMPTY_HELP = {
+    editor: ['O Editor', 'organiza o material em blocos editáveis, histórico de versões e validação humana do professor.'],
+    poster: ['A Capa (pôster)', 'monta a capa visual da apostila com caixas numeradas, destaque e prompt de imagem.'],
+    apostila: ['A Apostila completa', 'junta capa e miolo paginado em A4 com sumário, blocos didáticos e referências.'],
+    auditoria: ['A Auditoria', 'confere o material em 10 categorias e aponta o que verificar — sem nunca aprovar por você.'],
+    exportar: ['Exportar', 'gera HTML, JSON (mathlab.material/2), Markdown e SVGs diretamente no navegador.']
+  };
+  function groupOf(tab) {
+    if (tab === 'criar' || tab === 'plano') return 'criar';
+    if (NEED.includes(tab)) return 'revisar';
+    return 'organizar';
+  }
+  function emptyStateFor(tab) {
+    const info = EMPTY_HELP[tab] || ['Esta ferramenta', 'trabalha sobre um material aberto.'];
+    return '<div class="card empty"><h2>Nenhum material aberto</h2><p><b>' + info[0] + '</b> ' + info[1] + '</p>' +
+      '<div class="btns"><button class="b gold" data-a="previewdemo">👁️ Ver exemplo completo (sem salvar)</button><button class="b ghost" data-a="tab" data-t="criar">Ir para Criar</button><button class="b ghost" data-a="tab" data-t="biblioteca">Biblioteca</button></div></div>';
+  }
+  function exampleBannerHtml() {
+    if (!S.isPreviewExample || !S.draft) return '';
+    return '<div class="example-banner" role="status"><p>👁️ Você está explorando o <b>exemplo completo</b> sem alterar sua Biblioteca. Salve se quiser transformar em projeto seu.</p>' +
+      '<div class="btns" style="margin:0"><button class="b sm gold" data-a="savepreviewdemo">Salvar na minha Biblioteca</button><button class="b sm ghost" data-a="exitpreviewdemo">Sair do exemplo</button></div></div>';
+  }
+  function continueStripHtml() {
+    if (S.draft && S.tab !== 'editor') {
+      return '<div class="continue-strip"><p><b>Continuar de onde parei:</b> “' + esc(S.draft.title) + '” está aberto' + (S.isPreviewExample ? ' (exemplo)' : '') + '.</p><button class="b sm" data-a="tab" data-t="editor">Continuar no Editor</button></div>';
+    }
+    if (!S.draft && S.form.lastPedido && S.tab !== 'criar') {
+      return '<div class="continue-strip"><p><b>Continuar de onde parei:</b> seu último pedido está salvo na aba Criar esperando o JSON da IA.</p><button class="b sm gold" data-a="tab" data-t="criar">Voltar ao pedido</button></div>';
+    }
+    if (!S.draft && lib.projects.length && lib.projects[0].materials.length && S.tab === 'criar') {
+      const p0 = lib.projects[0], m0 = p0.materials[0], d0 = curData(m0);
+      return '<div class="continue-strip"><p><b>Último material da Biblioteca:</b> “' + esc(d0.title) + '” (' + esc(p0.name) + ').</p><button class="b sm" data-a="openmat" data-p="' + p0.id + '" data-m="' + m0.id + '">Continuar no Editor</button></div>';
+    }
+    return '';
+  }
 
   function render() {
-    $('#tabs').innerHTML = TABS.map((t) => '<button id="tab-' + t[0] + '" role="tab" aria-selected="' + (S.tab === t[0] ? 'true' : 'false') + '" data-a="tab" data-t="' + t[0] + '" class="' + (S.tab === t[0] ? 'on' : '') + '">' + t[1] + '</button>').join('');
+    const activeGroup = groupOf(S.tab);
+    const gEl = $('#groups');
+    if (gEl) {
+      gEl.innerHTML = Object.keys(GROUPS).map((g) => '<button class="group-btn" type="button" role="tab" aria-selected="' + (activeGroup === g && S.tab !== 'ajuda' ? 'true' : 'false') + '" data-a="group" data-g="' + g + '">' + GROUPS[g].label + ' <span class="gcount">' + GROUPS[g].tabs.length + '</span></button>').join('');
+    }
+    const gdEl = $('#groupDesc');
+    if (gdEl) gdEl.innerHTML = S.tab === 'ajuda' ? '<strong>Ajuda</strong> — como instalar o Gem/Skill, gerar PDF acessível e usar o contrato mathlab.material/2.' : GROUPS[activeGroup].desc;
+
+    $('#tabs').innerHTML = GROUPS[activeGroup].tabs.map((t) => {
+      const locked = NEED.includes(t[0]) && !S.draft;
+      return '<button id="tab-' + t[0] + '" class="subtab' + (S.tab === t[0] ? ' on' : '') + (locked ? ' locked' : '') + '" role="tab" aria-selected="' + (S.tab === t[0] ? 'true' : 'false') + '" data-a="tab" data-t="' + t[0] + '"' + (locked ? ' title="Precisa de um material aberto — clique para ver o que faz ou abrir o exemplo"' : '') + '>' + t[1] + (locked ? ' 🔒' : '') + '</button>';
+    }).join('');
+
     const v = { biblioteca: vBib, criar: vCriar, plano: vPlano, livro: vLivro, editor: vEditor, poster: vPoster, apostila: vApostila, auditoria: vAud, exportar: vExp, diario: vDiario, ajuda: vAjuda }[S.tab];
     const main = $('#main');
     main.setAttribute('role', 'tabpanel');
     main.setAttribute('aria-labelledby', 'tab-' + S.tab);
-    main.innerHTML = NEED.includes(S.tab) && !S.draft
-      ? '<div class="card empty"><h2>Nenhum material aberto</h2><p>Abra um material na <b>Biblioteca</b> ou crie um em <b>Criar</b>.</p><button class="b gold" data-a="tab" data-t="biblioteca">Ir para a Biblioteca</button></div>' : v();
+    const body = NEED.includes(S.tab) && !S.draft ? emptyStateFor(S.tab) : v();
+    main.innerHTML = exampleBannerHtml() + continueStripHtml() + body;
   }
 
   /* ---------- Plano por unidades ---------- */
@@ -2475,13 +2687,16 @@ function montarHtml(d, cfg) {
         }).join('') : '<p class="muted">Nenhum material ainda. Vá em <b>Criar</b>.</p>') + '</div>' +
         '<div class="card"><details><summary>Histórico do projeto</summary>' + p.log.slice().reverse().slice(0, 40).map((l) => '<div class="muted">' + fmt(l.at) + ' — ' + esc(l.msg) + '</div>').join('') + '</details></div>';
     }
-    const vis = lib.projects.filter((x) => S.showArch || !x.archived);
-    return '<div class="card"><h2>Seus projetos</h2>' + (vis.length ? vis.map((x) =>
-      '<div class="list-item"><div><b>' + esc(x.name) + '</b> ' + (x.archived ? '<span class="pill">arquivado</span>' : '') + '<br><span class="muted">' + esc([x.discipline, x.level].filter(Boolean).join(' · ')) + ' · ' + x.materials.length + ' material(is)</span></div><div class="btns"><button class="b sm" data-a="openproj" data-id="' + x.id + '">Abrir</button></div></div>').join('')
-      : '<p class="muted">Nenhum projeto ainda. Crie o primeiro abaixo ou carregue o exemplo.</p>') +
+    const q = (S.libQuery || '').trim().toLowerCase();
+    const vis = lib.projects.filter((x) => (S.showArch || !x.archived) && (!q || [x.name, x.discipline, x.level].concat(x.materials.map((m) => curData(m).title)).join(' ').toLowerCase().includes(q)));
+    return '<div class="card"><h2>Seus projetos</h2>' +
+      (lib.projects.length ? '<div class="search-row"><input id="libSearch" type="search" data-libsearch="1" value="' + esc(S.libQuery) + '" placeholder="Buscar por projeto, disciplina, etapa ou título do material…" aria-label="Buscar na biblioteca"></div>' : '') +
+      (vis.length ? vis.map((x) =>
+        '<div class="list-item"><div><b>' + esc(x.name) + '</b> ' + (x.archived ? '<span class="pill">arquivado</span>' : '') + '<br><span class="muted">' + esc([x.discipline, x.level].filter(Boolean).join(' · ')) + ' · ' + x.materials.length + ' material(is)</span></div><div class="btns"><button class="b sm" data-a="openproj" data-id="' + x.id + '">Abrir</button></div></div>').join('')
+        : (q ? '<p class="muted">Nenhum projeto corresponde a “' + esc(S.libQuery) + '”.</p>' : '<p class="muted">Nenhum projeto ainda. Crie o primeiro abaixo ou explore o exemplo completo.</p>')) +
       '<label><input type="checkbox" data-a="toggleArch" ' + (S.showArch ? 'checked' : '') + ' style="width:auto"> mostrar arquivados</label></div>' +
-      '<div class="card"><h3>Novo projeto</h3><div class="row"><div><label for="np-name">Nome</label><input id="np-name" placeholder="Ex.: 7º ano — Matemática"></div><div><label for="np-disc">Disciplina</label><input id="np-disc" placeholder="Ex.: Matemática"></div><div><label for="np-level">Etapa de ensino</label><input id="np-level" placeholder="Ex.: 7º ano do Ensino Fundamental"></div></div><div class="btns"><button class="b gold" data-a="newproj">Criar projeto</button><button class="b ghost" data-a="demo">Carregar exemplo completo</button></div></div>' +
-      '<div class="card"><h3>Backup</h3><p class="muted">Seus dados ficam só neste navegador. Baixe um backup de vez em quando.</p><div class="btns"><button class="b ghost" data-a="backup">Baixar backup da biblioteca</button><label class="b ghost" style="display:inline-block;margin:0;cursor:pointer">Restaurar backup<input type="file" accept=".json,application/json" data-a="restore" style="display:none"></label></div></div>';
+      '<div class="card"><h3>Novo projeto</h3><div class="row"><div><label for="np-name">Nome</label><input id="np-name" placeholder="Ex.: 7º ano — Matemática"></div><div><label for="np-disc">Disciplina</label><input id="np-disc" placeholder="Ex.: Matemática"></div><div><label for="np-level">Etapa de ensino</label><input id="np-level" placeholder="Ex.: 7º ano do Ensino Fundamental"></div></div><div class="btns"><button class="b gold" data-a="newproj">Criar projeto</button><button class="b ghost" data-a="previewdemo">👁️ Ver exemplo completo</button></div></div>' +
+      '<div class="card"><h3>Backup da Biblioteca</h3><p class="muted">Seus dados ficam só neste navegador. Baixe um backup periodicamente ou restaure um arquivo JSON anterior.</p><div class="btns"><button class="b" data-a="backup">⬇️ Baixar backup da biblioteca</button><label class="b" style="display:inline-flex;align-items:center;margin:0;cursor:pointer">⬆️ Restaurar backup<input type="file" accept=".json,application/json" data-a="restore" style="display:none"></label></div></div>';
   }
 
   /* ---------- Fontes do autor (base obrigatória do pedido) ---------- */
@@ -2538,11 +2753,13 @@ function montarHtml(d, cfg) {
       '<label for="cr-obj">Objetivos desejados (opcional)</label><textarea id="cr-obj" data-form="objectives" rows="2">' + esc(f.objectives) + '</textarea></div>' +
       cardDominio() +
       cardFontes() +
-      '<div class="card steps"><h3>Caminho sem custo (recomendado)</h3>' +
-      '<div class="step"><b>Copie o pedido</b> e cole no seu Gem do Gemini (ou no Claude com a skill instalada).<div class="btns"><button class="b gold" data-a="copyreq">Copiar pedido</button></div></div>' +
-      '<div class="step"><b>Cole aqui o JSON</b> que ele devolveu e importe.<textarea data-form="pasted" rows="6" placeholder="Cole aqui o bloco JSON inteiro…">' + esc(f.pasted) + '</textarea><div class="btns"><button class="b" data-a="importjson">Importar material</button></div></div>' +
-      '<div class="step">Revise no <b>Editor</b>, ajuste a <b>Apostila visual</b>, rode a <b>Auditoria</b> e exporte.</div></div>' +
-      '<div class="card"><h3>Outras opções</h3><div class="btns"><button class="b ghost" data-a="scaffold">Criar esqueleto offline (sem IA)</button><button class="b ghost" data-a="demo">Carregar exemplo completo</button></div><p class="muted">O esqueleto offline só monta a estrutura certa para o tipo de conhecimento, com marcadores [PREENCHER]. Ele não escreve conteúdo e a auditoria o reprova até você preencher.</p></div>';
+      '<div class="card steps" id="card-fluxo-ia"><h3>Fluxo com IA externa (sem custo · 4 passos)</h3>' +
+      '<div class="step' + (S.flowStep === 1 ? ' now' : S.flowStep > 1 ? ' done' : '') + '"><b>1. Gerar e copiar o pedido</b> — monta o texto completo com tema, regras do domínio e fontes marcadas.<div class="btns"><button class="b gold" data-a="copyreq">📋 Copiar pedido</button></div>' +
+      (f.lastPedido ? '<details class="pedido-box"' + (S.flowStep === 2 ? ' open' : '') + '><summary>Rascunho do último pedido salvo (' + f.lastPedido.length + ' caracteres)</summary><pre>' + esc(f.lastPedido) + '</pre></details>' : '') + '</div>' +
+      '<div class="step' + (S.flowStep === 2 ? ' now' : S.flowStep > 2 ? ' done' : '') + '"><b>2. Executar na IA externa</b> — cole o pedido no seu Gem do Gemini ou no Claude (com a skill <code>mathlab-aulas-visuais</code>) e copie o JSON devolvido.<div class="ext-links"><a class="b ghost sm" href="https://gemini.google.com/" target="_blank" rel="noopener noreferrer">Abrir Gemini ↗</a><a class="b ghost sm" href="https://claude.ai/" target="_blank" rel="noopener noreferrer">Abrir Claude ↗</a><button class="b sm" data-a="gotostep3">Já copiei o JSON, continuar ↓</button></div></div>' +
+      '<div class="step' + (S.flowStep === 3 ? ' now' : S.flowStep > 3 ? ' done' : '') + '"><b>3. Colar o JSON de volta e importar</b><textarea id="cr-pasted" data-form="pasted" rows="6" placeholder="Cole aqui o bloco JSON inteiro devolvido pela IA…">' + esc(f.pasted) + '</textarea><div class="btns"><button class="b" data-a="importjson">Importar material</button></div></div>' +
+      '<div class="step' + (S.flowStep === 4 ? ' now' : '') + '"><b>4. Revisar e validar</b> — revise no <b>Editor</b>, ajuste a <b>Capa</b> e a <b>Apostila</b>, rode a <b>Auditoria</b> e valide como professor.' + (S.draft ? '<div class="btns"><button class="b sm gold" data-a="tab" data-t="editor">Abrir no Editor →</button></div>' : '') + '</div></div>' +
+      '<div class="card"><h3>Outras opções</h3><div class="btns"><button class="b ghost" data-a="scaffold">Criar esqueleto offline (sem IA)</button><button class="b ghost" data-a="previewdemo">👁️ Ver exemplo completo (sem salvar)</button><button class="b ghost" data-a="demo">Salvar exemplo na Biblioteca</button></div><p class="muted">O esqueleto offline só monta a estrutura certa para o tipo de conhecimento, com marcadores [PREENCHER]. Ele não escreve conteúdo e a auditoria o reprova até você preencher.</p></div>';
   }
 
   /* ---------- Editor ---------- */
@@ -2721,7 +2938,23 @@ function montarHtml(d, cfg) {
 
   /* ---------- ações ---------- */
   const A = {
+    group: (el) => { const g = GROUPS[el.dataset.g]; if (!g) return; if (!g.tabs.some((t) => t[0] === S.tab)) S.tab = g.tabs[0][0]; render(); },
     tab: (el) => { S.tab = el.dataset.t; render(); },
+    previewdemo: () => {
+      if (S.dirty && !S.isPreviewExample && !confirm('Há alterações não salvas no material aberto. Abrir o exemplo assim mesmo?')) return;
+      S.pid = null; S.mid = null; S.isPreviewExample = true; S.draft = C.clone(C.demo()); S.dirty = false; S.tab = 'editor'; render();
+      toast('Exemplo completo aberto em modo prévia (sua Biblioteca não foi alterada).');
+    },
+    savepreviewdemo: () => {
+      if (!S.draft) return;
+      let p = lib.projects.find((x) => x.name === 'Exemplos');
+      if (!p) p = newProject('Exemplos', S.draft.discipline || 'Matemática', S.draft.level || '7º ano');
+      const rec = addMaterial(p, C.normalize(S.draft), 'Exemplo salvo da prévia');
+      S.pid = p.id; S.mid = rec.id; S.isPreviewExample = false; S.dirty = false; render();
+      toast('Exemplo salvo na sua Biblioteca (projeto "Exemplos").');
+    },
+    exitpreviewdemo: () => { S.draft = null; S.pid = null; S.mid = null; S.isPreviewExample = false; S.dirty = false; S.tab = lib.projects.length ? 'biblioteca' : 'criar'; render(); },
+    gotostep3: () => { S.flowStep = 3; render(); const ta = $('[data-form="pasted"]'); if (ta) { ta.focus(); ta.scrollIntoView({ behavior: 'smooth', block: 'center' }); } },
     openproj: (el) => { S.pid = el.dataset.id; render(); },
     closeproj: () => { S.pid = null; render(); },
     toggleArch: (el) => { S.showArch = el.checked; render(); },
@@ -2750,7 +2983,12 @@ function montarHtml(d, cfg) {
         catch (e) { toast('Backup inválido: ' + e.message, true); }
       }; rd.readAsText(f);
     },
-    copyreq: async () => { const t = C.buildRequestText(S.form) + (D && packDoForm(S.form) ? '\n\n' + D.regrasTexto(packDoForm(S.form)) : '') + (FT && fontesEscolhidas().length ? '\n\n' + FT.blocoDeFontes(fontesEscolhidas()).texto : ''); toast((await copy(t)) ? 'Pedido copiado. Cole no seu Gem ou no Claude.' : 'Não consegui copiar automaticamente.', false); },
+    copyreq: async () => {
+      const t = C.buildRequestText(S.form) + (D && packDoForm(S.form) ? '\n\n' + D.regrasTexto(packDoForm(S.form)) : '') + (FT && fontesEscolhidas().length ? '\n\n' + FT.blocoDeFontes(fontesEscolhidas()).texto : '');
+      S.form.lastPedido = t; S.flowStep = 2;
+      const ok = await copy(t); render();
+      toast(ok ? 'Pedido copiado e salvo abaixo. Cole no seu Gem ou no Claude.' : 'Pedido salvo abaixo. Copie manualmente do rascunho.', !ok);
+    },
     booktoggle: (el) => { const k = el.dataset.k, a = S.book.sel; if (el.checked) { if (!a.includes(k)) a.push(k); } else S.book.sel = a.filter((x) => x !== k); S.book.show = false; render(); },
     bookopt: (el) => { S.book[el.dataset.o] = el.checked; S.book.show = false; },
     bookup: (el) => { const i = +el.dataset.i, a = S.book.sel; if (i > 0) { [a[i - 1], a[i]] = [a[i], a[i - 1]]; S.book.show = false; render(); } },
@@ -2808,7 +3046,7 @@ function montarHtml(d, cfg) {
     importjson: () => {
       const r = C.importFromText(S.form.pasted); if (!r.ok) { toast(r.error, true); return; }
       const m = r.material; const p = (S.form.target && proj(S.form.target)) || newProject(m.discipline || m.title, m.discipline, m.level);
-      const rec = addMaterial(p, m, 'Importado da skill'); toast('Material importado.' + (r.warnings.length ? ' ' + r.warnings.join(' ') : '')); S.form.pasted = ''; S.dirty = false; openMat(p.id, rec.id); S.avisosImport = { mid: rec.id, list: r.warnings.filter((w) => !/^O JSON não declara/.test(w)) }; render();
+      const rec = addMaterial(p, m, 'Importado da skill'); toast('Material importado.' + (r.warnings.length ? ' ' + r.warnings.join(' ') : '')); S.form.pasted = ''; S.flowStep = 4; S.dirty = false; openMat(p.id, rec.id); S.avisosImport = { mid: rec.id, list: r.warnings.filter((w) => !/^O JSON não declara/.test(w)) }; render();
     },
     scaffold: () => {
       if (!S.form.topic.trim()) { toast('Preencha ao menos o tema.', true); return; }
@@ -2873,6 +3111,11 @@ function montarHtml(d, cfg) {
   document.addEventListener('change', (e) => { const el = e.target; if (el.dataset.formPlan) { S.planId = el.value; render(); return; } if ((el.type === 'checkbox' || el.type === 'file') && el.dataset.a && A[el.dataset.a]) A[el.dataset.a](el, e); else if (el.dataset.vis === 'kind') { S.vis.kind = el.value; S.vis.text = { numberLine: '-6, 6, -2, 5', timeline: '1789 | Revolução Francesa\n1822 | Independência do Brasil', flow: 'Observar\nFormular hipótese\nTestar\nConcluir', conceptMap: 'Tema central\nConceito A\nConceito B\nConceito C' }[el.value]; render(); } });
   document.addEventListener('input', (e) => {
     const el = e.target;
+    if (el.dataset.libsearch) {
+      const pos = el.selectionStart; S.libQuery = el.value; render();
+      const inp2 = $('#libSearch'); if (inp2) { inp2.focus(); try { inp2.setSelectionRange(pos, pos); } catch (_) { /* ignora */ } }
+      return;
+    }
     if (el.dataset.pu) {
       const bp = curPlan(); const [i, k] = el.dataset.pu.split('.'); if (bp && bp.units[+i]) { bp.units[+i][k] = el.value; persist(); const st = $('#plano-estado'); if (st) { const e2 = C.estadoBlueprint(bp); st.textContent = e2.texto; st.className = 'pill ' + (e2.aprovado ? 'ok' : 'warn'); } }
       return;
@@ -2895,8 +3138,46 @@ function montarHtml(d, cfg) {
   });
   window.addEventListener('beforeunload', (e) => { if (S.dirty) { e.preventDefault(); e.returnValue = ''; } });
 
+  /* ---------- tema claro/escuro (respeita prefers-color-scheme; toggle na sessão) ---------- */
+  function applyTheme(t) {
+    if (t === 'dark' || t === 'light') document.documentElement.setAttribute('data-theme', t);
+    else document.documentElement.removeAttribute('data-theme');
+    const btn = $('#themeBtn');
+    if (btn) {
+      const isDark = t === 'dark' || (!t && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      btn.setAttribute('aria-pressed', isDark ? 'true' : 'false');
+      btn.innerHTML = (isDark ? '☀️' : '🌙') + ' <span>' + (isDark ? 'Claro' : 'Escuro') + '</span>';
+    }
+  }
+  try { applyTheme(sessionStorage.getItem('mathlab.theme') || ''); } catch (e) { applyTheme(''); }
+  const themeBtn = $('#themeBtn');
+  if (themeBtn) {
+    themeBtn.addEventListener('click', () => {
+      const cur = document.documentElement.getAttribute('data-theme');
+      const sysDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const next = cur ? (cur === 'dark' ? 'light' : 'dark') : (sysDark ? 'light' : 'dark');
+      try { sessionStorage.setItem('mathlab.theme', next); } catch (e) { /* ignora */ }
+      applyTheme(next);
+    });
+  }
+
+  /* ---------- versão unificada a partir do manifest.json ---------- */
+  function setVersionText(verTopText, verFootText) {
+    const vt = $('#verTop'), vf = $('#ver');
+    if (vt) vt.textContent = verTopText;
+    if (vf) vf.textContent = verFootText;
+  }
+  setVersionText('v' + C.VERSION, 'v' + C.VERSION);
+  if (typeof fetch === 'function') {
+    fetch('manifest.json').then((r) => (r.ok ? r.json() : null)).then((m) => {
+      if (!m || !m.motor) return;
+      const top = 'v' + m.motor;
+      const foot = 'v' + m.motor + (m.pacote ? ' · pacote ' + m.pacote : '') + (m.contrato && m.contrato.schema ? ' · ' + m.contrato.schema : '');
+      setVersionText(top, foot);
+    }).catch(() => { /* offline / standalone usa C.VERSION */ });
+  }
+
   const st = document.createElement('style'); st.textContent = C.COVER_CSS + '\n' + C.POSTER_CSS; document.head.appendChild(st);
-  $('#ver').textContent = 'v' + C.VERSION;
   render();
   window.__mathlab = { S, lib: () => lib, A, render };
 })();
