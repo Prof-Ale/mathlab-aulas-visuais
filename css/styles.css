@@ -161,4 +161,20 @@ details{margin:8px 0}summary{cursor:pointer;color:var(--ink2);font-weight:700;mi
   button.b,label.b,.subtab,.group-btn,.top-btn{min-height:44px}
   section,[id],.card{scroll-margin-top:calc(var(--header-h) + 120px)}
 }
+/* Arquitetura pedagógica do formulário Criar (epistemologia, módulos e calibração) */
+.epist-hint{margin:8px 0 4px;padding:10px 12px;border-radius:10px;border:1px solid var(--bd);background:var(--chip-bg);font-size:.86rem;line-height:1.45;color:var(--ink)}
+.epist-hint small{display:block;color:var(--mut);margin-top:3px}
+.mod-wrap{margin-top:12px;padding:12px 14px;border-radius:10px;border:1px solid var(--bd);background:var(--bg)}
+.mod-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.mod-head b{font-size:.9rem;color:var(--ink)}
+.mod-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px 10px}
+.mod-item{display:flex;align-items:center;gap:8px;padding:6px 9px;border-radius:8px;border:1px solid var(--bd);background:var(--card);margin:0;cursor:pointer;font-size:.84rem;font-weight:600;color:var(--ink);transition:border-color .15s,background .15s}
+.mod-item:hover{border-color:var(--blue)}
+.mod-item input{width:auto;margin:0;accent-color:var(--blue)}
+.calib-box{margin-top:12px;padding:12px 14px;border-radius:10px;border:1px solid var(--bd);border-left:4px solid var(--gold);background:var(--chip-bg)}
+.calib-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.calib-head select{width:auto;min-width:220px;padding:6px 10px;font-size:.84rem}
+.calib-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px;font-size:.83rem;line-height:1.4}
+.calib-cell{background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:8px 10px}
+.calib-cell b{display:block;font-size:.78rem;text-transform:uppercase;letter-spacing:.35px;color:var(--blue);margin-bottom:2px}
 @media print{.top,.intro,.navzone,.continue-strip,.example-banner,.foot,#toast{display:none!important}}

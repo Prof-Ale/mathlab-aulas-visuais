@@ -16,7 +16,7 @@
   const S = { tab: lib.projects.length ? 'biblioteca' : 'criar', pid: null, mid: null, draft: null, dirty: false, isPreviewExample: false, flowStep: 1, libQuery: '', showPrev: false, showVers: false, showArch: false,
     diario: (() => { try { return JSON.parse(localStorage.getItem('mathlab.diario.v1') || 'null'); } catch (e) { return null; } })(),
     book: { sel: [], title: '', subtitle: '', author: '', glossary: true, answers: true, references: true, show: false },
-    form: { author: C.DEFAULT_AUTHOR, discipline: '', level: '', topic: '', duration: '1 aula de 50 minutos', objectives: '', type: 'auto', contentProfile: 'completo', registro: 'escolar', destinatario: 'estudante', target: '', pasted: '', lastPedido: '', domainId: '', domainResp: '', srcSel: [], srcDraft: { title: '', authors: '', year: '', venue: '', url: '', text: '', access: 'PARTIAL' } }, vis: { kind: 'numberLine', text: '-6, 6, -2, 5', title: '' } };
+    form: { author: C.DEFAULT_AUTHOR, discipline: '', level: '', topic: '', duration: '1 aula de 50 minutos', objectives: '', type: 'auto', contentProfile: 'completo', sections: C.PROFILE_SECTIONS.completo.slice(), stageOverride: 'auto', registro: 'escolar', destinatario: 'estudante', target: '', pasted: '', lastPedido: '', domainId: '', domainResp: '', srcSel: [], srcDraft: { title: '', authors: '', year: '', venue: '', url: '', text: '', access: 'PARTIAL' } }, vis: { kind: 'numberLine', text: '-6, 6, -2, 5', title: '' } };
 
   /* ---------- modelo: projetos > materiais > versões ---------- */
   const proj = (id) => lib.projects.find((p) => p.id === (id || S.pid));
@@ -305,16 +305,40 @@
   }
 
   /* ---------- Criar ---------- */
+  function epistHintHtml(f) {
+    const det = C.detectType(f.discipline);
+    const manual = f.type && f.type !== 'auto' && C.EPISTEMIC[f.type];
+    const eff = manual ? f.type : det;
+    const msg = manual
+      ? '<b>Epistemologia definida manualmente:</b> ' + esc(C.EPISTEMIC[eff].label) + (f.discipline ? ' <span class="muted">(sugestão automática pela disciplina seria ' + esc(C.EPISTEMIC[det].label.split(' (')[0]) + ')</span>' : '')
+      : (f.discipline
+        ? '<b>Detecção epistemológica inteligente:</b> para “' + esc(f.discipline) + '”, sugerimos <b>' + esc(C.EPISTEMIC[det].label) + '</b> — você pode alterar manualmente no seletor acima.'
+        : '<b>Detecção epistemológica inteligente:</b> digite a disciplina para sugerir automaticamente o tipo de conhecimento (editável manualmente).');
+    return msg + '<small>A <b>Psicologia Histórico-Cultural</b> fundamenta a organização pedagógica (mediação, ZDP), mas não substitui a epistemologia própria da disciplina.</small>';
+  }
+  function calibBodyHtml(f) {
+    const cal = C.calibrateStage(f.level, f.stageOverride);
+    return '<div class="calib-grid">' +
+      '<div class="calib-cell"><b>Profundidade conceitual</b>' + esc(cal.profundidade) + '</div>' +
+      '<div class="calib-cell"><b>Linguagem e registro</b>' + esc(cal.linguagem) + '</div>' +
+      '<div class="calib-cell"><b>Exemplos</b>' + esc(cal.exemplos) + '</div>' +
+      '<div class="calib-cell"><b>Complexidade das atividades</b>' + esc(cal.atividades) + '</div></div>';
+  }
   function vCriar() {
     const f = S.form;
     const opt = (v, t, sel) => '<option value="' + esc(v) + '"' + (sel ? ' selected' : '') + '>' + esc(t) + '</option>';
-    return '<div class="card"><h2>Criar material</h2><p class="muted">Funciona para qualquer disciplina, fundamentado na Psicologia Histórico-Cultural. Sem limite fixo de páginas e com escolha modular das seções.</p>' +
-      '<div class="row"><div><label for="cr-author">Autor</label><input id="cr-author" data-form="author" value="' + esc(f.author) + '" placeholder="Prof. Alê Barbosa"></div><div><label for="cr-disc">Disciplina</label><input id="cr-disc" data-form="discipline" value="' + esc(f.discipline) + '" placeholder="Ex.: História"></div><div><label for="cr-level">Etapa de ensino</label><input id="cr-level" data-form="level" value="' + esc(f.level) + '" placeholder="Ex.: 8º ano"></div><div><label for="cr-topic">Tema</label><input id="cr-topic" data-form="topic" value="' + esc(f.topic) + '" placeholder="Ex.: Revolução Francesa"></div><div><label for="cr-dur">Duração</label><input id="cr-dur" data-form="duration" value="' + esc(f.duration) + '"></div></div>' +
-      '<div class="row"><div><label for="cr-type">Tipo de conhecimento</label><select id="cr-type" data-form="type">' + opt('auto', 'Detectar pela disciplina', f.type === 'auto') + Object.keys(C.EPISTEMIC).map((k) => opt(k, C.EPISTEMIC[k].label, f.type === k)).join('') + '</select></div>' +
-      '<div><label for="cr-prof">O que você quer incluir?</label><select id="cr-prof" data-form="contentProfile">' + Object.keys(C.CONTENT_PROFILES).map((k) => opt(k, C.CONTENT_PROFILES[k], f.contentProfile === k)).join('') + '</select></div>' +
+    const selSecs = Array.isArray(f.sections) ? f.sections : C.PROFILE_SECTIONS.completo;
+    return '<div class="card"><h2>Criar material</h2><p class="muted">Funciona para qualquer disciplina. A <b>epistemologia própria da área</b> orienta o rigor do conteúdo; a <b>Psicologia Histórico-Cultural</b> fundamenta a organização pedagógica.</p>' +
+      '<div class="row"><div><label for="cr-author">Autor</label><input id="cr-author" data-form="author" value="' + esc(f.author) + '" placeholder="Prof. Alê Barbosa"></div><div><label for="cr-disc">Disciplina</label><input id="cr-disc" data-form="discipline" value="' + esc(f.discipline) + '" placeholder="Ex.: História, Matemática, Biologia…"></div><div><label for="cr-level">Etapa de ensino</label><input id="cr-level" data-form="level" value="' + esc(f.level) + '" placeholder="Ex.: 8º ano EF, 2º ano EM, Graduação…"></div><div><label for="cr-topic">Tema</label><input id="cr-topic" data-form="topic" value="' + esc(f.topic) + '" placeholder="Ex.: Revolução Francesa"></div><div><label for="cr-dur">Duração</label><input id="cr-dur" data-form="duration" value="' + esc(f.duration) + '"></div></div>' +
+      '<div class="row"><div><label for="cr-type">Tipo de conhecimento (epistemologia)</label><select id="cr-type" data-form="type">' + opt('auto', 'Automático pela disciplina', f.type === 'auto') + Object.keys(C.EPISTEMIC).map((k) => opt(k, C.EPISTEMIC[k].label, f.type === k)).join('') + '</select></div>' +
+      '<div><label for="cr-prof">Atalho de perfil (ajusta as seções abaixo)</label><select id="cr-prof" data-form="contentProfile">' + Object.keys(C.CONTENT_PROFILES).map((k) => opt(k, C.CONTENT_PROFILES[k], f.contentProfile === k)).join('') + '</select></div>' +
       '<div><label for="cr-reg">Registro de linguagem</label><select id="cr-reg" data-form="registro">' + Object.keys(C.REGISTROS).map((k) => opt(k, C.REGISTROS[k], f.registro === k)).join('') + '</select></div>' +
       '<div><label for="cr-dest">Destinatário</label><select id="cr-dest" data-form="destinatario">' + Object.keys(C.DESTINATARIOS).map((k) => opt(k, C.DESTINATARIOS[k], f.destinatario === k)).join('') + '</select></div>' +
       '<div><label for="cr-target">Salvar no projeto</label><select id="cr-target" data-form="target">' + opt('', '(criar projeto novo)', !f.target) + lib.projects.filter((p) => !p.archived).map((p) => opt(p.id, p.name, f.target === p.id)).join('') + '</select></div></div>' +
+      '<div class="epist-hint" id="epistemicHint" aria-live="polite">' + epistHintHtml(f) + '</div>' +
+      '<div class="mod-wrap" id="modularSections"><div class="mod-head"><b>Seleção modular de seções (' + selSecs.length + ' de ' + C.SECTION_CATALOG.length + ' ativas)</b><span class="muted">Marque exatamente o que deseja incluir, sem modelo fechado</span></div>' +
+      '<div class="mod-grid">' + C.SECTION_CATALOG.map((s) => '<label class="mod-item"><input type="checkbox" data-a="sectoggle" data-k="' + esc(s[0]) + '"' + (selSecs.includes(s[0]) ? ' checked' : '') + '> <span>' + esc(s[1]) + '</span></label>').join('') + '</div></div>' +
+      '<div class="calib-box" id="stageCalibration"><div class="calib-head"><b>Calibração pedagógica automática por etapa</b><select id="cr-stage" data-form="stageOverride" aria-label="Calibração por etapa">' + opt('auto', 'Automático (' + C.calibrateStage(f.level, 'auto').label + ')', !f.stageOverride || f.stageOverride === 'auto') + Object.keys(C.STAGE_PROFILES).map((k) => opt(k, C.STAGE_PROFILES[k].label, f.stageOverride === k)).join('') + '</select></div><div id="stageCalibrationBody">' + calibBodyHtml(f) + '</div></div>' +
       '<label for="cr-obj">Objetivos desejados (opcional)</label><textarea id="cr-obj" data-form="objectives" rows="2">' + esc(f.objectives) + '</textarea></div>' +
       cardDominio() +
       cardFontes() +
@@ -394,13 +418,13 @@
       '<label for="ps-avatar">Foto na seção “Sobre o Autor”</label><select id="ps-avatar" data-f="poster.avatarChoice">' + Object.keys(C.AVATAR_OPTIONS).map((k) => '<option value="' + k + '"' + ((p.avatarChoice || 'avatar-prof-ale-1.jpg') === k ? ' selected' : '') + '>' + esc(C.AVATAR_OPTIONS[k]) + '</option>').join('') + '</select>' +
       '<label for="ps-logo">Logo MathLab</label><select id="ps-logo" data-f="poster.logoChoice">' + Object.keys(C.LOGO_OPTIONS).map((k) => '<option value="' + k + '"' + ((p.logoChoice || 'logo-mathlab-clean.jpg') === k ? ' selected' : '') + '>' + esc(C.LOGO_OPTIONS[k]) + '</option>').join('') + '</select>' +
       '<label for="ps-theme">Tema de cores</label><select id="ps-theme" data-f="poster.theme">' + Object.keys(C.POSTER_THEMES).map((k) => '<option value="' + k + '"' + (p.theme === k ? ' selected' : '') + '>' + esc(C.POSTER_THEMES[k].nome) + '</option>').join('') + '</select>' +
-      inp('poster.title', 'Título do pôster') + inp('poster.subtitle', 'Subtítulo') + inp('poster.author', 'Autor na capa', C.DEFAULT_AUTHOR) + inp('poster.videoTitle', 'Videoaula complementar (título opcional)', 'Ex.: Aula em vídeo — Prof. Alê') + inp('poster.videoUrl', 'Link da videoaula (opcional)', 'https://youtube.com/...') + inp('poster.mascot', 'Mascote (descrição para a IA de imagem)', 'Ex.: estudante sorridente de mochila azul') +
+      inp('poster.title', 'Título do pôster') + inp('poster.subtitle', 'Subtítulo') + inp('poster.author', 'Autor na capa', C.DEFAULT_AUTHOR) + inp('poster.videoTitle', 'Videoaula complementar (título opcional)', 'Ex.: Aula em vídeo — Prof. Alê') + inp('poster.videoUrl', 'Link da videoaula (opcional)', 'https://youtube.com/...') + inp('poster.mascot', 'Elemento visual (descrição opcional para a IA de imagem)', 'Ex.: emblema geométrico ou diagrama próprio da disciplina') +
       '<h3>Caixas numeradas</h3>' + p.sections.map((s, i) => '<div class="blk"><div class="row"><div>' + inp('poster.sections.' + i + '.label', 'Rótulo ' + (i + 1), L[i] || '') + '</div><div>' + inp('poster.sections.' + i + '.title', 'Subtítulo (opcional)') + '</div></div>' + area('poster.sections.' + i + '.text', 'Texto', 3) + '<button class="b danger sm" data-a="delsec" data-i="' + i + '">Remover caixa</button></div>').join('') +
       (p.sections.length < 6 ? '<div class="btns"><button class="b ghost" data-a="addsec">+ Caixa numerada</button></div>' : '') +
       '<h3>Caixas extras</h3>' + inp('poster.goldTip', '💡 Dica de ouro') + inp('poster.didYouKnow', 'Você sabia?') + inp('poster.attention', '⚠️ Atenção aos detalhes') +
       '<h3>Faixa “Em resumo”</h3>' + p.summary.map((s, i) => '<div class="row"><div>' + inp('poster.summary.' + i + '.icon', 'Ícone (emoji)') + '</div><div>' + inp('poster.summary.' + i + '.label', 'Rótulo') + '</div><div>' + inp('poster.summary.' + i + '.text', 'Texto') + '</div><div><span class="muted" style="display:block;font-size:.82rem;margin:8px 0 3px">&nbsp;</span><button class="b danger sm" data-a="delsum" data-i="' + i + '" aria-label="Remover item ' + (i + 1) + ' do resumo">✕</button></div></div>').join('') +
       (p.summary.length < 5 ? '<div class="btns"><button class="b ghost" data-a="addsum">+ Item</button></div>' : '') + '</div>' +
-      '<div><div class="card"><h3>Prévia (Capa Clean + Folha de Rosto)</h3><div id="posterPreview" class="preview">' + (p.coverClean !== false ? '<div style="margin-bottom:16px">' + C.renderCleanCover(d) + '</div>' : '') + C.renderPoster(p, d.author) + '</div></div>' +
+      '<div><div class="card"><h3>Prévia (Capa Clean + Folha de Rosto)</h3><div id="posterPreview" class="preview">' + (p.coverClean !== false ? '<div style="margin-bottom:16px">' + C.renderCleanCover(d) + '</div>' : '') + C.renderPoster(p, d.author, d.epistemicType) + '</div></div>' +
       '<div class="card"><h3>Versão ilustrada com IA</h3><p class="muted">Copie o prompt, abra o Gemini (Nano Banana) e cole. O formato da imagem você escolhe no próprio app. IA de imagem às vezes erra letras: confira o texto na imagem. O pôster em HTML ao lado é sempre a versão exata.</p><div class="btns"><button class="b gold" data-a="copyimg">Copiar prompt da imagem</button><button class="b ghost" data-a="dlposter">Baixar pôster (HTML)</button><button class="b ghost" data-a="printposter">Imprimir / PDF</button></div><details><summary>Ver o prompt</summary><pre class="code">' + esc(C.buildImagePrompt(d)) + '</pre></details></div></div></div>';
   }
 
@@ -561,6 +585,13 @@
     bookprev: () => { S.book.show = true; render(); },
     dlbook2: () => { const r = compilar(); if (!r.ok) { toast(r.error, true); return; } dl(slug(r.title) + '-livro.html', 'text/html', r.html); },
     printbook2: () => { const r = compilar(); if (!r.ok) { toast(r.error, true); return; } printHTML(r.html); },
+    sectoggle: (el) => {
+      const k = el.dataset.k;
+      if (!Array.isArray(S.form.sections)) S.form.sections = C.PROFILE_SECTIONS.completo.slice();
+      if (el.checked) { if (!S.form.sections.includes(k)) S.form.sections.push(k); }
+      else S.form.sections = S.form.sections.filter((x) => x !== k);
+      render();
+    },
     srctoggle: (el) => { const k = el.dataset.k, a = S.form.srcSel; if (el.checked) { if (!a.includes(k)) a.push(k); } else S.form.srcSel = a.filter((x) => x !== k); render(); },
     srcdel: (el) => { lib.sources = (lib.sources || []).filter((x) => x.id !== el.dataset.k); S.form.srcSel = S.form.srcSel.filter((x) => x !== el.dataset.k); persist(); render(); },
     addsource: () => {
@@ -673,7 +704,21 @@
   };
 
   document.addEventListener('click', (e) => { const el = e.target.closest('[data-a]'); if (!el || el.type === 'checkbox' || el.type === 'file') return; if (A[el.dataset.a]) A[el.dataset.a](el, e); });
-  document.addEventListener('change', (e) => { const el = e.target; if (el.dataset.formPlan) { S.planId = el.value; render(); return; } if ((el.type === 'checkbox' || el.type === 'file') && el.dataset.a && A[el.dataset.a]) A[el.dataset.a](el, e); else if (el.dataset.vis === 'kind') { S.vis.kind = el.value; S.vis.text = { numberLine: '-6, 6, -2, 5', timeline: '1789 | Revolução Francesa\n1822 | Independência do Brasil', flow: 'Observar\nFormular hipótese\nTestar\nConcluir', conceptMap: 'Tema central\nConceito A\nConceito B\nConceito C' }[el.value]; render(); } });
+  document.addEventListener('change', (e) => {
+    const el = e.target;
+    if (el.dataset.formPlan) { S.planId = el.value; render(); return; }
+    if (el.dataset.form === 'contentProfile' && C.PROFILE_SECTIONS[el.value]) {
+      S.form.contentProfile = el.value;
+      S.form.sections = C.PROFILE_SECTIONS[el.value].slice();
+      render(); return;
+    }
+    if (el.dataset.form === 'type' || el.dataset.form === 'stageOverride') {
+      S.form[el.dataset.form] = el.value;
+      render(); return;
+    }
+    if ((el.type === 'checkbox' || el.type === 'file') && el.dataset.a && A[el.dataset.a]) A[el.dataset.a](el, e);
+    else if (el.dataset.vis === 'kind') { S.vis.kind = el.value; S.vis.text = { numberLine: '-6, 6, -2, 5', timeline: '1789 | Revolução Francesa\n1822 | Independência do Brasil', flow: 'Observar\nFormular hipótese\nTestar\nConcluir', conceptMap: 'Tema central\nConceito A\nConceito B\nConceito C' }[el.value]; render(); }
+  });
   document.addEventListener('input', (e) => {
     const el = e.target;
     if (el.dataset.libsearch) {
@@ -687,7 +732,17 @@
     }
     if (el.dataset.src) { S.form.srcDraft[el.dataset.src] = el.value; return; }
     if (el.dataset.book) { S.book[el.dataset.book] = el.value; return; }
-    if (el.dataset.form) { S.form[el.dataset.form] = el.value; return; }
+    if (el.dataset.form) {
+      S.form[el.dataset.form] = el.value;
+      if (el.dataset.form === 'discipline') {
+        const eh = $('#epistemicHint'); if (eh) eh.innerHTML = epistHintHtml(S.form);
+      }
+      if (el.dataset.form === 'level') {
+        const cb = $('#stageCalibrationBody'); if (cb) cb.innerHTML = calibBodyHtml(S.form);
+        const sel = $('#cr-stage'); if (sel && sel.options && sel.options[0]) sel.options[0].textContent = 'Automático (' + C.calibrateStage(S.form.level, 'auto').label + ')';
+      }
+      return;
+    }
     if (el.dataset.vis) { if (el.dataset.vis !== 'kind') S.vis[el.dataset.vis] = el.value; return; }
     if (el.dataset.f) {
       setPath(el.dataset.f, el.type === 'checkbox' ? el.checked : el.dataset.lines ? el.value.split('\n').map((x) => x.trim()).filter(Boolean) : el.value);
@@ -698,7 +753,7 @@
       S.dirty = true; const m = $('#dirtymark'); if (m) { m.className = 'dirty'; m.textContent = '● salvando...'; }
       scheduleAutosave();
       const rs = $('#revisao-estado'); if (rs) { const e = C.estadoRevisao(S.draft); rs.textContent = e.texto; rs.className = 'pill ' + (e.validado ? 'ok' : 'warn'); }
-      if (S.tab === 'poster' && S.draft.poster) { const pv = $('#posterPreview'); if (pv) pv.innerHTML = (S.draft.poster.coverClean !== false ? '<div style="margin-bottom:16px">' + C.renderCleanCover(S.draft) + '</div>' : '') + C.renderPoster(S.draft.poster, S.draft.author); }
+      if (S.tab === 'poster' && S.draft.poster) { const pv = $('#posterPreview'); if (pv) pv.innerHTML = (S.draft.poster.coverClean !== false ? '<div style="margin-bottom:16px">' + C.renderCleanCover(S.draft) + '</div>' : '') + C.renderPoster(S.draft.poster, S.draft.author, S.draft.epistemicType); }
     }
   });
   window.addEventListener('beforeunload', (e) => { if (S.dirty) { e.preventDefault(); e.returnValue = ''; } });
