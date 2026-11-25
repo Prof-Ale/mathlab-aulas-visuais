@@ -91,12 +91,30 @@ test('Formulário pedagógico + emblema editorial: detecção epistemológica, s
   const sc = C.scaffold({ discipline: 'Física', topic: 'Leis de Newton', sections: ['problematizacao', 'conceito', 'exemplo'] });
   assert.deepEqual(sc.blocks.map((b) => b.type), ['problematizacao', 'conceito', 'exemplo']);
 
+  const coreSrc = ler('js/core.js');
+  assert.ok(!coreSrc.includes('MASCOT_SVG'), 'MASCOT_SVG removido completamente de js/core.js');
+  assert.ok(!coreSrc.includes('mlp-mascot') && !coreSrc.includes('mled-guide-av'), 'classes CSS órfãs de mascote renomeadas');
+  assert.ok(!('svg' in C.AVATAR_OPTIONS), 'opção svg de mascote removida de AVATAR_OPTIONS');
+
+  Object.keys(C.EPISTEMIC).forEach((tipo) => {
+    const svg = C.emblemFor(tipo);
+    assert.ok(svg.includes('<svg') && svg.includes('aria-label="Emblema editorial'), 'emblema com aria-label para ' + tipo);
+    assert.ok(svg.includes('var(--tt') && svg.includes('var(--ac'), 'emblema usa cores do tema para ' + tipo);
+  });
+
   const demo = C.demo();
-  const cover = C.renderCleanCover(demo);
+  const coverWithPhoto = C.renderCleanCover(demo);
+  const coverNoPhoto = C.renderCleanCover(Object.assign({}, demo, { poster: Object.assign({}, demo.poster, { avatarChoice: 'none' }) }));
   const poster = C.renderPoster(demo.poster, demo.author, demo.epistemicType);
   const apostila = C.toApostila(demo);
-  [cover, poster, apostila].forEach((html) => {
-    assert.ok(!html.includes('Mascote estudante sorridente'), 'bonequinho genérico removido');
-    assert.ok(html.includes('Emblema editorial FORMAL'), 'emblema editorial da área presente');
+  const imgPrompt = C.buildImagePrompt(demo);
+
+  assert.ok(coverNoPhoto.includes('Emblema editorial — Área Formal') && !coverNoPhoto.includes('class="mlclean-avatar"'), 'capa sem foto mostra emblema da área');
+  assert.ok(coverWithPhoto.includes('class="mlclean-avatar"') && coverWithPhoto.includes('avatar-prof-ale-1.jpg'), 'capa com foto mostra foto do autor em círculo');
+  assert.ok(poster.includes('class="mlp-emblema"') && poster.includes('Emblema editorial — Área Formal'), 'pôster usa .mlp-emblema com emblema da área');
+  assert.ok(apostila.includes('class="mled-guide-emblema"') && apostila.includes('Emblema editorial — Área Formal'), 'guia da apostila usa .mled-guide-emblema');
+  assert.ok(imgPrompt.includes('Sem personagem ou mascote. Emblema geométrico da área, selo MathLab, capa editorial limpa.'), 'prompt de imagem pede capa editorial sem mascote');
+  [coverNoPhoto, coverWithPhoto, poster, apostila, imgPrompt].forEach((txt) => {
+    assert.ok(!/MASCOT_SVG|estudante sorridente|PERSONAGEM MASCOTE/i.test(txt), 'nenhum resquício de mascote infantil no material gerado');
   });
 });
