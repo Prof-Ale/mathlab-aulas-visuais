@@ -54,3 +54,19 @@ test('todo teste do diretório tests está no script npm test', () => {
   const scripts = JSON.parse(ler('package.json')).scripts.test;
   fs.readdirSync(path.join(root, 'tests')).filter((f) => f.endsWith('.test.js')).forEach((f) => assert.ok(scripts.includes('tests/' + f), f + ' fora do npm test'));
 });
+test('UI/UX v2: shell com H1, Open Graph, 3 grupos, modo escuro, busca e versão unificada', () => {
+  const html = ler('index.html');
+  assert.match(html, /<h1[^>]*>[^<]+<\/h1>/, 'index.html precisa de H1 visível');
+  assert.ok(html.includes('property="og:title"') && html.includes('name="twitter:card"'), 'tags Open Graph/Twitter presentes');
+  assert.ok(html.includes('id="groups"') && html.includes('id="themeBtn"') && html.includes('id="verTop"'), 'elementos de navegação, tema e versão no topo');
+  assert.ok(html.includes('<noscript>'), 'fallback noscript presente');
+  const css = ler('css/styles.css');
+  assert.ok(css.includes('prefers-color-scheme: dark') && css.includes('data-theme="dark"'), 'suporte a tema escuro no CSS');
+  assert.ok(css.includes('scroll-margin-top'), 'scroll-margin-top para âncoras abaixo do topo fixo');
+  const app = ler('js/app.js');
+  assert.ok(app.includes("tab: lib.projects.length ? 'biblioteca' : 'criar'"), 'primeira visita abre na aba Criar');
+  assert.ok(app.includes('const GROUPS =') && app.includes('criar:') && app.includes('revisar:') && app.includes('organizar:'), 'navegação em 3 grupos');
+  assert.ok(app.includes('previewdemo:') && app.includes('savepreviewdemo:') && app.includes('exitpreviewdemo:'), 'prévia de exemplo sem gravar na biblioteca');
+  assert.ok(app.includes('gotostep3:') && app.includes('card-fluxo-ia'), 'stepper persistente de 4 passos para IA externa');
+  assert.ok(app.includes('libSearch') && app.includes("fetch('manifest.json')"), 'busca na biblioteca e versão lida do manifest.json');
+});
