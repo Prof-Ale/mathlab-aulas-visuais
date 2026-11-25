@@ -77,6 +77,22 @@ async function fontesNaoEmbutidas(page) {
   return [...usadas.entries()].map(([familia, glifos]) => ({ familia, glifos }));
 }
 
+/** Confere no próprio arquivo o que um leitor de tela precisa: PDF marcado, árvore de estrutura, idioma, marcadores e texto alternativo. */
+export function acessibilidadePdf(buf) {
+  const t = Buffer.isBuffer(buf) ? buf.toString('latin1') : String(buf);
+  const conta = (re) => (t.match(re) || []).length;
+  const figuras = conta(/\/S\s*\/Figure\b/g);
+  return {
+    marcado: /\/Marked\s+true/.test(t),
+    estrutura: /\/StructTreeRoot/.test(t),
+    idioma: (t.match(/\/Lang\s*\(([^)]*)\)/) || [])[1] || null,
+    marcadores: /\/Outlines/.test(t),
+    titulos: conta(/\/S\s*\/H[1-6]\b/g),
+    figuras,
+    figurasComTextoAlternativo: Math.min(figuras, conta(/\/Alt\s*[(<]/g)),
+  };
+}
+
 export async function gerarPdf(material, saida, { root = ROOT } = {}) {
   const { chromium } = require('playwright');
   const m = C.normalize(material);
@@ -100,11 +116,11 @@ export async function gerarPdf(material, saida, { root = ROOT } = {}) {
     const paginasNoDom = await page.evaluate(() => document.querySelectorAll('.mlpage').length);
     const fontesDoSistema = await fontesNaoEmbutidas(page);
     const paginasCortadas = await page.evaluate(() => [...document.querySelectorAll('.mlpage')].map((p, i) => [i + 1, p.scrollHeight - p.clientHeight]).filter(([, d]) => d > 2).map(([n]) => n));
-    const bruto = await page.pdf({ preferCSSPageSize: true, printBackground: true });
+    const bruto = await page.pdf({ preferCSSPageSize: true, printBackground: true, tagged: true, outline: true });
     const pdf = normalizarPdf(bruto);
     fs.writeFileSync(saida, pdf);
     const paginasNoPdf = (pdf.toString('latin1').match(/\/Type\s*\/Page[^s]/g) || []).length;
-    return { saida, bytes: pdf.length, paginasNoDom, paginasNoPdf, bloqueados, fontesDoSistema, paginasCortadas };
+    return { saida, acessibilidade: acessibilidadePdf(pdf), bytes: pdf.length, paginasNoDom, paginasNoPdf, bloqueados, fontesDoSistema, paginasCortadas };
   } finally {
     await browser.close(); fs.rmSync(tmp, { force: true });
   }
@@ -124,6 +140,10 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const saida = path.resolve(saidaArg || (entrada === '--demo' ? 'apostila-demo.pdf' : entrada.replace(/\.json$/i, '') + '.pdf'));
   const r = await gerarPdf(material, saida);
   console.log(`PDF: ${r.saida} (${r.bytes} bytes, ${r.paginasNoPdf} páginas)`);
+  const ac = r.acessibilidade;
+  if (!ac.marcado || !ac.estrutura || ac.idioma !== 'pt-BR') { console.error('ERRO: o PDF saiu sem marcação de acessibilidade (marcado, estrutura e idioma pt-BR).'); process.exit(1); }
+  console.log(`Acessibilidade: PDF marcado, idioma ${ac.idioma}, ${ac.titulos} títulos, ${ac.figuras} figuras (${ac.figurasComTextoAlternativo} com texto alternativo), marcadores de navegação ${ac.marcadores ? 'sim' : 'não'}.`);
+  if (ac.figurasComTextoAlternativo < ac.figuras) console.error(`Aviso: ${ac.figuras - ac.figurasComTextoAlternativo} figura(s) sem texto alternativo no PDF.`);
   if (r.paginasNoPdf !== r.paginasNoDom) { console.error(`ERRO: a apostila tem ${r.paginasNoDom} páginas, mas o PDF saiu com ${r.paginasNoPdf}. Alguma página transbordou.`); process.exit(1); }
   if (r.paginasCortadas.length) { console.error(`ERRO: o conteúdo das páginas ${r.paginasCortadas.join(', ')} passa do limite da folha e foi cortado.`); process.exit(1); }
   const alemDeEmoji = r.fontesDoSistema.filter((f) => !/emoji/i.test(f.familia));
