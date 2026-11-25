@@ -70,3 +70,33 @@ test('UI/UX v2: shell com H1, Open Graph, 3 grupos, modo escuro, busca e versão
   assert.ok(app.includes('gotostep3:') && app.includes('card-fluxo-ia'), 'stepper persistente de 4 passos para IA externa');
   assert.ok(app.includes('libSearch') && app.includes("fetch('manifest.json')"), 'busca na biblioteca e versão lida do manifest.json');
 });
+test('Formulário pedagógico + emblema editorial: detecção epistemológica, seções modulares, calibração e fim do bonequinho', () => {
+  assert.equal(C.calibrateStage('4º ano do Ensino Fundamental').id, 'ef_iniciais');
+  assert.equal(C.calibrateStage('8º ano').id, 'ef_finais');
+  assert.equal(C.calibrateStage('2º ano do Ensino Médio').id, 'em');
+  assert.equal(C.calibrateStage('EJA - Ensino Médio').id, 'eja');
+  assert.equal(C.calibrateStage('Graduação em Administração').id, 'superior');
+  assert.equal(C.calibrateStage('Mestrado em Educação').id, 'pos');
+  assert.equal(C.calibrateStage('8º ano', 'superior').id, 'superior');
+
+  const req = C.buildRequestText({
+    discipline: 'História', level: '2º ano do Ensino Médio', topic: 'Revolução Industrial',
+    type: 'auto', sections: ['problematizacao', 'contexto', 'conceito', 'exemplo']
+  });
+  assert.ok(req.includes('NÃO substitui a epistemologia'), 'separa PHC da epistemologia da disciplina');
+  assert.ok(req.includes('Histórica'), 'detecta epistemologia pela disciplina');
+  assert.ok(req.includes('Ensino Médio'), 'inclui calibração pedagógica da etapa');
+  assert.ok(req.includes('NÃO inclua lista de exercícios nem gabarito'), 'respeita seções modulares sem exercícios');
+
+  const sc = C.scaffold({ discipline: 'Física', topic: 'Leis de Newton', sections: ['problematizacao', 'conceito', 'exemplo'] });
+  assert.deepEqual(sc.blocks.map((b) => b.type), ['problematizacao', 'conceito', 'exemplo']);
+
+  const demo = C.demo();
+  const cover = C.renderCleanCover(demo);
+  const poster = C.renderPoster(demo.poster, demo.author, demo.epistemicType);
+  const apostila = C.toApostila(demo);
+  [cover, poster, apostila].forEach((html) => {
+    assert.ok(!html.includes('Mascote estudante sorridente'), 'bonequinho genérico removido');
+    assert.ok(html.includes('Emblema editorial FORMAL'), 'emblema editorial da área presente');
+  });
+});

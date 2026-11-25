@@ -34,7 +34,8 @@
     'avatar-prof-ale-2.jpg': 'Prof. Alê — Moletom MathLab',
     'avatar-prof-ale-3.jpg': 'Prof. Alê — Camisa Marinho MathLab',
     'avatar-prof-ale-4.jpg': 'Prof. Alê — Camisa Branca e Logo',
-    svg: 'Mascote ilustrado (SVG offline)',
+    svg: 'Emblema editorial da área (SVG offline)',
+    none: 'Sem foto (apenas emblema editorial)',
   };
 
   const LOGO_OPTIONS = {
@@ -63,6 +64,96 @@
     expositivo_visual: 'Exposição conceitual + recursos visuais + exemplos (sem exercícios)',
     pratica: 'Foco em exercícios graduados + gabarito comentado',
   };
+
+  /* ---------- Seleção modular de seções (sem modelos fechados) ---------- */
+  const SECTION_CATALOG = [
+    ['problematizacao', 'Problematização inicial'],
+    ['contexto', 'Contexto histórico-cultural'],
+    ['conceito', 'Desenvolvimento conceitual'],
+    ['visual', 'Figuras e esquemas (SVG)'],
+    ['exemplo', 'Exemplos resolvidos / analisados'],
+    ['atividade', 'Atividade guiada em sala'],
+    ['exercicios', 'Exercícios graduados'],
+    ['gabarito', 'Gabarito comentado'],
+    ['avaliacao', 'Avaliação formativa'],
+    ['acessibilidade', 'Acessibilidade (DUA)'],
+    ['referencias', 'Referências e fontes'],
+  ];
+
+  const PROFILE_SECTIONS = {
+    completo: ['problematizacao', 'conceito', 'visual', 'exemplo', 'atividade', 'exercicios', 'gabarito', 'acessibilidade'],
+    expositivo: ['problematizacao', 'contexto', 'conceito', 'exemplo', 'referencias'],
+    expositivo_visual: ['problematizacao', 'conceito', 'visual', 'exemplo', 'acessibilidade'],
+    pratica: ['conceito', 'exemplo', 'exercicios', 'gabarito', 'avaliacao'],
+  };
+
+  /* ---------- Calibração pedagógica automática por etapa de ensino ---------- */
+  const STAGE_PROFILES = {
+    ef_iniciais: {
+      label: 'Ensino Fundamental — Anos Iniciais (1º ao 5º ano)',
+      profundidade: 'Introdutória e concreta, partindo de experiências cotidianas observáveis para primeiras generalizações.',
+      linguagem: 'Clara, direta e acolhedora, frases curtas e vocabulário explicado no próprio texto.',
+      exemplos: 'Situações concretas do dia a dia com forte apoio visual passo a passo.',
+      atividades: 'Tarefas curtas e guiadas com apoio explícito na ZDP e progressão suave.',
+      registroSugerido: 'escolar',
+    },
+    ef_finais: {
+      label: 'Ensino Fundamental — Anos Finais (6º ao 9º ano)',
+      profundidade: 'Intermediária: articula conceitos cotidianos com conceitos científicos e introduz justificativas formais.',
+      linguagem: 'Escolar clara com introdução progressiva da terminologia própria da disciplina.',
+      exemplos: 'Contextualizados e resolvidos passo a passo, destacando erros típicos.',
+      atividades: 'Exercícios graduados em 3 níveis (básico, aplicação e desafio contextualizado).',
+      registroSugerido: 'escolar',
+    },
+    em: {
+      label: 'Ensino Médio (1º ao 3º ano / Pré-vestibular)',
+      profundidade: 'Aprofundada: rigor conceitual, relações entre modelos, demonstrações/argumentação e leitura crítica.',
+      linguagem: 'Formal-escolar precisa, usando a notação e os termos técnicos da área.',
+      exemplos: 'Problemas articulados com justificativa completa e conexão interdisciplinar/ENEM.',
+      atividades: 'Questões analíticas, interpretação de dados/fontes e problemas multi-etapas.',
+      registroSugerido: 'escolar',
+    },
+    eja: {
+      label: 'EJA — Educação de Jovens e Adultos',
+      profundidade: 'Essencial e rigorosa, sem infantilização, valorizando saberes prévios de vida e trabalho.',
+      linguagem: 'Adulta, respeitosa, objetiva e clara, evitando jargão desnecessário.',
+      exemplos: 'Situações reais do mundo do trabalho, finanças pessoais, cidadania e cotidiano adulto.',
+      atividades: 'Práticas aplicáveis, bem estruturadas e com autonomia progressiva.',
+      registroSugerido: 'escolar',
+    },
+    superior: {
+      label: 'Ensino Técnico / Graduação',
+      profundidade: 'Avançada: fundamentação teórica, formalização rigorosa, limites de validade e debate metodológico.',
+      linguagem: 'Técnico-acadêmica rigorosa, própria da literatura da área.',
+      exemplos: 'Estudos de caso, demonstrações ou análises técnicas com referência explícita.',
+      atividades: 'Problemas abertos, análise crítica e aplicação profissional/científica.',
+      registroSugerido: 'academico',
+    },
+    pos: {
+      label: 'Pós-graduação / Formação Docente',
+      profundidade: 'Especializada: discussão epistemológica, revisão crítica de literatura e implicações metodológicas.',
+      linguagem: 'Acadêmica avançada, precisa e dialogada com autores e fontes primárias.',
+      exemplos: 'Análise de casos complexos, pesquisas empíricas ou situações didáticas reais.',
+      atividades: 'Produção crítica, problematização teórica e desenho de intervenções fundamentadas.',
+      registroSugerido: 'academico',
+    },
+  };
+
+  function calibrateStage(level, override) {
+    if (override && override !== 'auto' && STAGE_PROFILES[override]) {
+      return Object.assign({ id: override, auto: false }, STAGE_PROFILES[override]);
+    }
+    const s = strip(level);
+    let id = 'ef_finais';
+    if (!s) id = 'ef_finais';
+    else if (/\beja\b|jovens e adultos/.test(s)) id = 'eja';
+    else if (/pos[- ]?grad|mestrad|doutorad|especializ|formacao docente|licenciatura/.test(s)) id = 'pos';
+    else if (/graduac|superior|universit|faculdade|tecnic|tecnolog|bacharel/.test(s)) id = 'superior';
+    else if (/ensino medio|\bem\b|vestibular|enem|pre-vest|([123][ºo°]?\s*(ano)?\s*(do\s*)?(em|medio))/.test(s)) id = 'em';
+    else if (/\b[1-5][ºo°]?\s*ano\b|anos iniciais|fundamental\s*(i|1)\b|alfabetiz/.test(s)) id = 'ef_iniciais';
+    else if (/\b[6-9][ºo°]?\s*ano\b|anos finais|fundamental\s*(ii|2)\b/.test(s)) id = 'ef_finais';
+    return Object.assign({ id, auto: true }, STAGE_PROFILES[id]);
+  }
 
   /* ---------- utilidades ---------- */
   const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -100,12 +191,12 @@
   function detectType(discipline) {
     const d = strip(discipline);
     const has = (...k) => k.some((x) => d.includes(x));
-    if (has('educacao fisica', 'informatica', 'programacao', 'musica', 'tecnic', 'culinaria', 'enfermagem', 'robotica')) return 'pratica';
-    if (has('matematica', 'logica', 'geometria', 'algebra', 'estatistica', 'aritmetica', 'calculo')) return 'formal';
-    if (has('fisica', 'quimica', 'biologia', 'ciencias', 'astronomia')) return 'empirica';
-    if (has('portugues', 'lingua', 'ingles', 'espanhol', 'redacao', 'gramatica', 'frances')) return 'linguistica';
-    if (has('historia', 'arqueologia')) return 'historica';
-    if (has('filosofia', 'sociologia', 'literatura', 'arte', 'religios', 'psicologia', 'direito', 'etica')) return 'interpretativa';
+    if (has('educacao fisica', 'informatica', 'programacao', 'musica', 'tecnic', 'culinaria', 'enfermagem', 'robotica', 'design', 'engenharia', 'administracao', 'contabil')) return 'pratica';
+    if (has('matematica', 'logica', 'geometria', 'algebra', 'estatistica', 'aritmetica', 'calculo', 'trigonometria')) return 'formal';
+    if (has('fisica', 'quimica', 'biologia', 'ciencias', 'astronomia', 'ecologia', 'genetica', 'saude')) return 'empirica';
+    if (has('portugues', 'lingua', 'ingles', 'espanhol', 'redacao', 'gramatica', 'frances', 'libras', 'leitura')) return 'linguistica';
+    if (has('historia', 'arqueologia', 'geografia', 'antropologia')) return 'historica';
+    if (has('filosofia', 'sociologia', 'literatura', 'arte', 'religios', 'psicologia', 'direito', 'etica', 'pedagogia', 'economia')) return 'interpretativa';
     return 'geral';
   }
 
@@ -273,19 +364,36 @@
     suave: { nome: 'Suave (tons pastel, economiza tinta)', c: ['#5b8def', '#4fb286', '#f0a35e', '#d97a9c', '#9a7ad9'], bg: '#ffffff', title: '#26335f', accent: '#ffe08a' },
   };
 
-  const MASCOT_SVG = '<svg viewBox="0 0 120 130" role="img" aria-label="Mascote estudante sorridente"><title>Mascote</title>' +
-    '<ellipse cx="60" cy="122" rx="38" ry="6" fill="rgba(0,0,0,.12)"/><rect x="30" y="72" width="60" height="46" rx="14" fill="#1e6fd9"/>' +
-    '<rect x="40" y="86" width="40" height="28" rx="4" fill="#fff" stroke="#14264f" stroke-width="3"/><line x1="60" y1="86" x2="60" y2="114" stroke="#14264f" stroke-width="3"/>' +
-    '<circle cx="60" cy="44" r="32" fill="#ffd9b0" stroke="#14264f" stroke-width="3"/><path d="M28 40 Q30 10 62 12 Q92 12 92 40 Q80 24 60 26 Q40 26 28 40Z" fill="#4a2c17" stroke="#14264f" stroke-width="3"/>' +
-    '<circle cx="48" cy="46" r="5" fill="#14264f"/><circle cx="72" cy="46" r="5" fill="#14264f"/><circle cx="50" cy="44" r="1.8" fill="#fff"/><circle cx="74" cy="44" r="1.8" fill="#fff"/>' +
-    '<path d="M46 58 Q60 72 74 58" fill="#fff" stroke="#14264f" stroke-width="3" stroke-linecap="round"/><circle cx="38" cy="56" r="5" fill="#ff9aa2" opacity=".7"/><circle cx="82" cy="56" r="5" fill="#ff9aa2" opacity=".7"/></svg>';
+  /* ---------- Emblema geométrico/tipográfico editorial por área epistêmica ---------- */
+  const EMBLEM_META = {
+    formal: { tag: 'FORMAL', accent: '#1e6fd9', glyph: '<line x1="24" y1="68" x2="96" y2="68" stroke="#14264f" stroke-width="2.2"/><line x1="60" y1="26" x2="60" y2="94" stroke="#14264f" stroke-width="2.2"/><path d="M28 84 Q48 28 60 60 T92 34" fill="none" stroke="#1e6fd9" stroke-width="3.5" stroke-linecap="round"/><circle cx="60" cy="60" r="4.5" fill="#f2b705" stroke="#14264f" stroke-width="2"/><polygon points="96,68 90,64 90,72" fill="#14264f"/><polygon points="60,26 56,32 64,32" fill="#14264f"/>' },
+    empirica: { tag: 'EMPÍRICA', accent: '#22a559', glyph: '<ellipse cx="60" cy="60" rx="32" ry="13" fill="none" stroke="#14264f" stroke-width="2.4" transform="rotate(-30 60 60)"/><ellipse cx="60" cy="60" rx="32" ry="13" fill="none" stroke="#22a559" stroke-width="2.4" transform="rotate(30 60 60)"/><ellipse cx="60" cy="60" rx="32" ry="13" fill="none" stroke="#1e6fd9" stroke-width="2.2" transform="rotate(90 60 60)"/><circle cx="60" cy="60" r="7" fill="#f2b705" stroke="#14264f" stroke-width="2.4"/>' },
+    interpretativa: { tag: 'INTERPRETATIVA', accent: '#7a4bd1', glyph: '<polygon points="60,26 92,84 28,84" fill="none" stroke="#14264f" stroke-width="2.8" stroke-linejoin="round"/><polygon points="60,40 80,78 40,78" fill="#7a4bd1" opacity=".16"/><line x1="26" y1="54" x2="94" y2="54" stroke="#7a4bd1" stroke-width="2.4" stroke-dasharray="4 3"/><circle cx="60" cy="54" r="5.5" fill="#f2b705" stroke="#14264f" stroke-width="2.2"/>' },
+    historica: { tag: 'HISTÓRICA', accent: '#c97a16', glyph: '<circle cx="60" cy="60" r="28" fill="none" stroke="#14264f" stroke-width="2.4"/><polygon points="60,28 66,54 92,60 66,66 60,92 54,66 28,60 54,54" fill="#c97a16" opacity=".22" stroke="#14264f" stroke-width="2"/><line x1="34" y1="60" x2="86" y2="60" stroke="#14264f" stroke-width="2.2"/><circle cx="44" cy="60" r="3.5" fill="#f2b705" stroke="#14264f" stroke-width="1.8"/><circle cx="60" cy="60" r="4.5" fill="#14264f"/><circle cx="76" cy="60" r="3.5" fill="#f2b705" stroke="#14264f" stroke-width="1.8"/>' },
+    linguistica: { tag: 'LINGUÍSTICA', accent: '#d6456b', glyph: '<path d="M36 86 L56 30 L84 30 L64 86 Z" fill="#d6456b" opacity=".14" stroke="#14264f" stroke-width="2.6" stroke-linejoin="round"/><line x1="45" y1="64" x2="73" y2="64" stroke="#14264f" stroke-width="2.6"/><path d="M30 42 Q44 32 54 42" fill="none" stroke="#d6456b" stroke-width="2.6" stroke-linecap="round"/><circle cx="78" cy="78" r="6" fill="#f2b705" stroke="#14264f" stroke-width="2.2"/>' },
+    pratica: { tag: 'PRÁTICA', accent: '#0e8f8f', glyph: '<rect x="28" y="32" width="24" height="18" rx="4" fill="#0e8f8f" opacity=".2" stroke="#14264f" stroke-width="2.4"/><rect x="68" y="32" width="24" height="18" rx="4" fill="#f2b705" opacity=".35" stroke="#14264f" stroke-width="2.4"/><rect x="46" y="68" width="28" height="20" rx="4" fill="#1e6fd9" opacity=".18" stroke="#14264f" stroke-width="2.4"/><path d="M52 41 H68 M80 50 V60 H60 V68 M40 50 V60 H60" fill="none" stroke="#14264f" stroke-width="2.4" stroke-linecap="round"/>' },
+    geral: { tag: 'MATHLAB', accent: '#14264f', glyph: '<rect x="30" y="30" width="26" height="26" rx="5" fill="#1e6fd9" opacity=".18" stroke="#14264f" stroke-width="2.4"/><rect x="64" y="30" width="26" height="26" rx="5" fill="#f2b705" opacity=".38" stroke="#14264f" stroke-width="2.4"/><rect x="30" y="64" width="26" height="26" rx="5" fill="#22a559" opacity=".2" stroke="#14264f" stroke-width="2.4"/><rect x="64" y="64" width="26" height="26" rx="5" fill="#7a4bd1" opacity=".18" stroke="#14264f" stroke-width="2.4"/>' },
+  };
 
-  const BOOKS_ICON_SVG = '<svg viewBox="0 0 90 90" width="76" height="76" role="img" aria-label="Livros e lápis escolares"><title>Livros escolares</title>' +
-    '<rect x="10" y="54" width="66" height="16" rx="4" fill="#e0457b" stroke="#1b2a6b" stroke-width="2.5"/>' +
-    '<rect x="14" y="38" width="62" height="16" rx="4" fill="#22a559" stroke="#1b2a6b" stroke-width="2.5"/>' +
-    '<rect x="8" y="22" width="66" height="16" rx="4" fill="#1e6fd9" stroke="#1b2a6b" stroke-width="2.5"/>' +
-    '<line x1="20" y1="22" x2="20" y2="38" stroke="#ffd23f" stroke-width="3"/><line x1="24" y1="38" x2="24" y2="54" stroke="#fff" stroke-width="3"/>' +
-    '<polygon points="68,8 78,12 62,48 52,44" fill="#ffd23f" stroke="#1b2a6b" stroke-width="2.2"/><polygon points="52,44 62,48 53,55" fill="#ffd9b0" stroke="#1b2a6b" stroke-width="2"/></svg>';
+  function epistemicEmblemSvg(type, size) {
+    const k = EMBLEM_META[type] ? type : 'geral';
+    const meta = EMBLEM_META[k];
+    const sz = size ? ' width="' + size + '" height="' + size + '"' : '';
+    return '<svg viewBox="0 0 120 120"' + sz + ' role="img" aria-label="Emblema editorial ' + esc(meta.tag) + '"><title>Emblema ' + esc(meta.tag) + '</title>' +
+      '<circle cx="60" cy="60" r="55" fill="#ffffff" stroke="#14264f" stroke-width="3.5"/>' +
+      '<circle cx="60" cy="60" r="47" fill="none" stroke="' + meta.accent + '" stroke-width="1.8" stroke-dasharray="5 3"/>' +
+      meta.glyph +
+      '<rect x="24" y="96" width="72" height="16" rx="8" fill="#14264f"/>' +
+      '<text x="60" y="107.5" text-anchor="middle" font-family="Nunito,Segoe UI,Arial,sans-serif" font-size="8.5" font-weight="800" letter-spacing="1.1" fill="#f2b705">' + esc(meta.tag) + '</text></svg>';
+  }
+
+  const MASCOT_SVG = epistemicEmblemSvg('geral');
+
+  const BOOKS_ICON_SVG = '<svg viewBox="0 0 90 90" width="72" height="72" role="img" aria-label="Selo editorial MathLab"><title>Selo MathLab</title>' +
+    '<circle cx="45" cy="45" r="40" fill="#14264f" stroke="#f2b705" stroke-width="3.5"/>' +
+    '<circle cx="45" cy="45" r="32" fill="none" stroke="#f2b705" stroke-width="1.2" stroke-dasharray="3 3"/>' +
+    '<text x="45" y="42" text-anchor="middle" font-family="Fredoka,Segoe UI,Arial,sans-serif" font-size="16" font-weight="700" fill="#ffffff">ML</text>' +
+    '<text x="45" y="58" text-anchor="middle" font-family="Nunito,Segoe UI,Arial,sans-serif" font-size="7.5" font-weight="800" letter-spacing="1" fill="#f2b705">EDITORIAL</text></svg>';
 
   const FONTS_LINK = '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Fredoka:wght@600;700&family=Nunito:wght@400;600;700;800&family=Patrick+Hand&display=swap" rel="stylesheet">';
 
@@ -347,10 +455,11 @@
     return 'assets/' + esc(file);
   }
 
-  function avatarHtml(choice, cls) {
+  function avatarHtml(choice, cls, epistemicType) {
     const c = choice || 'avatar-prof-ale-1.jpg';
-    if (c === 'svg' || !AVATAR_OPTIONS[c]) return MASCOT_SVG;
-    return '<img class="' + (cls || 'ml-av') + '" src="' + assetSrc(c) + '" alt="Prof. Alê Barbosa">';
+    if (c === 'none') return '';
+    if (c === 'svg' || !AVATAR_OPTIONS[c]) return epistemicEmblemSvg(epistemicType || 'geral');
+    return '<img class="' + (cls || 'ml-av') + '" src="' + assetSrc(c) + '" alt="Autoria docente">';
   }
 
   function logoHtml(choice, cls) {
@@ -366,23 +475,24 @@
     const title = (p && p.title) || m.title || 'Material Didático';
     const sub = (p && p.subtitle) || (m.topic && m.topic !== title ? m.topic : 'Material didático visual');
     const lg = logoHtml(p.logoChoice, 'mlclean-logo');
+    const emblem = epistemicEmblemSvg(m.epistemicType || 'geral', 112);
     const profLabel = m.contentProfile === 'expositivo' ? 'Expositivo' : m.contentProfile === 'expositivo_visual' ? 'Expositivo Visual' : m.contentProfile === 'pratica' ? 'Prática' : 'Completo';
     const pills = [m.discipline, m.level, profLabel].filter(Boolean).map((x) => '<span>' + esc(x) + '</span>').join('');
     return '<article class="mlclean" style="' + themeStyle(p.theme) + '">' +
-      '<header class="mlclean-top">' + (lg || '<div></div>') + '<div class="mlclean-brand">MathLab Educação<small>Matemática em Investigação</small></div></header>' +
+      '<header class="mlclean-top">' + (lg || '<div></div>') + '<div class="mlclean-brand">MathLab Educação<small>Autoria Docente · Ensino Visual</small></div></header>' +
       '<section class="mlclean-mid"><div class="mlclean-pills">' + pills + '</div>' +
       '<h1 class="mlclean-title">' + esc(title) + '</h1>' +
       '<p class="mlclean-sub">' + esc(sub) + '</p>' +
-      '<div class="mlclean-avatar-wrap"><div style="width:128px">' + MASCOT_SVG + '</div>' +
-      '<div class="mlclean-author">' + esc(auth) + '</div><div class="mlclean-role">Autoria Docente · Psicologia Histórico-Cultural</div></div></section>' +
+      '<div class="mlclean-avatar-wrap"><div class="mlclean-emblem" style="width:112px;height:112px">' + emblem + '</div>' +
+      '<div class="mlclean-author">' + esc(auth) + '</div><div class="mlclean-role">Autoria Docente · Epistemologia da disciplina &amp; Mediação Histórico-Cultural</div></div></section>' +
       '<footer class="mlclean-bot"><span>' + (m.duration ? '⏱️ ' + esc(m.duration) : 'Material de Apoio Pedagógico') + '</span><span>' + esc(estadoRevisao(m).texto) + '</span></footer>' +
       '</article>';
   }
 
-  function renderPoster(p, author) {
+  function renderPoster(p, author, epistemicType) {
     if (!p) return '';
     const auth = String(p.author || author || DEFAULT_AUTHOR).trim();
-    const av = MASCOT_SVG;
+    const av = epistemicEmblemSvg(epistemicType || 'geral', 96);
     const lg = logoHtml(p.logoChoice);
     const secs = (p.sections || []).map((s, i) =>
       '<div class="mlp-card" style="--c:var(--c' + ((i % 5) + 1) + ')"><div class="mlp-tag"><span class="mlp-num">' + (i + 1) + '</span>' + esc(s.label || '') + '</div>' +
@@ -409,7 +519,7 @@
     L.push('TÍTULO grande no topo, em letras 3D arredondadas e divertidas, cor amarela com contorno azul-marinho e sombra sólida: "' + p.title + '".');
     if (p.subtitle) L.push('Subtítulo em faixa clara estilo manuscrito logo abaixo: "' + p.subtitle + '".');
     if (auth) L.push('Assinatura/Selo de autoria visível na capa: "' + auth + '".');
-    L.push('PERSONAGEM MASCOTE: ' + (p.mascot || 'um estudante simpático e original, sorridente, segurando livros coloridos') + ' — personagem original, expressivo, com balões de fala curtos e ícones escolares ao redor (pilha de livros, lápis, lâmpada, globo).');
+    L.push('ELEMENTO VISUAL CENTRAL: ' + (p.mascot || 'emblema editorial geométrico e diagramas próprios da disciplina (' + (m.discipline || 'tema da aula') + '), sem mascote genérico infantilizado') + ' — identidade editorial limpa, expressiva e coerente com a etapa de ensino.');
     L.push('CAIXAS NUMERADAS, cada uma com cor própria, borda grossa, sombra sólida, número em círculo e rótulo em destaque (escreva o texto exatamente como abaixo):');
     (p.sections || []).forEach((s, i) => L.push((i + 1) + ') ' + String(s.label || '').toUpperCase() + (s.title ? ' — ' + s.title : '') + ': "' + s.text + '"'));
     const ex = [];
@@ -430,18 +540,32 @@
     const reg = REGISTROS[r.registro] ? r.registro : 'escolar';
     const dest = DESTINATARIOS[r.destinatario] ? r.destinatario : 'estudante';
     const auth = String(r.author || DEFAULT_AUTHOR).trim();
+    const cal = calibrateStage(r.level, r.stageOverride);
+    const selSecs = Array.isArray(r.sections) && r.sections.length
+      ? SECTION_CATALOG.filter((x) => r.sections.includes(x[0]))
+      : SECTION_CATALOG.filter((x) => (PROFILE_SECTIONS[prof] || PROFILE_SECTIONS.completo).includes(x[0]));
+    const exclSecs = SECTION_CATALOG.filter((x) => !selSecs.some((s) => s[0] === x[0]));
+    const noEx = !selSecs.some((x) => x[0] === 'exercicios') && !selSecs.some((x) => x[0] === 'gabarito');
     return [
       'Use o MathLab Aulas Visuais para criar um material didático.',
       'Autor: ' + auth,
-      'Base pedagógica: Psicologia Histórico-Cultural (Vigotski, Luria, Leontiev — ZDP, mediação semiótica e formação de conceitos científicos; sem confundir ZDP com scaffolding de Wood, Bruner & Ross, 1976).',
+      'Fundamento da organização pedagógica: Psicologia Histórico-Cultural (Vigotski, Luria, Leontiev — ZDP, mediação semiótica e progressão dos conceitos cotidianos aos científicos; sem confundir ZDP com scaffolding de Wood, Bruner & Ross, 1976).',
+      'Princípio epistemológico: a Psicologia Histórico-Cultural fundamenta a organização pedagógica, mas NÃO substitui a epistemologia, os métodos nem os critérios de rigor próprios da disciplina.',
       'Disciplina: ' + (r.discipline || '[informe]'),
+      'Epistemologia / Tipo de conhecimento: ' + EPISTEMIC[t].label + (r.type && r.type !== 'auto' ? ' (definido manualmente)' : ' (detectado pela disciplina)'),
       'Etapa de ensino: ' + (r.level || '[informe]'),
+      'Calibração pedagógica (' + cal.label + '):',
+      '  - Profundidade conceitual: ' + cal.profundidade,
+      '  - Linguagem: ' + cal.linguagem,
+      '  - Exemplos: ' + cal.exemplos,
+      '  - Complexidade das atividades: ' + cal.atividades,
       'Público e registro: ' + DESTINATARIOS[dest] + ' · Registro ' + REGISTROS[reg],
       'Tema: ' + (r.topic || '[informe]'),
       'Duração: ' + (r.duration || '1 aula de 50 minutos'),
-      'Tipo de conhecimento: ' + EPISTEMIC[t].label,
       'Perfil de conteúdo desejado (' + prof + '): ' + CONTENT_PROFILES[prof],
-      prof === 'expositivo' || prof === 'expositivo_visual' ? 'ATENÇÃO: O professor solicitou SOMENTE exposição conceitual/exemplos, SEM lista de exercícios e SEM gabarito.' : '',
+      'Seções selecionadas (incluir): ' + selSecs.map((x) => x[1]).join(', ') + '.',
+      exclSecs.length ? 'Seções NÃO selecionadas (não incluir): ' + exclSecs.map((x) => x[1]).join(', ') + '.' : '',
+      noEx ? 'ATENÇÃO: O professor desmarcou exercícios e gabarito — NÃO inclua lista de exercícios nem gabarito.' : '',
       'Extensão do miolo: SEM limite máximo de páginas — desenvolva com profundidade adequada ao tema e à duração.',
       r.objectives ? 'Objetivos desejados: ' + r.objectives : '',
       'Entregue o material (com caixas de destaque nos blocos) e a apostila visual (capa em pôster com author "' + auth + '") no formato ' + SCHEMA + '.',
@@ -1031,7 +1155,7 @@
   function toHTML(m, o) {
     m = normalize(m); o = o || {};
     const body = [];
-    if (m.poster && o.poster !== false) body.push('<div class="pgbreak">' + renderPoster(m.poster, m.author) + '</div>');
+    if (m.poster && o.poster !== false) body.push('<div class="pgbreak">' + renderPoster(m.poster, m.author, m.epistemicType) + '</div>');
     if (o.material !== false) {
       body.push('<div class="doc"><h1>' + esc(m.title) + '</h1><div class="meta">' + [m.discipline, m.level, m.duration, m.author].filter(Boolean).map(esc).join(' · ') + '</div>');
       if (m.objectives.length) body.push('<div class="sec b-conceito"><h2>🎯 Objetivos de aprendizagem</h2><ul>' + m.objectives.map((x) => '<li>' + inline(x) + '</li>').join('') + '</ul></div>');
@@ -1124,17 +1248,19 @@
     const BUDGET = isEd ? 640 : 580;
     const pages = []; /* cada página: { kind, html, title } */
     const lg = m.poster ? logoHtml(m.poster.logoChoice) : '';
-    const av = m.poster ? avatarHtml(m.poster.avatarChoice) : MASCOT_SVG;
+    const emblemSmall = epistemicEmblemSvg(m.epistemicType || 'geral', 40);
+    const emblemGuide = epistemicEmblemSvg(m.epistemicType || 'geral', 84);
+    const av = m.poster ? avatarHtml(m.poster.avatarChoice, 'ml-av', m.epistemicType) : '';
     const head = (pn) => isEd
-      ? '<div class="mlph"><div class="mlph-left">' + (lg || MASCOT_SVG) + '<div><b>' + esc(m.title) + '</b><small>' + [m.discipline, m.level].filter(Boolean).map(esc).join(' · ') + '</small></div></div><span class="mlph-pg">' + (pn || '') + '</span></div>'
-      : '<div class="mlph"><div class="mlph-left">' + (lg || MASCOT_SVG) + '<div><b>' + esc(m.title) + '</b><small>' + [m.discipline, m.level].filter(Boolean).map(esc).join(' · ') + '</small></div></div><span class="mlph-badge">' + esc(m.author || DEFAULT_AUTHOR) + '</span></div>';
+      ? '<div class="mlph"><div class="mlph-left">' + (lg || emblemSmall) + '<div><b>' + esc(m.title) + '</b><small>' + [m.discipline, m.level].filter(Boolean).map(esc).join(' · ') + '</small></div></div><span class="mlph-pg">' + (pn || '') + '</span></div>'
+      : '<div class="mlph"><div class="mlph-left">' + (lg || emblemSmall) + '<div><b>' + esc(m.title) + '</b><small>' + [m.discipline, m.level].filter(Boolean).map(esc).join(' · ') + '</small></div></div><span class="mlph-badge">' + esc(m.author || DEFAULT_AUTHOR) + '</span></div>';
     const card = (n, icon, label, inner, c, ttl, ped) => '<section class="mlc mlmove" data-n="' + (typeof n === 'number' ? n : '') + '" data-t="' + esc(ttl || '') + '" style="--c:var(--c' + c + ')"><div class="mlc-tag"><span class="mlc-num">' + n + '</span>' + (isEd ? '' : icon + ' ') + esc(label) + '</div>' + (ped ? '<div class="mlc-ped">' + esc(ped) + '</div>' : '') + inner + '</section>';
 
     /* abertura do miolo: percurso histórico-cultural */
     const profLabel = m.contentProfile === 'expositivo' ? 'Expositivo' : m.contentProfile === 'expositivo_visual' ? 'Expositivo Visual' : m.contentProfile === 'pratica' ? 'Prática' : 'Completo';
     let intro = '<div id="ml-toc"></div>@@HEAD@@<h2 class="mlh2">Antes de começar</h2><p class="mlsub-hand">Percurso de mediação — dos conhecimentos cotidianos aos científicos</p><div class="mlinfo">' +
-      [m.discipline, m.level, m.duration && '⏱️ ' + m.duration, '📘 ' + profLabel, '🧠 Psicologia Histórico-Cultural'].filter(Boolean).map((x) => '<span>' + esc(x) + '</span>').join('') + '</div>';
-    if (isEd) intro += '<div class="mled-guide mlmove"><div class="mled-guide-av">' + MASCOT_SVG + '</div><div>@@TOC@@</div></div>';
+      [m.discipline, m.level, m.duration && '⏱️ ' + m.duration, '📘 ' + profLabel, '🧠 ' + (EPISTEMIC[m.epistemicType] ? EPISTEMIC[m.epistemicType].label.split(' (')[0] : 'Geral'), '🤝 Mediação PHC'].filter(Boolean).map((x) => '<span>' + esc(x) + '</span>').join('') + '</div>';
+    if (isEd) intro += '<div class="mled-guide mlmove"><div class="mled-guide-av">' + emblemGuide + '</div><div>@@TOC@@</div></div>';
     if (m.poster && m.poster.videoUrl && /^https?:\/\//i.test(m.poster.videoUrl)) {
       intro += '<a class="mlvid mlmove" href="' + esc(m.poster.videoUrl) + '" target="_blank" rel="noopener"><div><strong>▶ Videoaula complementar</strong><span>' + esc(m.poster.videoTitle || m.title) + '</span></div><span>Abrir ↗</span></a>';
     }
@@ -1183,7 +1309,7 @@
     const tocHtml = toc.length ? '<h2 class="mlh2" style="margin-top:4px;font-size:22px">Nesta apostila</h2><ul class="mltoc">' + toc.join('') + '</ul>' : '';
     const out = [];
     if (hasCleanCover) out.push('<div class="mlpage mlcover mlcleanwrap" id="ml-top">' + renderCleanCover(m) + '</div>');
-    if (hasPoster) out.push('<div class="mlpage mlcover"' + (!hasCleanCover ? ' id="ml-top"' : '') + '>' + renderPoster(m.poster, m.author) + '</div>');
+    if (hasPoster) out.push('<div class="mlpage mlcover"' + (!hasCleanCover ? ' id="ml-top"' : '') + '>' + renderPoster(m.poster, m.author, m.epistemicType) + '</div>');
     pages.forEach((p) => {
       const nav = isEd ? '<span class="mlnav"><a href="#ml-toc" title="Sumário">📑</a><a href="#ml-top" title="Início">🏠</a></span>' : '';
       out.push('<div class="mlpage" data-kind="' + p.kind + '">' + p.html.replace('@@HEAD@@', head(p.pn)).replace('@@TOC@@', tocHtml) + '<div class="mlpf">' + nav + '<span>MathLab Educação · ' + esc(m.title) + (m.author ? ' · ' + esc(m.author) : '') + '</span><span>' + p.pn + ' / ' + total + '</span></div></div>');
@@ -1206,11 +1332,19 @@
     r = r || {};
     const t = r.type && r.type !== 'auto' && EPISTEMIC[r.type] ? r.type : detectType(r.discipline);
     const labels = EPISTEMIC[t].labels;
+    const baseBlocks = TEMPLATES[t].map((x) => ({ type: x[0], title: x[1], content: '[PREENCHER: ' + x[2] + ']' })).concat([{ type: 'acessibilidade', title: 'Acessibilidade', content: '[PREENCHER: formas alternativas de representar e de participar]' }]);
+    const blocks = Array.isArray(r.sections) && r.sections.length
+      ? SECTION_CATALOG.filter((s) => s[0] !== 'referencias' && r.sections.includes(s[0])).map((s) => {
+          const found = baseBlocks.find((b) => b.type === s[0]);
+          return found || { type: s[0], title: BLOCK_TYPES[s[0]] ? BLOCK_TYPES[s[0]][0] : s[1], content: '[PREENCHER: ' + s[1] + ']' };
+        })
+      : baseBlocks;
     const m = normalize({
       title: r.topic || 'Novo material', discipline: r.discipline, level: r.level, topic: r.topic, duration: r.duration, epistemicType: t,
+      contentProfile: CONTENT_PROFILES[r.contentProfile] ? r.contentProfile : 'completo',
       objectives: ['[PREENCHER: objetivo de aprendizagem 1]', '[PREENCHER: objetivo de aprendizagem 2]'],
       prerequisites: ['[PREENCHER: o que o estudante já precisa saber]'],
-      blocks: TEMPLATES[t].map((x) => ({ type: x[0], title: x[1], content: '[PREENCHER: ' + x[2] + ']' })).concat([{ type: 'acessibilidade', title: 'Acessibilidade', content: '[PREENCHER: formas alternativas de representar e de participar]' }]),
+      blocks: blocks.length ? blocks : baseBlocks,
       limitations: ['Esqueleto gerado offline, sem IA: nenhum conteúdo foi produzido nem pesquisado.'],
       poster: { title: r.topic || 'Título', subtitle: '[PREENCHER: subtítulo curto]', mascot: '', sections: labels.map((l) => ({ label: l, title: '', text: '[PREENCHER: até 25 palavras]' })), goldTip: '[PREENCHER]', didYouKnow: '[PREENCHER]', attention: '[PREENCHER]', summary: [{ icon: '⭐', label: '[PREENCHER]', text: '' }], theme: 'alegre' },
       meta: { generatedBy: 'offline-scaffold' },
@@ -1254,5 +1388,5 @@
     });
   }
 
-  return { BLUEPRINT_SCHEMA, UNIT_SCHEMA, estadoAcumulado, buildBlueprintRequest, normalizeBlueprint, importBlueprint, hashBlueprint, estadoBlueprint, approveBlueprint, proximaUnidade, buildUnitRequest, applyUnit, problemasParaReparo, buildRepairPrompt, applyRepair, REPAIR_SCHEMA, avisosDeImportacao, VERSION, SCHEMA, hashConteudo, estadoRevisao, DEFAULT_AUTHOR, REGISTROS, DESTINATARIOS, INTERIOR_STYLES, AVATAR_OPTIONS, LOGO_OPTIONS, BLOCK_PEDAGOGY, CONTENT_PROFILES, EPISTEMIC, BLOCK_TYPES, POSTER_THEMES, COVER_CSS, POSTER_CSS, DOC_CSS, VISUALS, esc, uid, wc, clone, detectType, sanitizeSvg, renderMarkdown, renderCleanCover, renderPoster, buildImagePrompt, buildRequestText, normalize, fromV2, parseModelJson, importFromText, audit, toMarkdown, toHTML, toApostila, CALLOUTS, scaffold, demo };
+  return { BLUEPRINT_SCHEMA, UNIT_SCHEMA, estadoAcumulado, buildBlueprintRequest, normalizeBlueprint, importBlueprint, hashBlueprint, estadoBlueprint, approveBlueprint, proximaUnidade, buildUnitRequest, applyUnit, problemasParaReparo, buildRepairPrompt, applyRepair, REPAIR_SCHEMA, avisosDeImportacao, VERSION, SCHEMA, hashConteudo, estadoRevisao, DEFAULT_AUTHOR, REGISTROS, DESTINATARIOS, INTERIOR_STYLES, AVATAR_OPTIONS, LOGO_OPTIONS, BLOCK_PEDAGOGY, CONTENT_PROFILES, SECTION_CATALOG, PROFILE_SECTIONS, STAGE_PROFILES, calibrateStage, epistemicEmblemSvg, EPISTEMIC, BLOCK_TYPES, POSTER_THEMES, COVER_CSS, POSTER_CSS, DOC_CSS, VISUALS, esc, uid, wc, clone, detectType, sanitizeSvg, renderMarkdown, renderCleanCover, renderPoster, buildImagePrompt, buildRequestText, normalize, fromV2, parseModelJson, importFromText, audit, toMarkdown, toHTML, toApostila, CALLOUTS, scaffold, demo };
 });
