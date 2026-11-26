@@ -122,6 +122,54 @@
     }),
   });
 
+  const PROFESSOR_ALE_DISCIPLINE_LABELS = Object.freeze({
+    matematica: 'Matemática',
+    fisica: 'Física',
+    quimica: 'Química',
+    biologia: 'Biologia',
+    neuroanatomia: 'Neuroanatomia',
+    psicologia: 'Psicologia',
+    psicanalise: 'Psicanálise',
+    educacao_aee: 'Educação e AEE',
+    terapia_ocupacional: 'Terapia Ocupacional',
+    filosofia: 'Filosofia',
+    historia: 'História',
+    tecnologia_robotica: 'Tecnologia e Robótica',
+    educacao_financeira: 'Educação Financeira',
+  });
+
+  function getProfessorAleContext(discipline, overrideKey) {
+    if (overrideKey && PROFESSOR_ALE_IDENTITY.disciplines[overrideKey]) {
+      return {
+        key: overrideKey,
+        label: PROFESSOR_ALE_DISCIPLINE_LABELS[overrideKey] || overrideKey,
+        visual: PROFESSOR_ALE_IDENTITY.disciplines[overrideKey],
+      };
+    }
+    const d = strip(discipline);
+    const rules = [
+      ['educacao_financeira', ['financeir', 'financas', 'economia pessoal', 'juros']],
+      ['tecnologia_robotica', ['robotica', 'tecnologia', 'informatica', 'programacao', 'computacao']],
+      ['neuroanatomia', ['neuroanatom', 'neurocienc', 'sistema nervoso']],
+      ['terapia_ocupacional', ['terapia ocupacional']],
+      ['educacao_aee', ['aee', 'educacao especial', 'inclusao', 'pedagogia', 'didatica']],
+      ['psicanalise', ['psicanalis', 'freud', 'lacan']],
+      ['psicologia', ['psicolog', 'cognicao', 'vigotski', 'vygotsky']],
+      ['fisica', ['fisica', 'mecanica', 'optica', 'eletricidade']],
+      ['quimica', ['quimica', 'molecul', 'estequiometr']],
+      ['biologia', ['biolog', 'celula', 'genetica', 'ecologia', 'ciencias']],
+      ['filosofia', ['filosof', 'etica', 'epistemolog']],
+      ['historia', ['histor', 'geografia']],
+      ['matematica', ['matemat', 'algebra', 'geometr', 'aritmet', 'estatist', 'calculo', 'logica']],
+    ];
+    for (const [key, kws] of rules) {
+      if (kws.some((k) => d.includes(k))) {
+        return { key, label: PROFESSOR_ALE_DISCIPLINE_LABELS[key], visual: PROFESSOR_ALE_IDENTITY.disciplines[key] };
+      }
+    }
+    return { key: 'matematica', label: PROFESSOR_ALE_DISCIPLINE_LABELS.matematica, visual: PROFESSOR_ALE_IDENTITY.disciplines.matematica };
+  }
+
   const BLOCK_PEDAGOGY = {
     problematizacao: 'Vivência & Problema (Conceitos Cotidianos)',
     contexto: 'Contexto Histórico-Cultural',
@@ -292,8 +340,78 @@
       .replace(/(xlink:href|href)\s*=\s*("|')\s*javascript:[^"']*\2/gi, '');
   }
 
-  /* ---------- Markdown mínimo e seguro ---------- */
+  /* ---------- KaTeX offline (100% local: navegador + Node) ---------- */
+  let _katexMod;
+  function getKatex() {
+    if (typeof window !== 'undefined' && window.katex && typeof window.katex.renderToString === 'function') {
+      return window.katex;
+    }
+    if (_katexMod === undefined) {
+      _katexMod = null;
+      if (typeof require === 'function') {
+        try { _katexMod = require('../assets/vendor/katex/katex.min.js'); } catch (_) { _katexMod = null; }
+      }
+    }
+    return _katexMod;
+  }
+
+  let _katexCssCache = null;
+  function getKatexInlineCss() {
+    if (_katexCssCache !== null) return _katexCssCache;
+    if (typeof document !== 'undefined') {
+      const el = document.getElementById('katex-inline-css');
+      if (el && el.textContent) { _katexCssCache = el.textContent; return _katexCssCache; }
+    }
+    if (typeof require === 'function') {
+      try {
+        const fs = require('fs'), path = require('path');
+        const kdir = path.join(__dirname, '..', 'assets', 'vendor', 'katex');
+        let css = fs.readFileSync(path.join(kdir, 'katex.min.css'), 'utf8');
+        css = css.replace(/url\(fonts\/([^)]+\.woff2)\)\s*format\(["']woff2["']\)(?:,url\(fonts\/[^)]+\)\s*format\(["'](?:woff|truetype)["']\))*/g, (_, file) => {
+          const b64 = fs.readFileSync(path.join(kdir, 'fonts', file)).toString('base64');
+          return 'url(data:font/woff2;base64,' + b64 + ') format("woff2")';
+        });
+        _katexCssCache = css;
+        return _katexCssCache;
+      } catch (_) {}
+    }
+    _katexCssCache = '';
+    return _katexCssCache;
+  }
+
+  function getKatexStyleTag() {
+    const css = getKatexInlineCss();
+    if (css) return '<style>' + css + '</style>';
+    return '<link rel="stylesheet" href="assets/vendor/katex/katex.min.css">';
+  }
+
+  function renderMathExpr(expr, display) {
+    const clean = String(expr || '').trim();
+    if (!clean) return '';
+    const k = getKatex();
+    if (k && typeof k.renderToString === 'function') {
+      try {
+        const rendered = k.renderToString(clean, {
+          displayMode: !!display,
+          throwOnError: false,
+          strict: false,
+          trust: false,
+          output: 'htmlAndMathml',
+        });
+        return display
+          ? '<div class="math math-display">' + rendered + '</div>'
+          : '<span class="math">' + rendered + '</span>';
+      } catch (_) {}
+    }
+    return display
+      ? '<div class="math math-display">' + esc(clean) + '</div>'
+      : '<span class="math">' + esc(clean) + '</span>';
+  }
+
+  /* ---------- Markdown mínimo e seguro (com KaTeX offline) ---------- */
   // fórmula = $...$ cujo $ de abertura não vem colado em letra/número (assim "R$ 40" não vira fórmula)
+  const MATH_BLOCK_RE = /\$\$([\s\S]+?)\$\$|\\\[([\s\S]+?)\\\]/g;
+  const MATH_PAREN_RE = /\\\(([^\n]+?)\\\)/g;
   const MATH_RE = /(^|[^\w$])\$(?=\S)([^$\n]*?\S)\$(?!\w)/g;
   const MATH_OPEN = /(^|[^\w$])\$(?=\S)/;
   function inline(s) {
@@ -301,7 +419,9 @@
     const keep = (h) => '\u0000' + (stash.push(h) - 1) + '\u0000';
     s = String(s);
     s = s.replace(/`([^`]+)`/g, (_, c) => keep('<code>' + esc(c) + '</code>'));
-    s = s.replace(MATH_RE, (_, pre, c) => pre + keep('<span class="math">' + esc(c) + '</span>'));
+    s = s.replace(MATH_BLOCK_RE, (_, a, b) => keep(renderMathExpr(a || b, true)));
+    s = s.replace(MATH_PAREN_RE, (_, c) => keep(renderMathExpr(c, false)));
+    s = s.replace(MATH_RE, (_, pre, c) => pre + keep(renderMathExpr(c, false)));
     s = esc(s);
     s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
     s = s.replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>');
@@ -648,7 +768,13 @@
     L.push('TÍTULO grande no topo, em tipografia forte, cor amarela com contorno azul-marinho e sombra sólida: "' + p.title + '".');
     if (p.subtitle) L.push('Subtítulo em faixa clara logo abaixo: "' + p.subtitle + '".');
     if (auth) L.push('Assinatura/Selo de autoria visível na capa: "' + auth + '".');
-    L.push('IDENTIDADE VISUAL: Sem personagem ou mascote. Emblema geométrico da área, selo MathLab, capa editorial limpa.' + (p.mascot ? ' Detalhe visual complementar: ' + p.mascot + '.' : ''));
+    const profAleKey = p.profAleDiscipline && PROFESSOR_ALE_IDENTITY.disciplines[p.profAleDiscipline] ? p.profAleDiscipline : '';
+    if (profAleKey) {
+      const ctx = getProfessorAleContext(m.discipline, profAleKey);
+      L.push('IDENTIDADE VISUAL (PERSONAGEM OFICIAL): Professor Alê (' + ctx.label + ') — ' + ctx.visual + '. Elementos permanentes: rosto consistente com óculos e cabelo curto, camisa/marca MathLab em azul marinho (#0D2B5B) e amarelo ouro (#F7B500), estilo cartoon editorial amigável e confiável.' + (p.mascot ? ' Detalhe visual complementar: ' + p.mascot + '.' : ''));
+    } else {
+      L.push('IDENTIDADE VISUAL: Sem personagem ou mascote. Emblema geométrico da área, selo MathLab, capa editorial limpa.' + (p.mascot ? ' Detalhe visual complementar: ' + p.mascot + '.' : ''));
+    }
     L.push('CAIXAS NUMERADAS, cada uma com cor própria, borda grossa, sombra sólida, número em círculo e rótulo em destaque (escreva o texto exatamente como abaixo):');
     (p.sections || []).forEach((s, i) => L.push((i + 1) + ') ' + String(s.label || '').toUpperCase() + (s.title ? ' — ' + s.title : '') + ': "' + s.text + '"'));
     const ex = [];
@@ -768,6 +894,8 @@
       m.poster = {
         title: String(p.title || m.title), subtitle: String(p.subtitle || ''), author: String(p.author || m.author || DEFAULT_AUTHOR), mascot: String(p.mascot || ''),
         coverClean: p.coverClean !== false,
+        openingInfographic: p.openingInfographic === true,
+        profAleDiscipline: PROFESSOR_ALE_IDENTITY.disciplines[p.profAleDiscipline] ? p.profAleDiscipline : 'none',
         interiorStyle: INTERIOR_STYLES[p.interiorStyle] ? p.interiorStyle : (isLegacy ? 'ludico' : 'editorial'),
         avatarChoice: AVATAR_OPTIONS[p.avatarChoice] ? p.avatarChoice : 'avatar-prof-ale-1.jpg',
         logoChoice: LOGO_OPTIONS[p.logoChoice] ? p.logoChoice : 'logo-mathlab-clean.jpg',
@@ -1297,7 +1425,7 @@
       if (m.limitations.length) body.push('<div class="sec b-nota"><h2>⚠️ Limitações documentais</h2><ul class="lims">' + m.limitations.map((x) => '<li>' + inline(x) + '</li>').join('') + '</ul></div>');
       body.push('</div>');
     }
-    return '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + esc(m.title) + '</title>' + FONTS_LINK + '<style>' + DOC_CSS + '\n' + POSTER_CSS + '</style></head><body>' + body.join('\n') + '</body></html>';
+    return '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + esc(m.title) + '</title>' + FONTS_LINK + getKatexStyleTag() + '<style>' + DOC_CSS + '\n' + POSTER_CSS + '</style></head><body>' + body.join('\n') + '</body></html>';
   }
 
   /* ---------- Apostila completa (capa + miolo em páginas A4) ---------- */
@@ -1370,6 +1498,57 @@
 
   const BOOK_SCRIPT = "<script>(function(){\nvar H=1123,pages=function(){return Array.prototype.slice.call(document.querySelectorAll('.mlpage:not(.mlcover)'));};\nfunction mk(src){var d=document.createElement('div');d.className='mlpage';d.setAttribute('data-kind','content');var h=src.querySelector('.mlph'),f=src.querySelector('.mlpf');if(h)d.appendChild(h.cloneNode(true));if(f)d.appendChild(f.cloneNode(true));return d;}\nfunction kids(p){return Array.prototype.filter.call(p.children,function(c){return c.classList.contains('mlmove');});}\nfunction over(p){return p.scrollHeight>H+1;}\nfunction run(){\n var list=pages();\n for(var i=0;i<list.length;i++){\n  var p=list[i];\n  var guard=0;\n  while(over(p)&&kids(p).length>1&&guard++<60){\n   var k=kids(p),last=k[k.length-1];\n   var nx=p.nextElementSibling;\n   if(!nx||!nx.classList.contains('mlpage')||nx.getAttribute('data-kind')==='final'||p.getAttribute('data-kind')==='final'||!nx.classList.contains('mlpage')||nx.getAttribute('data-moved')!=='1'){\n    nx=mk(p);nx.setAttribute('data-moved','1');p.parentNode.insertBefore(nx,p.nextSibling);list.splice(i+1,0,nx);\n   }\n   var first=nx.querySelector('.mlmove');\n   if(first)nx.insertBefore(last,first);else nx.insertBefore(last,nx.querySelector('.mlpf'));\n  }\n }\n var all=pages(),off=document.querySelectorAll('.mlcover').length,tot=all.length+off;\n var toc=[];\n all.forEach(function(p,i){\n  var f=p.querySelectorAll('.mlpf span');if(f.length)f[f.length-1].textContent=(i+1+off)+' / '+tot;\n  var pg=p.querySelector('.mlph-pg');if(pg)pg.textContent=(i+1+off);\n  Array.prototype.forEach.call(p.querySelectorAll('.mlc[data-n]'),function(c){if(c.getAttribute('data-n'))toc.push('<li><b>'+c.getAttribute('data-n')+'.</b> '+c.getAttribute('data-t')+'<i></i><b>pág. '+(i+1+off)+'</b></li>');});\n });\n var ul=document.querySelector('.mltoc');if(ul&&toc.length)ul.innerHTML=toc.join('');\n}\nif(document.readyState==='complete')run();else window.addEventListener('load',run);\n})();<\/script>";
 
+  /* ---------- Infográfico de Abertura (camada 3 da sequência editorial definitiva) ---------- */
+  const INFOGRAPHIC_CSS = [
+    '.mlopen-info{background:#F8F3E6;border:3px solid #0D2B5B;border-radius:14px;padding:20px 24px;min-height:1050px;display:flex;flex-direction:column;gap:14px;color:#0D2B5B}',
+    '.mlopen-head{display:flex;align-items:center;justify-content:space-between;gap:14px;border-bottom:4px solid #F7B500;padding-bottom:10px}',
+    '.mlopen-kicker{font-family:"Fredoka",sans-serif;font-size:12px;text-transform:uppercase;letter-spacing:.9px;color:#F57C00;font-weight:700}',
+    '.mlopen-head h2{font-family:"Fredoka",sans-serif;font-size:24px;margin:2px 0;color:#0D2B5B}',
+    '.mlopen-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;flex:1}',
+    '.mlopen-card{background:#fff;border:2px solid #0D2B5B;border-top:5px solid var(--c,#1E88E5);border-radius:12px;padding:12px 14px;font-size:13.5px;line-height:1.45}',
+    '.mlopen-card h3{margin:0 0 6px;font-family:"Fredoka",sans-serif;font-size:15px;color:#0D2B5B;display:flex;align-items:center;gap:6px}',
+    '.mlopen-badge{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#0D2B5B;color:#F7B500;font-size:12px;font-weight:800}',
+    '.mlopen-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;background:#0D2B5B;color:#fff;border-radius:12px;padding:12px 16px}',
+    '.mlopen-strip strong{display:block;color:#F7B500;font-family:"Fredoka",sans-serif;font-size:13.5px}',
+    '.mlopen-strip span{font-size:12.5px;opacity:.94}',
+    '.mlopen-foot{display:flex;justify-content:space-between;font-size:11.5px;color:#334155;border-top:2px dashed #0D2B5B;padding-top:6px;font-weight:700}',
+  ].join('\n');
+
+  function renderOpeningInfographic(m) {
+    m = normalize(m);
+    const p = m.poster || {};
+    const lg = logoHtml(p.logoChoice, 'mlclean-logo');
+    const accents = ['#0D2B5B', '#1E88E5', '#F57C00', '#2E7D32', '#6A1B9A', '#C62828'];
+    const items = (p.sections && p.sections.length)
+      ? p.sections.map((s, i) => ({
+          num: i + 1,
+          title: (s.label || 'Ponto ' + (i + 1)) + (s.title ? ' — ' + s.title : ''),
+          body: inline(s.text || ''),
+          color: accents[i % accents.length],
+        }))
+      : m.blocks.slice(0, 6).map((b, i) => ({
+          num: i + 1,
+          title: b.title || BLOCK_TYPES[b.type][0],
+          body: inline(String(b.content || '').split('\n')[0].slice(0, 180)),
+          color: accents[i % accents.length],
+        }));
+    const cardsHtml = items.map((it) =>
+      '<div class="mlopen-card" style="--c:' + it.color + '"><h3><span class="mlopen-badge">' + it.num + '</span>' + esc(it.title) + '</h3><div>' + it.body + '</div></div>'
+    ).join('');
+    const stripItems = [];
+    if (p.goldTip) stripItems.push('<div><strong>💡 Dica de Ouro</strong><span>' + inline(p.goldTip) + '</span></div>');
+    if (p.attention) stripItems.push('<div><strong>⚠️ Atenção Conceitual</strong><span>' + inline(p.attention) + '</span></div>');
+    (p.summary || []).slice(0, 3).forEach((s) => {
+      stripItems.push('<div><strong>' + esc(s.icon || '⭐') + ' ' + esc(s.label) + '</strong><span>' + inline(s.text || '') + '</span></div>');
+    });
+    return '<article class="mlopen-info" aria-label="Infográfico de abertura">' +
+      '<header class="mlopen-head"><div><div class="mlopen-kicker">Infográfico de Abertura · Mapa Conceitual</div><h2>' + esc(m.title) + '</h2><small>' + [m.discipline, m.level].filter(Boolean).map(esc).join(' · ') + '</small></div><div>' + (lg || emblemFor(m.epistemicType || 'geral', 60)) + '</div></header>' +
+      '<section class="mlopen-grid">' + cardsHtml + '</section>' +
+      (stripItems.length ? '<section class="mlopen-strip">' + stripItems.join('') + '</section>' : '') +
+      '<footer class="mlopen-foot"><span>' + esc(EDITORIAL_IDENTITY.motto) + '</span><span>' + esc(m.author || DEFAULT_AUTHOR) + '</span></footer>' +
+      '</article>';
+  }
+
   function toApostila(m, o) {
     m = normalize(m); o = o || {};
     const theme = (m.poster && m.poster.theme) || 'alegre';
@@ -1427,10 +1606,11 @@
     fin += '<p class="mlnote mlmove">' + (estadoRevisao(m).validado ? 'Material revisado e validado pelo professor. ' + esc(estadoRevisao(m).nota) : 'Este material deve ser conferido e validado pelo professor antes do uso em aula.') + '</p>';
     pages.push({ kind: 'final', html: fin, title: 'Em resumo' });
 
-    /* numeração das páginas: Capa Clean (1) + Folha de Rosto/Pôster (2) + Miolo */
+    /* numeração das páginas: Capa Clean (1) + Folha de Rosto/Pôster (2) + [Infográfico de Abertura (3)] + Miolo */
     const hasPoster = !!(m.poster && o.cover !== false);
     const hasCleanCover = !!(hasPoster && m.poster.coverClean !== false && o.cleanCover !== false);
-    const coverCount = (hasCleanCover ? 1 : 0) + (hasPoster ? 1 : 0);
+    const hasOpeningInfo = !!(o.openingInfographic === true || (m.poster && m.poster.openingInfographic === true && o.openingInfographic !== false));
+    const coverCount = (hasCleanCover ? 1 : 0) + (hasPoster ? 1 : 0) + (hasOpeningInfo ? 1 : 0);
     const first = coverCount + 1;
     const total = pages.length + coverCount;
     const toc = [];
@@ -1439,11 +1619,12 @@
     const out = [];
     if (hasCleanCover) out.push('<div class="mlpage mlcover mlcleanwrap" id="ml-top">' + renderCleanCover(m) + '</div>');
     if (hasPoster) out.push('<div class="mlpage mlcover"' + (!hasCleanCover ? ' id="ml-top"' : '') + '>' + renderPoster(m.poster, m.author, m.epistemicType) + '</div>');
+    if (hasOpeningInfo) out.push('<div class="mlpage mlcover mlopenwrap">' + renderOpeningInfographic(m) + '</div>');
     pages.forEach((p) => {
       const nav = isEd ? '<span class="mlnav"><a href="#ml-toc" title="Sumário">📑</a><a href="#ml-top" title="Início">🏠</a></span>' : '';
       out.push('<div class="mlpage" data-kind="' + p.kind + '">' + p.html.replace('@@HEAD@@', head(p.pn)).replace('@@TOC@@', tocHtml) + '<div class="mlpf">' + nav + '<span>MathLab Educação · ' + esc(m.title) + (m.author ? ' · ' + esc(m.author) : '') + '</span><span>' + p.pn + ' / ' + total + '</span></div></div>');
     });
-    return '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + esc(m.title) + ' — apostila</title>' + FONTS_LINK + '<style>' + COVER_CSS + '\n' + POSTER_CSS + '\n' + BOOK_CSS + '</style></head><body><div class="mlbook' + (isEd ? ' ml-ed' : '') + '" style="' + themeStyle(theme) + '">' + out.join('\n') + '</div>' + BOOK_SCRIPT + '</body></html>';
+    return '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + esc(m.title) + ' — apostila</title>' + FONTS_LINK + getKatexStyleTag() + '<style>' + COVER_CSS + '\n' + POSTER_CSS + '\n' + INFOGRAPHIC_CSS + '\n' + BOOK_CSS + '</style></head><body><div class="mlbook' + (isEd ? ' ml-ed' : '') + '" style="' + themeStyle(theme) + '">' + out.join('\n') + '</div>' + BOOK_SCRIPT + '</body></html>';
   }
 
   /* ---------- esqueleto offline (honesto: não finge conteúdo) ---------- */
@@ -1517,5 +1698,5 @@
     });
   }
 
-  return { BLUEPRINT_SCHEMA, UNIT_SCHEMA, estadoAcumulado, buildBlueprintRequest, normalizeBlueprint, importBlueprint, hashBlueprint, estadoBlueprint, approveBlueprint, proximaUnidade, buildUnitRequest, applyUnit, problemasParaReparo, buildRepairPrompt, applyRepair, REPAIR_SCHEMA, avisosDeImportacao, VERSION, SCHEMA, hashConteudo, estadoRevisao, DEFAULT_AUTHOR, REGISTROS, DESTINATARIOS, INTERIOR_STYLES, AVATAR_OPTIONS, LOGO_OPTIONS, EDITORIAL_IDENTITY, PROFESSOR_ALE_IDENTITY, BLOCK_PEDAGOGY, CONTENT_PROFILES, SECTION_CATALOG, PROFILE_SECTIONS, STAGE_PROFILES, calibrateStage, emblemFor, epistemicEmblemSvg: emblemFor, EPISTEMIC, BLOCK_TYPES, POSTER_THEMES, COVER_CSS, POSTER_CSS, DOC_CSS, VISUALS, esc, uid, wc, clone, detectType, sanitizeSvg, renderMarkdown, renderCleanCover, renderPoster, buildImagePrompt, buildRequestText, normalize, fromV2, parseModelJson, importFromText, audit, toMarkdown, toHTML, toApostila, CALLOUTS, scaffold, demo };
+  return { BLUEPRINT_SCHEMA, UNIT_SCHEMA, estadoAcumulado, buildBlueprintRequest, normalizeBlueprint, importBlueprint, hashBlueprint, estadoBlueprint, approveBlueprint, proximaUnidade, buildUnitRequest, applyUnit, problemasParaReparo, buildRepairPrompt, applyRepair, REPAIR_SCHEMA, avisosDeImportacao, VERSION, SCHEMA, hashConteudo, estadoRevisao, DEFAULT_AUTHOR, REGISTROS, DESTINATARIOS, INTERIOR_STYLES, AVATAR_OPTIONS, LOGO_OPTIONS, EDITORIAL_IDENTITY, PROFESSOR_ALE_IDENTITY, PROFESSOR_ALE_DISCIPLINE_LABELS, getProfessorAleContext, BLOCK_PEDAGOGY, CONTENT_PROFILES, SECTION_CATALOG, PROFILE_SECTIONS, STAGE_PROFILES, calibrateStage, emblemFor, epistemicEmblemSvg: emblemFor, EPISTEMIC, BLOCK_TYPES, POSTER_THEMES, COVER_CSS, POSTER_CSS, INFOGRAPHIC_CSS, DOC_CSS, VISUALS, esc, uid, wc, clone, detectType, sanitizeSvg, renderMathExpr, getKatexStyleTag, renderMarkdown, renderCleanCover, renderPoster, renderOpeningInfographic, buildImagePrompt, buildRequestText, normalize, fromV2, parseModelJson, importFromText, audit, toMarkdown, toHTML, toApostila, CALLOUTS, scaffold, demo };
 });

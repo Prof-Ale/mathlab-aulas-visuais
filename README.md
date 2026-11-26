@@ -144,8 +144,9 @@ O projeto oferece dois caminhos para PDF:
 | Plano por unidades, memória acumulada, reparo localizado, pacotes de domínio e fontes do autor | **Implementado** | `js/core.js`, `js/dominios.js`, `js/fontes.js` |
 | Auditoria automática v1/v2, validação humana por hash e verificação de acessibilidade (`tools/audit-a11y.js`) | **Implementado** | `js/core.js`, `js/auditar-v2.js`, `tools/audit-a11y.js` |
 | Diário de bordo e Portfólio docente (`js/racional.js`, `js/portfolio.js`, `tools/portfolio.mjs`) | **Experimental** | Módulos presentes com schemas `diario.v1` e `portfolio.v1` em `schema/` |
-| Fórmulas matemáticas `$...$` em `<span class="math">` (protegendo `R$`) | **Implementado (básico)** | `js/core.js` — usa fonte matemática sem motor LaTeX/KaTeX completo |
-| Renderização **KaTeX** offline, exportação **DOCX** e **PPTX** (com OMML nativo), e exportação Direção AB | **Outro projeto** | Implementados nos repositórios irmãos [`mathlab-aulas-visuais-app`](https://github.com/Prof-Ale/mathlab-aulas-visuais-app) e [`MathLab-Editorial-System`](https://github.com/Prof-Ale/MathLab-Editorial-System) — **não** estão neste repositório estático |
+| Renderização matemática **KaTeX 100% offline** (`$...$`, `$$...$$`, `\(...\)`, `\[...\]`, protegendo `R$`) | **Implementado** | `assets/vendor/katex/` (MIT, zero dependência npm) + `js/core.js` + `js/livro.js` + `dist/mathlab-standalone.html` |
+| **Infográfico de Abertura** (sequência editorial 4 camadas) e **Seletor contextual do Professor Alê** (13 áreas) | **Implementado** | `js/core.js` (`renderOpeningInfographic`, `getProfessorAleContext`) + `js/app.js` |
+| Exportação **DOCX** e **PPTX** (com OMML nativo) e exportação Direção AB | **Outro projeto** | Implementados nos repositórios irmãos [`mathlab-aulas-visuais-app`](https://github.com/Prof-Ale/mathlab-aulas-visuais-app) e [`MathLab-Editorial-System`](https://github.com/Prof-Ale/MathLab-Editorial-System) — **não** estão neste repositório estático |
 | Auditoria ABNT / revisão editorial assistida e consulta CrossRef/OpenAlex | **Outro projeto** | Implementados no repositório irmão [`ScriptaLab`](https://github.com/Prof-Ale/ScriptaLab) e no App Node |
 | Integração direta com APIs de IA a partir do site | **Planejado / Fora do escopo do site estático** | O site permanece intencionalmente sem backend e sem chave de API |
 
@@ -200,8 +201,7 @@ Veja o passo a passo completo para configurar **Claude (Skill)**, **Gemini (Gem)
 
 - **Suíte automatizada:** `npm test` executa 13 arquivos de teste (`core`, `instrucoes`, `validacao`, `contrato`, `avisos`, `reparo`, `plano`, `app-bridge`, `pdf`, `dominios`, `livro`, `fontes`, `manifesto`). Os 2 testes end-to-end de geração de PDF em `tests/pdf.test.js` são ignorados automaticamente quando o `playwright` não está instalado.
 - **Limitações conhecidas:**
-  - Não renderiza LaTeX avançado com KaTeX neste site estático (`$...$` é exibido em `<span class="math">` com fonte matemática); comandos como `\frac{a}{b}` ou `\mathbb{Z}` devem usar notação Unicode direta ou ser exportados pelo App Node / Direção AB.
-  - Não exporta `.docx` nem `.pptx` neste repositório.
+  - Não exporta `.docx` nem `.pptx` neste repositório (disponíveis no App Node `mathlab-aulas-visuais-app`).
   - Persistência em `localStorage` depende do navegador/perfil local (use o backup JSON da Biblioteca).
   - No `npm run pdf`, emojis e alguns subscritos Unicode podem recorrer à fonte do sistema operacional.
   - A auditoria automática não substitui a revisão pedagógica e científica do professor.
