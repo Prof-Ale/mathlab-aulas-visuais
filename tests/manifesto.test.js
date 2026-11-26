@@ -110,7 +110,7 @@ test('Formulário pedagógico + emblema editorial: detecção epistemológica, s
   const imgPrompt = C.buildImagePrompt(demo);
 
   assert.ok(coverNoPhoto.includes('Emblema editorial — Área Formal') && !coverNoPhoto.includes('class="mlclean-avatar"'), 'capa sem foto mostra emblema da área');
-  assert.ok(coverWithPhoto.includes('class="mlclean-avatar"') && coverWithPhoto.includes('avatar-prof-ale-1.jpg'), 'capa com foto mostra foto do autor em círculo');
+  assert.ok(!coverWithPhoto.includes('class="mlclean-avatar"') && !coverWithPhoto.includes('avatar-prof-ale-1.jpg') && coverWithPhoto.includes('Emblema editorial — Área Formal'), 'capa nunca mostra foto do autor, mesmo com avatar escolhido');
   assert.ok(poster.includes('class="mlp-emblema"') && poster.includes('Emblema editorial — Área Formal'), 'pôster usa .mlp-emblema com emblema da área');
   assert.ok(apostila.includes('class="mled-guide-emblema"') && apostila.includes('Emblema editorial — Área Formal'), 'guia da apostila usa .mled-guide-emblema');
   assert.ok(imgPrompt.includes('Sem personagem ou mascote. Emblema geométrico da área, selo MathLab, capa editorial limpa.'), 'prompt de imagem pede capa editorial sem mascote');

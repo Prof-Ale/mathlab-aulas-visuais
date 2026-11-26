@@ -217,3 +217,10 @@ Veja o passo a passo completo para configurar **Claude (Skill)**, **Gemini (Gem)
 | **1.3 – 1.4** | Capa Clean, Folha de Rosto, Miolo Editorial Clean com pílula de página, etiquetas Histórico-Culturais e caixa *Minha Síntese*. |
 | **1.2** | Remoção do teto de 6 páginas, perfis modulares (`completo`, `expositivo`, `expositivo_visual`, `pratica`) e auditoria coerente com o perfil. |
 | **1.1** | Miolo A4 completo na aba *Apostila completa* e caixas de destaque (`callout`: dica, sabia, atenção, prova). |
+
+
+## Capa e fórmulas (26/11/2026)
+
+- A Capa Clean nunca leva foto nem avatar do autor. Ela mostra o emblema da área ou, se você anexar, a **arte da capa**.
+- **Arte da capa sem API:** na aba Apostila visual, copie o prompt da arte (só a ilustração, 3:4, sem texto e sem pessoas), gere no Gemini (Nano Banana) e anexe o arquivo (PNG, JPEG ou WebP, até 3 MB, com texto alternativo). Título, subtítulo e autor continuam em HTML, sem erro de letra. O prompt do infográfico continua separado.
+- Fórmula em bloco (`$$...$$`) não fica mais dentro de parágrafo, e `$-R$ 65,00$` escrito pela IA vira moeda, não fórmula.

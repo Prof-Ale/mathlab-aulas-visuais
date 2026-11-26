@@ -421,6 +421,7 @@
     s = s.replace(/`([^`]+)`/g, (_, c) => keep('<code>' + esc(c) + '</code>'));
     s = s.replace(MATH_BLOCK_RE, (_, a, b) => keep(renderMathExpr(a || b, true)));
     s = s.replace(MATH_PAREN_RE, (_, c) => keep(renderMathExpr(c, false)));
+    s = s.replace(/\$(-?)R\$\s?(\d[\d.,]*)\$/g, (_, sg, v) => keep(esc(sg + 'R$ ' + v)));
     s = s.replace(MATH_RE, (_, pre, c) => pre + keep(renderMathExpr(c, false)));
     s = esc(s);
     s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
@@ -466,7 +467,7 @@
       if (!p.length) { p.push(L[i]); i++; }
       out.push('<p>' + p.map(inline).join('<br>') + '</p>');
     }
-    return out.join('\n');
+    return out.join('\n').replace(/<p>(<div class="math math-display">[\s\S]*?<\/div>)<\/p>/g, '$1');
   }
 
   /* ---------- geradores de SVG (funcionam offline, qualquer disciplina) ---------- */
@@ -655,6 +656,7 @@
     '.mlclean-avatar-wrap{display:inline-flex;flex-direction:column;align-items:center;gap:10px;background:#fff;border:3px solid var(--tt);border-radius:22px;padding:18px 28px;box-shadow:6px 6px 0 var(--ac)}',
     '.mlclean-avatar{width:148px;height:148px;border-radius:50%;object-fit:cover;object-position:top center;border:4px solid var(--ac);box-shadow:0 4px 14px rgba(20,38,79,.18)}',
     '.mlclean-author{font-family:"Caveat","Patrick Hand",cursive;font-size:28px;font-weight:700;color:var(--tt);line-height:1.1}',
+    '.mlclean-visual{display:flex;justify-content:center;margin:6px 0 18px}.mlclean-art{margin:0;width:100%}.mlclean-art img{display:block;width:100%;max-height:520px;object-fit:cover;border-radius:18px;border:3px solid var(--tt);box-shadow:6px 6px 0 var(--ac)}',
     '.mlclean-role{font-size:12.5px;font-weight:700;color:#55607a;letter-spacing:.3px}',
     '.mlclean-bot{display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:2px dashed #b9c3d9;padding-top:14px;font-size:12.5px;color:#55607a;font-weight:700}',
     '@media print{.mlclean{width:210mm;min-height:296mm;border-radius:0;padding:18mm 18mm 14mm}}',
@@ -715,6 +717,9 @@
     return '<img class="' + (cls || 'ml-lg') + '" src="' + assetSrc(c) + '" alt="MathLab Educação">';
   }
 
+  const COVER_ART_RE = /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/;
+  function coverArtOk(v) { return typeof v === 'string' && v.length < 4200000 && COVER_ART_RE.test(v); }
+
   function renderCleanCover(m) {
     m = normalize(m);
     const p = m.poster || {};
@@ -722,9 +727,10 @@
     const title = (p && p.title) || m.title || 'Material Didático';
     const sub = (p && p.subtitle) || (m.topic && m.topic !== title ? m.topic : 'Material didático visual');
     const lg = logoHtml(p.logoChoice, 'mlclean-logo');
-    const coverVisual = hasAuthorPhoto(p.avatarChoice)
-      ? '<img class="mlclean-avatar" src="' + assetSrc(p.avatarChoice) + '" alt="' + esc(auth) + '">'
-      : '<div class="mlclean-emblem" style="width:116px;height:116px">' + emblemFor(m.epistemicType || 'geral', 116) + '</div>';
+    // A capa nunca leva foto nem avatar do autor. Com arte (feita pela IA, sem texto) ela vira a ilustração da capa; sem arte, o emblema da área.
+    const coverVisual = coverArtOk(p.coverArt)
+      ? '<figure class="mlclean-art"><img src="' + esc(p.coverArt) + '" alt="' + esc(p.coverArtAlt || 'Ilustração da capa: ' + title) + '"></figure>'
+      : '<div class="mlclean-emblem" style="width:150px;height:150px">' + emblemFor(m.epistemicType || 'geral', 150) + '</div>';
     const profLabel = m.contentProfile === 'expositivo' ? 'Expositivo' : m.contentProfile === 'expositivo_visual' ? 'Expositivo Visual' : m.contentProfile === 'pratica' ? 'Prática' : 'Completo';
     const pills = [m.discipline, m.level, profLabel].filter(Boolean).map((x) => '<span>' + esc(x) + '</span>').join('');
     return '<article class="mlclean" style="' + themeStyle(p.theme) + '">' +
@@ -732,8 +738,8 @@
       '<section class="mlclean-mid"><div class="mlclean-pills">' + pills + '</div>' +
       '<h1 class="mlclean-title">' + esc(title) + '</h1>' +
       '<p class="mlclean-sub">' + esc(sub) + '</p>' +
-      '<div class="mlclean-avatar-wrap">' + coverVisual +
-      '<div class="mlclean-author">' + esc(auth) + '</div><div class="mlclean-role">Autoria Docente · Epistemologia da disciplina &amp; Mediação Histórico-Cultural</div></div></section>' +
+      '<div class="mlclean-visual">' + coverVisual + '</div>' +
+      '<div class="mlclean-author">' + esc(auth) + '</div><div class="mlclean-role">Autoria Docente · MathLab Educação</div></section>' +
       '<footer class="mlclean-bot"><span>' + (m.duration ? '⏱️ ' + esc(m.duration) : 'Material de Apoio Pedagógico') + '</span><span>' + esc(estadoRevisao(m).texto) + '</span></footer>' +
       '</article>';
   }
@@ -785,6 +791,22 @@
     if ((p.summary || []).length) L.push('FAIXA FINAL "EM RESUMO:" com ' + p.summary.length + ' ícones ilustrados e legendas curtas: ' + p.summary.map((s) => s.icon + ' "' + s.label + (s.text ? ' — ' + s.text : '') + '"').join('; ') + '.');
     L.push('REGRAS: todo o texto em português do Brasil, escrito exatamente como fornecido, sem erros de ortografia e sem inventar textos extras; letras grandes, manuscritas/arredondadas e legíveis; fundo claro com textura sutil; muitos ícones e pequenas ilustrações relacionadas ao assunto; hierarquia visual clara; sem marca d\'água de terceiros e sem personagens de filmes ou desenhos conhecidos.');
     return L.join('\n');
+  }
+
+  /* Prompt só da ARTE da capa: sem texto, sem pessoa. O título, o subtítulo e o autor o site escreve em HTML (sem erro de letra). */
+  function buildCoverPrompt(m) {
+    const p = m.poster || {};
+    const tema = String(m.topic || m.title || p.title || 'o tema da aula').trim();
+    const nivel = [m.discipline, m.level].filter(Boolean).join(', ');
+    const th = (POSTER_THEMES[p.theme] || POSTER_THEMES.alegre);
+    return [
+      'Crie a ILUSTRAÇÃO DE CAPA de um material didático sobre "' + tema + '"' + (nivel ? ' (' + nivel + ', escola pública brasileira)' : '') + '.',
+      'Formato: retrato, proporção 3:4, 1200 por 1600 pixels. Composição centrada e legível de longe, sem detalhes pequenos; o título fica fora da imagem, o site escreve em volta dela.',
+      'Mostre uma ÚNICA cena ou metáfora visual forte do assunto, em ilustração educacional plana, traço limpo, cores sólidas, alto contraste, boa leitura em impressão preto e branco. Use objetos e símbolos do próprio tema; nada de fotografia.',
+      'Paleta: azul-marinho (#14264F) como base, amarelo (#F2B705) como destaque' + (th && th.nome ? ', combinando com o tema de cores "' + th.nome + '"' : '') + ', fundo claro.',
+      'PROIBIDO na imagem: qualquer texto, letra, número, fórmula ou legenda; logotipos e marcas; rostos, pessoas, personagens, mascotes e fotos de pessoas reais; molduras e bordas desenhadas.',
+      'Entregue só a imagem, em PNG ou JPEG.'
+    ].join('\n');
   }
 
   /* ---------- Pedido para colar no Gem/Claude/ChatGPT (modo sem custo) ---------- */
@@ -899,6 +921,8 @@
         interiorStyle: INTERIOR_STYLES[p.interiorStyle] ? p.interiorStyle : (isLegacy ? 'ludico' : 'editorial'),
         avatarChoice: AVATAR_OPTIONS[p.avatarChoice] ? p.avatarChoice : 'avatar-prof-ale-1.jpg',
         logoChoice: LOGO_OPTIONS[p.logoChoice] ? p.logoChoice : 'logo-mathlab-clean.jpg',
+        coverArt: coverArtOk(p.coverArt) ? p.coverArt : '',
+        coverArtAlt: String(p.coverArtAlt || '').trim().slice(0, 300),
         videoTitle: String(p.videoTitle || '').trim(),
         videoUrl: String(p.videoUrl || '').trim(),
         sections: (Array.isArray(p.sections) ? p.sections : []).slice(0, 6).map((s, i) => ({ label: String(s.label || 'Seção ' + (i + 1)), title: String(s.title || ''), text: String(s.text || '') })),
@@ -1698,5 +1722,5 @@
     });
   }
 
-  return { BLUEPRINT_SCHEMA, UNIT_SCHEMA, estadoAcumulado, buildBlueprintRequest, normalizeBlueprint, importBlueprint, hashBlueprint, estadoBlueprint, approveBlueprint, proximaUnidade, buildUnitRequest, applyUnit, problemasParaReparo, buildRepairPrompt, applyRepair, REPAIR_SCHEMA, avisosDeImportacao, VERSION, SCHEMA, hashConteudo, estadoRevisao, DEFAULT_AUTHOR, REGISTROS, DESTINATARIOS, INTERIOR_STYLES, AVATAR_OPTIONS, LOGO_OPTIONS, EDITORIAL_IDENTITY, PROFESSOR_ALE_IDENTITY, PROFESSOR_ALE_DISCIPLINE_LABELS, getProfessorAleContext, BLOCK_PEDAGOGY, CONTENT_PROFILES, SECTION_CATALOG, PROFILE_SECTIONS, STAGE_PROFILES, calibrateStage, emblemFor, epistemicEmblemSvg: emblemFor, EPISTEMIC, BLOCK_TYPES, POSTER_THEMES, COVER_CSS, POSTER_CSS, INFOGRAPHIC_CSS, DOC_CSS, VISUALS, esc, uid, wc, clone, detectType, sanitizeSvg, renderMathExpr, getKatexStyleTag, renderMarkdown, renderCleanCover, renderPoster, renderOpeningInfographic, buildImagePrompt, buildRequestText, normalize, fromV2, parseModelJson, importFromText, audit, toMarkdown, toHTML, toApostila, CALLOUTS, scaffold, demo };
+  return { BLUEPRINT_SCHEMA, UNIT_SCHEMA, estadoAcumulado, buildBlueprintRequest, normalizeBlueprint, importBlueprint, hashBlueprint, estadoBlueprint, approveBlueprint, proximaUnidade, buildUnitRequest, applyUnit, problemasParaReparo, buildRepairPrompt, applyRepair, REPAIR_SCHEMA, avisosDeImportacao, VERSION, SCHEMA, hashConteudo, estadoRevisao, DEFAULT_AUTHOR, REGISTROS, DESTINATARIOS, INTERIOR_STYLES, AVATAR_OPTIONS, LOGO_OPTIONS, EDITORIAL_IDENTITY, PROFESSOR_ALE_IDENTITY, PROFESSOR_ALE_DISCIPLINE_LABELS, getProfessorAleContext, BLOCK_PEDAGOGY, CONTENT_PROFILES, SECTION_CATALOG, PROFILE_SECTIONS, STAGE_PROFILES, calibrateStage, emblemFor, epistemicEmblemSvg: emblemFor, EPISTEMIC, BLOCK_TYPES, POSTER_THEMES, COVER_CSS, POSTER_CSS, INFOGRAPHIC_CSS, DOC_CSS, VISUALS, esc, uid, wc, clone, detectType, sanitizeSvg, renderMathExpr, getKatexStyleTag, renderMarkdown, renderCleanCover, renderPoster, renderOpeningInfographic, buildImagePrompt, buildCoverPrompt, coverArtOk, buildRequestText, normalize, fromV2, parseModelJson, importFromText, audit, toMarkdown, toHTML, toApostila, CALLOUTS, scaffold, demo };
 });
