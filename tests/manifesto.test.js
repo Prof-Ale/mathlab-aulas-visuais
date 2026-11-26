@@ -136,3 +136,31 @@ test('Identidade editorial e Ficha Oficial do Professor Alê incorporadas ao nú
     C.PROFESSOR_ALE_IDENTITY.referenceSheets.disciplineGrid,
   ].forEach((rel) => assert.ok(fs.existsSync(path.join(root, rel)), 'asset ausente: ' + rel));
 });
+
+test('KaTeX offline, Infográfico de Abertura (4 camadas) e seletor contextual do Professor Alê', () => {
+  // 1. KaTeX offline em inline, bloco, parênteses, proteção de R$ e trust:false
+  const md = 'Conjunto $\\mathbb{Z}$, temp \\(-4^\\circ\\text{C}\\), preço R$ 120,00.\n\n$$\\frac{a}{b} + \\sqrt{x}$$\n\nLink: $\\href{javascript:alert(1)}{x^2}$';
+  const html = C.renderMarkdown(md);
+  assert.ok(html.includes('class="katex"'), 'KaTeX renderizou HTML');
+  assert.ok(html.includes('class="math math-display"'), 'bloco display renderizado');
+  assert.ok(html.includes('R$ 120,00'), 'R$ 120,00 intacto');
+  assert.ok(!html.includes('href="javascript:'), 'trust:false bloqueia javascript:');
+  const visible = html.replace(/<annotation\b[^>]*>[\s\S]*?<\/annotation>/g, '');
+  assert.ok(!visible.includes('\\mathbb') && !visible.includes('\\frac') && !visible.includes('\\sqrt'), 'nenhum comando LaTeX cru no visual');
+
+  // 2. Infográfico de Abertura opcional (sequência editorial 4 camadas)
+  const demo = C.demo();
+  const apDefault = C.toApostila(demo);
+  const ap4 = C.toApostila(demo, { openingInfographic: true });
+  assert.ok(!apDefault.includes('class="mlopen-info"'), 'padrão mantém 3 camadas sem alterar paginação anterior');
+  assert.ok(ap4.includes('class="mlopen-info"') && ap4.includes('Infográfico de Abertura'), 'camada 3 de Infográfico de Abertura renderizada');
+  assert.ok(ap4.includes('data:font/woff2;base64,'), 'fontes KaTeX embutidas offline na apostila');
+
+  // 3. Seletor contextual do Professor Alê por disciplina
+  assert.equal(C.getProfessorAleContext('Neuroanatomia').key, 'neuroanatomia');
+  assert.equal(C.getProfessorAleContext('Educação Financeira').key, 'educacao_financeira');
+  assert.equal(C.getProfessorAleContext('Física', 'quimica').key, 'quimica');
+  const demoWithAle = Object.assign({}, demo, { poster: Object.assign({}, demo.poster, { profAleDiscipline: 'fisica' }) });
+  const promptAle = C.buildImagePrompt(demoWithAle);
+  assert.ok(promptAle.includes('Professor Alê (Física)') && promptAle.includes('#0D2B5B'), 'prompt contextual do Professor Alê');
+});

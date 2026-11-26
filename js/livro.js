@@ -109,7 +109,8 @@
     if (gloss.length) h.push('<div class="pg quebra" id="glossario"><h2>Glossário</h2><p class="meta">Termos reunidos dos blocos de conceito. Conferir as definições faz parte da revisão.</p><dl class="gl">' + gloss.map((g) => '<dt>' + esc(g.termo) + '</dt><dd>' + esc(g.def) + ' <small>(cap. ' + g.cap + ')</small></dd>').join('') + '</dl></div>');
     if (respostas.length) h.push('<div class="pg quebra" id="respostas"><h2>Caderno de respostas</h2>' + respostas.map((r) => '<h3>Capítulo ' + r.cap + '. ' + esc(r.titulo) + '</h3>' + r.blocos.map((b) => '<section class="sec b-gabarito">' + C.renderMarkdown(b.content) + (b.svg ? '<div class="fig">' + C.sanitizeSvg(b.svg) + '</div>' : '') + '</section>').join('')).join('') + '</div>');
     if (refs.length) h.push('<div class="pg quebra" id="referencias"><h2>Referências</h2><ul>' + refs.map((r) => '<li>' + esc([r.authors, r.title, r.year, r.venue].filter(Boolean).join('. ')) + (r.doi ? ' DOI ' + esc(r.doi) + '.' : '') + (r.url ? ' ' + esc(r.url) : '') + ' <small>(' + (r.verified ? 'conferida' : 'não conferida') + ')</small></li>').join('') + '</ul></div>');
-    const html = '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + esc(titulo) + '</title><style>\n' + CSS + '\n</style></head><body>' + h.join('\n') + '</body></html>';
+    const katexTag = typeof C.getKatexStyleTag === 'function' ? C.getKatexStyleTag() : '';
+    const html = '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + esc(titulo) + '</title>' + katexTag + '<style>\n' + CSS + '\n</style></head><body>' + h.join('\n') + '</body></html>';
     return { ok: true, html, title: titulo, chapters: caps.length, validated: validados, toc, glossary: gloss, answers: respostas, references: refs, warnings };
   }
 

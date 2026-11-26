@@ -54,7 +54,8 @@ test('SVG perigoso é sanitizado e reprovado na auditoria', () => {
 test('markdown escapa HTML e preserva fórmulas', () => {
   const h = C.renderMarkdown('<img src=x onerror=alert(1)> **ok** e $a*b*c$\n\n1. um\n2. dois');
   assert.ok(!/<img/.test(h));
-  assert.match(h, /<span class="math">a\*b\*c<\/span>/);
+  assert.match(h, /<span class="math">/);
+  assert.ok(h.includes('class="katex"') && !h.includes('<em>b</em>'), 'KaTeX renderiza fórmula sem corromper asteriscos');
   assert.match(h, /<ol start="1">/);
 });
 
