@@ -43,6 +43,85 @@
     none: 'Sem logo',
   };
 
+  /* ---------- Identidade editorial e Ficha Oficial do Personagem Professor Alê (v1.0) ---------- */
+  const EDITORIAL_IDENTITY = Object.freeze({
+    version: '1.0',
+    brand: 'MathLab Aulas Visuais',
+    author: DEFAULT_AUTHOR,
+    motto: 'Conhecimento em diferentes campos, rigor em cada produção.',
+    palette: Object.freeze({
+      principal: { name: 'Azul Marinho', hex: '#0D2B5B' },
+      destaque: { name: 'Amarelo Ouro', hex: '#F7B500' },
+      fundo: { name: 'Bege Claro', hex: '#F8F3E6' },
+      apoio: { name: 'Azul Médio', hex: '#1E88E5' },
+      acesso: { name: 'Laranja', hex: '#F57C00' },
+      contraste: { name: 'Verde', hex: '#2E7D32' },
+      enfase: { name: 'Roxo', hex: '#6A1B9A' },
+      aviso: { name: 'Vermelho', hex: '#C62828' },
+    }),
+    logos: Object.freeze({
+      clean: 'assets/logo-mathlab-clean.jpg',
+      selo: 'assets/logo-mathlab-selo.jpg',
+      cleanRef: 'assets/identidade/logo-mathlab-clean-oficial.jpg',
+      seloRef: 'assets/identidade/logo-mathlab-selo-oficial.jpg',
+    }),
+    editorialSequence: Object.freeze([
+      { order: 1, id: 'capa', label: 'Capa', purpose: 'Identidade MathLab, hierarquia tipográfica clara, título, subtítulo, autoria e identificação do estudante.' },
+      { order: 2, id: 'folha_de_rosto', label: 'Folha de rosto', purpose: 'Título completo, autor, disciplina, ano escolar/etapa e identificação editorial limpa (separada de infográficos).' },
+      { order: 3, id: 'infografico_abertura', label: 'Infográfico de abertura', purpose: 'Síntese visual conceitual separada da folha de rosto, com linguagem e notação matemática corretas.' },
+      { order: 4, id: 'miolo_didatico', label: 'Miolo didático', purpose: 'Páginas A4 com fundo claro, economia de tinta, conceitos, exemplos resolvidos, representações, situações-problema e exercícios graduados.' },
+    ]),
+    guidelines: Object.freeze([
+      'Paleta oficial em azul marinho (#0D2B5B), amarelo ouro (#F7B500), laranja (#F57C00) e fundo claro (#F8F3E6 / branco).',
+      'Identidade MathLab preservada sem alteração do logotipo ou de suas cores principais.',
+      'Personagem do professor como elemento de identidade, sem repetição excessiva nas páginas internas.',
+      'Capas com hierarquia tipográfica clara e contraste acessível.',
+      'Miolo A4 com boa legibilidade, economia de tinta e adequação à impressão e leitura digital.',
+      'Infográficos conceituais separados de folhas de rosto.',
+      'Fórmulas matemáticas com notação correta.',
+    ]),
+  });
+
+  const PROFESSOR_ALE_IDENTITY = Object.freeze({
+    version: '1.0',
+    name: 'Professor Alê (Prof. Alê Barbosa)',
+    role: 'Personagem institucional multidisciplinar — professor, pesquisador e mediador do conhecimento',
+    consistencyRule: 'O personagem muda de roupa complementar, pose, expressão, objetos e cenário conforme a disciplina, mas continua reconhecível como a mesma pessoa.',
+    referenceSheets: Object.freeze({
+      modelSheet: 'assets/identidade/ficha-oficial-personagem-prof-ale-v1.0.jpg',
+      disciplineGrid: 'assets/identidade/prof-ale-disciplinas-multidisciplinar.jpg',
+    }),
+    permanentElements: Object.freeze([
+      'Rosto inspirado nas fotografias oficiais do Prof. Alê Barbosa',
+      'Óculos com formato semelhante ao original',
+      'Cabelo curto e características faciais reconhecíveis',
+      'Camisa azul marinho ou camiseta com a marca MathLab',
+      'Logotipo MathLab em azul e amarelo',
+      'Estilo de ilustração cartoon 3D / cartoon editorial, amigável, didático e confiável',
+    ]),
+    variableElements: Object.freeze([
+      'Expressão facial (sorriso padrão, atenção, reflexão, surpresa, entusiasmo, confiança) e pose (explicar, dialogar, investigar, concluir)',
+      'Figurino complementar (padrão, jaleco, moletom tecnologia, colete Educação/AEE, pesquisa/leitura, apresentação)',
+      'Objetos e instrumentos próprios da disciplina',
+      'Cenário, cores auxiliares e elementos conceituais',
+    ]),
+    disciplines: Object.freeze({
+      matematica: 'Professor com régua, equações, gráficos e reta numérica',
+      fisica: 'Jaleco, experimentos, pêndulo, vetores e instrumentos',
+      quimica: 'Jaleco, tubos de ensaio, vidrarias e modelos moleculares',
+      biologia: 'Jaleco, microscópio, células, DNA e estruturas biológicas',
+      neuroanatomia: 'Jaleco, cérebro, neurônios e sistema nervoso',
+      psicologia: 'Postura reflexiva, livros, símbolo Ψ e elementos da cognição',
+      psicanalise: 'Livros, divã e referências aos conceitos psicanalíticos',
+      educacao_aee: 'Recursos de acessibilidade, mediação, quebra-cabeça inclusivo e múltiplas formas de representação',
+      terapia_ocupacional: 'Materiais sensoriais, blocos de coordenação e recursos de autonomia',
+      filosofia: 'Livros, pensadores clássicos e questões filosóficas',
+      historia: 'Mapas, globo, documentos e objetos históricos',
+      tecnologia_robotica: 'Moletom MathLab, computador, código, circuitos e robôs',
+      educacao_financeira: 'Moedas/cédulas, planejamento e gráficos financeiros',
+    }),
+  });
+
   const BLOCK_PEDAGOGY = {
     problematizacao: 'Vivência & Problema (Conceitos Cotidianos)',
     contexto: 'Contexto Histórico-Cultural',
@@ -1438,5 +1517,5 @@
     });
   }
 
-  return { BLUEPRINT_SCHEMA, UNIT_SCHEMA, estadoAcumulado, buildBlueprintRequest, normalizeBlueprint, importBlueprint, hashBlueprint, estadoBlueprint, approveBlueprint, proximaUnidade, buildUnitRequest, applyUnit, problemasParaReparo, buildRepairPrompt, applyRepair, REPAIR_SCHEMA, avisosDeImportacao, VERSION, SCHEMA, hashConteudo, estadoRevisao, DEFAULT_AUTHOR, REGISTROS, DESTINATARIOS, INTERIOR_STYLES, AVATAR_OPTIONS, LOGO_OPTIONS, BLOCK_PEDAGOGY, CONTENT_PROFILES, SECTION_CATALOG, PROFILE_SECTIONS, STAGE_PROFILES, calibrateStage, emblemFor, epistemicEmblemSvg: emblemFor, EPISTEMIC, BLOCK_TYPES, POSTER_THEMES, COVER_CSS, POSTER_CSS, DOC_CSS, VISUALS, esc, uid, wc, clone, detectType, sanitizeSvg, renderMarkdown, renderCleanCover, renderPoster, buildImagePrompt, buildRequestText, normalize, fromV2, parseModelJson, importFromText, audit, toMarkdown, toHTML, toApostila, CALLOUTS, scaffold, demo };
+  return { BLUEPRINT_SCHEMA, UNIT_SCHEMA, estadoAcumulado, buildBlueprintRequest, normalizeBlueprint, importBlueprint, hashBlueprint, estadoBlueprint, approveBlueprint, proximaUnidade, buildUnitRequest, applyUnit, problemasParaReparo, buildRepairPrompt, applyRepair, REPAIR_SCHEMA, avisosDeImportacao, VERSION, SCHEMA, hashConteudo, estadoRevisao, DEFAULT_AUTHOR, REGISTROS, DESTINATARIOS, INTERIOR_STYLES, AVATAR_OPTIONS, LOGO_OPTIONS, EDITORIAL_IDENTITY, PROFESSOR_ALE_IDENTITY, BLOCK_PEDAGOGY, CONTENT_PROFILES, SECTION_CATALOG, PROFILE_SECTIONS, STAGE_PROFILES, calibrateStage, emblemFor, epistemicEmblemSvg: emblemFor, EPISTEMIC, BLOCK_TYPES, POSTER_THEMES, COVER_CSS, POSTER_CSS, DOC_CSS, VISUALS, esc, uid, wc, clone, detectType, sanitizeSvg, renderMarkdown, renderCleanCover, renderPoster, buildImagePrompt, buildRequestText, normalize, fromV2, parseModelJson, importFromText, audit, toMarkdown, toHTML, toApostila, CALLOUTS, scaffold, demo };
 });

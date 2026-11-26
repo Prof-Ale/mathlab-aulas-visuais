@@ -1,59 +1,60 @@
-# MathLab Aulas Visuais v1.2 — Guia de Uso e Publicação
+# MathLab Aulas Visuais v1.6.0 — Guia de Uso e Publicação
 
+**Versão do pacote:** `1.6.0` · **Motor:** `2.0.0` · **Contrato:** `mathlab.material/2` (`2.1`)  
 **Autor padrão:** Prof. Alê Barbosa  
-**Base pedagógica:** Psicologia Histórico-Cultural (Vigotski, Luria, Leontiev — mediação semiótica, Zona de Desenvolvimento Proximal e passagem dos conceitos cotidianos aos científicos).
+**Base pedagógica:** Psicologia Histórico-Cultural (mediação semiótica, Zona de Desenvolvimento Proximal e passagem dos conceitos cotidianos aos científicos, respeitando a epistemologia própria de cada disciplina).
 
 ---
 
-## O que mudou na v1.2
+## Principais recursos da versão atual (`1.6.0`)
 
-1. **Sem limite máximo de páginas no miolo:** o conteúdo cresce conforme a densidade do tema (acabou o teto de 6 páginas).
-2. **Perfis de conteúdo modulares (`contentProfile`):**
-   - `completo` — aula/apostila completa com exercícios graduados e gabarito comentado.
-   - `expositivo` — apresentação conceitual aprofundada + exemplos comentados, **sem exercícios nem gabarito**.
-   - `expositivo_visual` — foco em exposição conceitual e diagramas/esquemas SVG, **sem exercícios**.
-   - `pratica` — oficina, atividades guiadas, exercícios graduados e gabarito.
-3. **Capa ilustrada e colorida:** fontes manuscritas/divertidas (`Fredoka` + `Patrick Hand`), sombras estilo HQ, ícones de livros/lápis e selo **Prof. Alê Barbosa**.
-4. **Auditoria coerente com o perfil:** materiais `expositivo` e `expositivo_visual` não são penalizados por não terem exercícios ou gabarito.
+1. **Ambiente multidisciplinar (7 tipos de conhecimento + pacotes de domínio):** Formal, Empírica, Interpretativa, Histórica, Linguística, Prática e Geral/Mista, além de pacotes sob medida (`mathlab.domain/1`).
+2. **Seleção modular de seções e perfis (`contentProfile`):** `completo`, `expositivo`, `expositivo_visual` e `pratica`, sem limite fixo de páginas no miolo.
+3. **Fluxo completo com IA externa (sem API no site):** stepper de 4 passos, fontes do autor (`[F1]`, `[F2]`), plano por unidades com memória acumulada e conferência/reparo localizado (`mathlab.repair/1`).
+4. **Validação humana e auditoria automática:** nenhum material nasce validado; a validação fica registrada com nome, data e hash do conteúdo.
+5. **Compilação de Livro/Caderno e PDF reproduzível/acessível:** exportação HTML autocontida, Markdown, JSON (`mathlab.material/2`), SVG e CLI `npm run pdf` (Playwright + fontes locais OFL).
 
 ---
 
 ## 1. Como usar com cada IA
 
 ### Claude (Skill)
-- Arquivo pronto para upload: `mathlab-aulas-visuais-skill_v1.2.zip` (na pasta `MathLab_Aulas_Visuais`) ou `skill/SKILL.md`.
-- No Claude: **Configurações → Recursos (Capabilities) → Skills → Carregar skill** e envie o `.zip`.
-- Depois peça normalmente, por exemplo:
+- Use o arquivo [`skill/SKILL.md`](skill/SKILL.md) como skill chamada `mathlab-aulas-visuais`.
+- No Claude: **Configurações → Recursos (Capabilities) → Skills** e carregue a skill.
+- Exemplo de pedido:
   > *"Crie uma apostila expositiva (sem exercícios) sobre Equações do 1º Grau para o 7º ano, com bastante desenvolvimento conceitual."*
 
 ### Google Gemini (Gem)
 - Abra [gemini.google.com](https://gemini.google.com) → **Explorar Gems → Novo Gem**.
-- Cole o conteúdo de `gemini/GEM_INSTRUCOES.md` no campo de instruções e salve.
+- Cole o conteúdo de [`gemini/GEM_INSTRUCOES.md`](gemini/GEM_INSTRUCOES.md) no campo de instruções e salve.
 
 ### ChatGPT (Custom GPT)
 - Abra **Explorar GPTs → Criar → Configurar**.
-- Cole o bloco de texto de `chatgpt/CHATGPT_GPT_INSTRUCOES.md` em **Instructions**.
+- Cole o bloco de texto de [`chatgpt/CHATGPT_GPT_INSTRUCOES.md`](chatgpt/CHATGPT_GPT_INSTRUCOES.md) em **Instructions** (cabe no limite de 8.000 caracteres).
 - Opcional: anexe `skill/SKILL.md` em **Knowledge**.
 
 ### Fluxo no site MathLab
-1. Copie o JSON gerado pela IA (ou gere o prompt em **Criar / Pedir à IA**).
-2. Cole em **Importar JSON** no site MathLab (`index.html` ou `dist/mathlab-standalone.html`).
-3. Ajuste na aba **Editor** e personalize a **Capa** (tema, autor, selos).
-4. Exporte em **Apostila A4 (Capa + Miolo)** para imprimir ou salvar como PDF.
+1. Na aba **Criar**, preencha disciplina, etapa, tema, seções desejadas e clique em **Copiar pedido**.
+2. Cole o pedido na IA escolhida e copie o JSON (`mathlab.material/2`) devolvido.
+3. No site (`index.html` ou `dist/mathlab-standalone.html`), cole em **Criar → Importar material**.
+4. Revise no **Editor**, confira os avisos na **Auditoria**, marque **Revisei e valido este material** e exporte (**Apostila completa**, **HTML**, **Markdown**, **JSON** ou **Livro**).
+5. Para PDF reproduzível e acessível por linha de comando:
+   ```bash
+   npm run pdf -- material.json saida.pdf
+   ```
 
 ---
 
 ## 2. Como publicar no GitHub Pages
 
-Esta pasta já está inicializada como repositório Git local (`main`) com o workflow `.github/workflows/pages.yml`.
+O repositório já possui o workflow [`.github/workflows/pages.yml`](.github/workflows/pages.yml), que executa `npm test` antes de publicar.
 
-1. Crie um repositório novo no GitHub (ex.: `mathlab-aulas-visuais`) — **sem** marcar README/.gitignore iniciais.
-2. No PowerShell, dentro desta pasta (`MathLab_Aulas_Visuais_v1.2_GitHub`), execute:
+1. Suba o conteúdo do repositório para a branch `main` no GitHub:
+   ```powershell
+   git remote add origin https://github.com/SEU_USUARIO/mathlab-aulas-visuais.git
+   git push -u origin main
+   ```
+2. No GitHub: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
+3. A cada envio para `main`, o site será testado e publicado em `https://SEU_USUARIO.github.io/mathlab-aulas-visuais/`.
 
-```powershell
-git remote add origin https://github.com/SEU_USUARIO/mathlab-aulas-visuais.git
-git push -u origin main
-```
-
-3. No GitHub: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
-4. Em cerca de 1 minuto o site ficará publicado em `https://SEU_USUARIO.github.io/mathlab-aulas-visuais/`.
+Sem GitHub, basta abrir [`dist/mathlab-standalone.html`](dist/mathlab-standalone.html) diretamente no navegador (100% offline).

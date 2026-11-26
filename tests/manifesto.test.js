@@ -118,3 +118,21 @@ test('Formulário pedagógico + emblema editorial: detecção epistemológica, s
     assert.ok(!/MASCOT_SVG|estudante sorridente|PERSONAGEM MASCOTE/i.test(txt), 'nenhum resquício de mascote infantil no material gerado');
   });
 });
+
+test('Identidade editorial e Ficha Oficial do Professor Alê incorporadas ao núcleo e aos assets', () => {
+  assert.equal(C.EDITORIAL_IDENTITY.palette.principal.hex, '#0D2B5B');
+  assert.equal(C.EDITORIAL_IDENTITY.palette.destaque.hex, '#F7B500');
+  assert.equal(C.EDITORIAL_IDENTITY.editorialSequence.length, 4);
+  assert.deepEqual(
+    C.EDITORIAL_IDENTITY.editorialSequence.map((s) => s.id),
+    ['capa', 'folha_de_rosto', 'infografico_abertura', 'miolo_didatico']
+  );
+  assert.ok(C.PROFESSOR_ALE_IDENTITY.permanentElements.length >= 6);
+  assert.ok(Object.keys(C.PROFESSOR_ALE_IDENTITY.disciplines).length >= 12);
+  [
+    C.EDITORIAL_IDENTITY.logos.cleanRef,
+    C.EDITORIAL_IDENTITY.logos.seloRef,
+    C.PROFESSOR_ALE_IDENTITY.referenceSheets.modelSheet,
+    C.PROFESSOR_ALE_IDENTITY.referenceSheets.disciplineGrid,
+  ].forEach((rel) => assert.ok(fs.existsSync(path.join(root, rel)), 'asset ausente: ' + rel));
+});

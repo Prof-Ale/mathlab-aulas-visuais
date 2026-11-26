@@ -58,9 +58,10 @@ test('instruções: o esquema de referências é completo no GPT, no Gem e na Sk
 });
 
 test('instruções: o bloco colável do GPT cabe no limite de 8000 caracteres do campo Instructions', () => {
-  const m = files.gpt.match(/```text\n([\s\S]*?)\n```/);
+  const m = files.gpt.match(/```text\r?\n([\s\S]*?)\r?\n```/);
   assert.ok(m, 'bloco text não encontrado');
-  assert.ok([...m[1]].length <= 8000, 'bloco do GPT com ' + [...m[1]].length + ' caracteres');
+  const len = [...m[1].replace(/\r\n/g, '\n')].length;
+  assert.ok(len <= 8000, 'bloco do GPT com ' + len + ' caracteres');
 });
 
 test('instruções: Educação Especial manda tratar os decretos de 2025 como norma a verificar', () => {
