@@ -164,3 +164,21 @@ test('KaTeX offline, Infográfico de Abertura (4 camadas) e seletor contextual d
   const promptAle = C.buildImagePrompt(demoWithAle);
   assert.ok(promptAle.includes('Professor Alê (Física)') && promptAle.includes('#0D2B5B'), 'prompt contextual do Professor Alê');
 });
+
+test('documentação fiel: README cita o número real de suítes e os originais de identidade existem', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const raiz = path.join(__dirname, '..');
+  const readme = fs.readFileSync(path.join(raiz, 'README.md'), 'utf8');
+  const suites = fs.readdirSync(__dirname).filter((f) => f.endsWith('.test.js'));
+  const roda = require('../package.json').scripts.test.split(' ').filter((x) => x.endsWith('.test.js'));
+  assert.strictEqual(roda.length, suites.length, 'todo arquivo de teste está no script npm test');
+  assert.ok(readme.includes('todas as ' + suites.length + ' suítes'), 'README cita ' + suites.length + ' suítes');
+  assert.ok(readme.includes('executa ' + suites.length + ' arquivos de teste'), 'README cita ' + suites.length + ' arquivos de teste');
+  for (const f of ['ficha-professor-ale-v1.0-original.png', 'colagem-multidisciplinar-original.png', 'logo-mathlab-selo-circular-original.jpg', 'logotipo-mathlab-fundo-claro-original.png']) {
+    assert.ok(fs.existsSync(path.join(raiz, 'assets', 'identidade', 'originais', f)), f);
+    assert.ok(fs.readFileSync(path.join(raiz, 'docs', 'IDENTIDADE_EDITORIAL_E_PERSONAGEM.md'), 'utf8').includes(f), 'doc cita ' + f);
+  }
+  const linhaDocx = readme.split('\n').find((l) => /DOCX/.test(l) && l.startsWith('|'));
+  assert.ok(/Outro projeto/.test(linhaDocx), 'DOCX e PPTX continuam declarados como de outro projeto');
+});

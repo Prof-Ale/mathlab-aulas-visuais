@@ -145,6 +145,7 @@ O projeto oferece dois caminhos para PDF:
 | Auditoria automática v1/v2, validação humana por hash e verificação de acessibilidade (`tools/audit-a11y.js`) | **Implementado** | `js/core.js`, `js/auditar-v2.js`, `tools/audit-a11y.js` |
 | Diário de bordo e Portfólio docente (`js/racional.js`, `js/portfolio.js`, `tools/portfolio.mjs`) | **Experimental** | Módulos presentes com schemas `diario.v1` e `portfolio.v1` em `schema/` |
 | Renderização matemática **KaTeX 100% offline** (`$...$`, `$$...$$`, `\(...\)`, `\[...\]`, protegendo `R$`) | **Implementado** | `assets/vendor/katex/` (MIT, zero dependência npm) + `js/core.js` + `js/livro.js` + `dist/mathlab-standalone.html` |
+| **Capa Clean sem foto do autor**, **arte de capa opcional** (prompt só da ilustração, sem texto e sem pessoas, para o Gemini/Nano Banana; o arquivo PNG, JPEG ou WebP até 3 MB volta pelo site, com texto alternativo) e proteção de `R$` e de `$$...$$` na renderização | **Implementado** | `js/core.js` (`renderCleanCover`, `buildCoverPrompt`, `coverArtOk`), `js/app.js` (aba Apostila visual), `tests/capa-formulas.test.js`. O site não gera a imagem: o professor leva o prompt à ferramenta de imagem e traz o arquivo |
 | **Infográfico de Abertura** (sequência editorial 4 camadas) e **Seletor contextual do Professor Alê** (13 áreas) | **Implementado** | `js/core.js` (`renderOpeningInfographic`, `getProfessorAleContext`) + `js/app.js` |
 | Exportação **DOCX** e **PPTX** (com OMML nativo) e exportação Direção AB | **Outro projeto** | Implementados nos repositórios irmãos [`mathlab-aulas-visuais-app`](https://github.com/Prof-Ale/mathlab-aulas-visuais-app) e [`MathLab-Editorial-System`](https://github.com/Prof-Ale/MathLab-Editorial-System) — **não** estão neste repositório estático |
 | Auditoria ABNT / revisão editorial assistida e consulta CrossRef/OpenAlex | **Outro projeto** | Implementados no repositório irmão [`ScriptaLab`](https://github.com/Prof-Ale/ScriptaLab) e no App Node |
@@ -163,6 +164,8 @@ As diretrizes visuais oficiais e a **Ficha Oficial do Personagem Professor Alê 
   2. **Folha de rosto** — título completo, autor, disciplina, ano escolar/etapa e identificação editorial limpa.
   3. **Infográfico de abertura** — síntese visual conceitual separada da folha de rosto, com linguagem e notação matemática corretas.
   4. **Miolo didático A4** — conceitos, exemplos resolvidos, representações visuais, situações-problema e exercícios graduados, com boa legibilidade e economia de tinta na impressão e leitura digital.
+- **Capa:** a Capa Clean não leva foto nem avatar do autor. Mostra o emblema da área ou a arte de capa anexada pelo professor. O personagem aparece na caixa "Sobre o Autor", no Infográfico de Abertura e nos prompts de imagem, quando o professor escolhe a variação contextual.
+- **Arquivos oficiais em resolução total:** `assets/identidade/originais/` guarda as quatro imagens como foram enviadas (ficha do personagem, grade multidisciplinar, selo circular e logotipo de fundo claro). Os arquivos de `assets/identidade/` e de `assets/` são cópias reduzidas para uso no site. Os logotipos não são recriados nem redesenhados.
 - **Personagem oficial — Professor Alê (Prof. Alê Barbosa):** usado como elemento de identidade sem repetição excessiva nas páginas internas. Mantém consistência facial, óculos, cabelo curto, marca MathLab e estilo cartoon editorial, variando figurino, expressão, pose, objetos e cenário conforme a disciplina (Matemática, Física, Química, Biologia, Neuroanatomia, Psicologia, Psicanálise, Educação e AEE, Terapia Ocupacional, Filosofia, História, Tecnologia e Robótica, Educação Financeira).
 
 ---
@@ -183,7 +186,7 @@ As diretrizes visuais oficiais e a **Ficha Oficial do Personagem Professor Alê 
 
 ### Comandos
 ```bash
-npm test                                  # executa todas as 13 suítes em tests/
+npm test                                  # executa todas as 14 suítes em tests/
 npm run build                             # gera dist/mathlab-standalone.html
 npm run pdf -- --demo apostila-demo.pdf   # gera PDF acessível e reproduzível (requer Playwright)
 ```
@@ -199,7 +202,7 @@ Veja o passo a passo completo para configurar **Claude (Skill)**, **Gemini (Gem)
 
 ## Testes e limitações conhecidas
 
-- **Suíte automatizada:** `npm test` executa 13 arquivos de teste (`core`, `instrucoes`, `validacao`, `contrato`, `avisos`, `reparo`, `plano`, `app-bridge`, `pdf`, `dominios`, `livro`, `fontes`, `manifesto`). Os 2 testes end-to-end de geração de PDF em `tests/pdf.test.js` são ignorados automaticamente quando o `playwright` não está instalado.
+- **Suíte automatizada:** `npm test` executa 14 arquivos de teste (`core`, `instrucoes`, `validacao`, `contrato`, `avisos`, `reparo`, `plano`, `app-bridge`, `pdf`, `dominios`, `livro`, `fontes`, `manifesto`, `capa-formulas`). Os 2 testes end-to-end de geração de PDF em `tests/pdf.test.js` são ignorados automaticamente quando o `playwright` não está instalado.
 - **Limitações conhecidas:**
   - Não exporta `.docx` nem `.pptx` neste repositório (disponíveis no App Node `mathlab-aulas-visuais-app`).
   - Persistência em `localStorage` depende do navegador/perfil local (use o backup JSON da Biblioteca).
@@ -213,14 +216,9 @@ Veja o passo a passo completo para configurar **Claude (Skill)**, **Gemini (Gem)
 | Versão | Destaques |
 | --- | --- |
 | **1.6.0** *(motor 2.0.0, contrato 2.1)* | Redesign UI/UX v2 (3 grupos de navegação, modo escuro, busca na biblioteca, stepper de 4 passos), formulário pedagógico com calibração por etapa e seções modulares, emblemas editoriais geométricos por área (`emblemFor`), PDF reproduzível e acessível (tagged `pt-BR`), manifesto único de versões (`manifest.json`), incorporação da identidade editorial e da Ficha Oficial do Professor Alê v1.0. |
+| **Em validação** *(26/11/2026, sem nova versão publicada)* | KaTeX offline, Infográfico de Abertura, seletor contextual do Professor Alê, Capa Clean sem foto, arte de capa opcional e correções de fórmula em bloco e de `R$`. Aguardam a validação do professor em uso real antes de subir a versão no `manifest.json`. |
 | **1.5.x** | Plano por unidades (`mathlab.blueprint/1` e `mathlab.unit/1`), memória acumulada, conferência e reparo (`mathlab.repair/1`), pacotes de domínio (`mathlab.domain/1`), fontes do autor (`[F1]`…), compilação de Livro/Caderno e interoperabilidade com o App Node (`mathlab.material/2` v2.1). |
 | **1.3 – 1.4** | Capa Clean, Folha de Rosto, Miolo Editorial Clean com pílula de página, etiquetas Histórico-Culturais e caixa *Minha Síntese*. |
 | **1.2** | Remoção do teto de 6 páginas, perfis modulares (`completo`, `expositivo`, `expositivo_visual`, `pratica`) e auditoria coerente com o perfil. |
 | **1.1** | Miolo A4 completo na aba *Apostila completa* e caixas de destaque (`callout`: dica, sabia, atenção, prova). |
 
-
-## Capa e fórmulas (26/11/2026)
-
-- A Capa Clean nunca leva foto nem avatar do autor. Ela mostra o emblema da área ou, se você anexar, a **arte da capa**.
-- **Arte da capa sem API:** na aba Apostila visual, copie o prompt da arte (só a ilustração, 3:4, sem texto e sem pessoas), gere no Gemini (Nano Banana) e anexe o arquivo (PNG, JPEG ou WebP, até 3 MB, com texto alternativo). Título, subtítulo e autor continuam em HTML, sem erro de letra. O prompt do infográfico continua separado.
-- Fórmula em bloco (`$$...$$`) não fica mais dentro de parágrafo, e `$-R$ 65,00$` escrito pela IA vira moeda, não fórmula.

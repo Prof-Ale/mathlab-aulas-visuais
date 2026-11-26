@@ -21,6 +21,23 @@ Sequência editorial adotada como padrão para cadernos temáticos (como o cader
    - Conceitos, exemplos resolvidos, representações visuais, situações-problema e exercícios graduados.
    - Fundo claro, boa legibilidade, contraste acessível, economia de tinta na impressão e adequação à leitura digital.
 
+### Originais em resolução total
+
+`assets/identidade/originais/` guarda as quatro imagens oficiais exatamente como foram enviadas, sem recorte, recompressão ou redesenho:
+
+| Arquivo | Conteúdo | Tamanho |
+| --- | --- | --- |
+| `ficha-professor-ale-v1.0-original.png` | Ficha Oficial do Personagem Professor Alê, versão 1.0 | 1199 por 1312 px |
+| `colagem-multidisciplinar-original.png` | Professor Alê nas 12 áreas (Matemática a Educação Financeira) | 1536 por 1024 px |
+| `logo-mathlab-selo-circular-original.jpg` | Selo circular MathLab Educação, azul marinho e dourado | 1254 por 1254 px |
+| `logotipo-mathlab-fundo-claro-original.png` | Logotipo MathLab, fundo claro | 1536 por 1024 px |
+
+Os arquivos de `assets/identidade/` (1024 px) e de `assets/` são cópias reduzidas para uso no site. Qualquer ajuste visual parte dos originais.
+
+### Capa e personagem
+
+A Capa Clean não leva foto nem avatar do autor. O personagem entra na caixa "Sobre o Autor", no Infográfico de Abertura e nos prompts de imagem com a variação contextual por disciplina, sempre sem repetição excessiva.
+
 ---
 
 ## 2. Logotipos e Paleta de Cores Oficial
