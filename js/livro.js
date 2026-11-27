@@ -101,7 +101,8 @@
       let s = '<div class="pg quebra" id="cap-' + (i + 1) + '"><h1 class="cap">Capítulo ' + (i + 1) + '. ' + esc(m.title) + '</h1><div class="meta">' + [m.discipline, m.level, m.duration].filter(Boolean).map(esc).join(' · ') + '</div>';
       if (m.objectives.length) s += '<div class="sec b-conceito"><h3>🎯 Objetivos de aprendizagem</h3><ul>' + m.objectives.map((x) => '<li>' + esc(x) + '</li>').join('') + '</ul></div>';
       m.blocks.filter((b) => !(usaRespostas && b.type === 'gabarito')).forEach((b) => {
-        s += '<section class="sec b-' + b.type + '"><h3>' + esc(C.BLOCK_TYPES[b.type][1]) + ' ' + esc(b.title) + '</h3>' + C.renderMarkdown(b.content) + (b.svg ? '<div class="fig">' + C.sanitizeSvg(b.svg) + '</div>' : '') + '</section>';
+        const imgHtml = typeof C.renderBlockImageHtml === 'function' ? C.renderBlockImageHtml(b.image) : '';
+        s += '<section class="sec b-' + b.type + '"><h3>' + esc(C.BLOCK_TYPES[b.type][1]) + ' ' + esc(b.title) + '</h3>' + C.renderMarkdown(b.content) + (b.svg ? '<div class="fig">' + C.sanitizeSvg(b.svg) + '</div>' : '') + imgHtml + '</section>';
       });
       if (m.limitations.length) s += '<div class="sec"><h3>Limitações declaradas</h3><ul>' + m.limitations.map((x) => '<li>' + esc(x) + '</li>').join('') + '</ul></div>';
       h.push(s + '</div>');

@@ -718,6 +718,28 @@
   }
 
   const COVER_ART_RE = /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/;
+  const BRIDGE_IMG_MIMES = { 'image/png': 1, 'image/jpeg': 1, 'image/webp': 1 };
+  function normalizeBridgeImage(img) {
+    if (!img || typeof img !== 'object') return null;
+    const mime = String(img.mime || '').trim().toLowerCase();
+    const data = String(img.data || '').trim();
+    if (!BRIDGE_IMG_MIMES[mime] || !data || data.length > 4200000 || !/^[A-Za-z0-9+/=\s]+$/.test(data)) return null;
+    const out = { mime, data: data.replace(/\s+/g, ''), alt: String(img.alt || '').trim().slice(0, 300) };
+    if (img.caption) out.caption = String(img.caption).trim().slice(0, 300);
+    if (img.credit) out.credit = String(img.credit).trim().slice(0, 200);
+    if (Number(img.width) > 0) out.width = Math.round(Number(img.width));
+    if (Number(img.height) > 0) out.height = Math.round(Number(img.height));
+    return out;
+  }
+
+  function renderBlockImageHtml(img) {
+    const clean = normalizeBridgeImage(img);
+    if (!clean) return '';
+    const leg = [clean.caption, clean.credit ? 'Crédito: ' + clean.credit : ''].filter(Boolean).join(' · ');
+    return '<figure class="fig"><img src="data:' + clean.mime + ';base64,' + clean.data + '" alt="' + esc(clean.alt || 'Figura do bloco') + '" style="max-width:100%;height:auto;border-radius:8px">' +
+      (leg ? '<figcaption style="margin-top:6px;font-size:12.5px;color:#475569;font-style:italic">' + esc(leg) + '</figcaption>' : '') + '</figure>';
+  }
+
   function coverArtOk(v) { return typeof v === 'string' && v.length < 4200000 && COVER_ART_RE.test(v); }
 
   function renderCleanCover(m) {
@@ -903,7 +925,10 @@
       if (!b || typeof b !== 'object') return;
       const type = BLOCK_TYPES[b.type] ? b.type : 'nota';
       const co = b.callout && typeof b.callout === 'object' && String(b.callout.text || '').trim() ? { kind: CALLOUTS[b.callout.kind] ? b.callout.kind : 'dica', text: String(b.callout.text).trim() } : null;
-      m.blocks.push({ id: b.id || uid('b'), type, title: String(b.title || BLOCK_TYPES[type][0]), content: String(b.content || ''), svg: b.svg ? String(b.svg) : '', callout: co });
+      const bImg = normalizeBridgeImage(b.image);
+      const blkObj = { id: b.id || uid('b'), type, title: String(b.title || BLOCK_TYPES[type][0]), content: String(b.content || ''), svg: b.svg ? String(b.svg) : '', callout: co };
+      if (bImg) blkObj.image = bImg;
+      m.blocks.push(blkObj);
     });
     (Array.isArray(o.references) ? o.references : []).forEach((r) => {
       if (!r || typeof r !== 'object') return;
@@ -930,6 +955,14 @@
         summary: (Array.isArray(p.summary) ? p.summary : []).slice(0, 5).map((s) => ({ icon: String(s.icon || '⭐'), label: String(s.label || ''), text: String(s.text || '') })),
         theme: POSTER_THEMES[p.theme] ? p.theme : 'alegre',
       };
+    }
+    const cImg = normalizeBridgeImage(o.coverImage);
+    if (cImg) {
+      m.coverImage = cImg;
+      if (m.poster && !m.poster.coverArt) {
+        m.poster.coverArt = 'data:' + cImg.mime + ';base64,' + cImg.data;
+        if (cImg.alt && !m.poster.coverArtAlt) m.poster.coverArtAlt = cImg.alt;
+      }
     }
     if (o.revisao && typeof o.revisao === 'object') {
       m.revisao = { aprovado: o.revisao.aprovado === true, revisadoPor: String(o.revisao.revisadoPor || ''), data: String(o.revisao.data || ''), hash: String(o.revisao.hash || '') };
@@ -1443,7 +1476,7 @@
       if (m.prerequisites.length) body.push('<div class="sec"><h2>🔑 Conhecimentos prévios</h2><ul>' + m.prerequisites.map((x) => '<li>' + inline(x) + '</li>').join('') + '</ul></div>');
       m.blocks.forEach((b) => {
         body.push('<section class="sec b-' + b.type + '"><h2>' + BLOCK_TYPES[b.type][1] + ' ' + esc(b.title) + '</h2>' + renderMarkdown(b.content) +
-          (b.svg ? '<div class="fig">' + sanitizeSvg(b.svg) + '</div>' : '') + '</section>');
+          (b.svg ? '<div class="fig">' + sanitizeSvg(b.svg) + '</div>' : '') + renderBlockImageHtml(b.image) + '</section>');
       });
       if (m.references.length) body.push('<div class="sec"><h2>📚 Referências</h2><ul class="refs">' + m.references.map((r) => '<li>' + esc(r.authors) + ' (' + esc(r.year) + '). <em>' + esc(r.title) + '</em>. ' + esc(r.venue) + (r.doi ? ' DOI: ' + esc(r.doi) : '') + ' <small>[acesso: ' + esc(r.accessLevel) + ']</small></li>').join('') + '</ul></div>');
       if (m.limitations.length) body.push('<div class="sec b-nota"><h2>⚠️ Limitações documentais</h2><ul class="lims">' + m.limitations.map((x) => '<li>' + inline(x) + '</li>').join('') + '</ul></div>');
@@ -1609,7 +1642,7 @@
       if (!cur || (w > 0 && w + bw > BUDGET)) open();
       n += 1; w += bw;
       const co = b.callout ? '<div class="mlco ' + CALLOUTS[b.callout.kind][1] + '"><h4>' + CALLOUTS[b.callout.kind][0] + '</h4>' + inline(b.callout.text) + '</div>' : '';
-      cur.html += card(n, BLOCK_TYPES[b.type][1], b.title, renderMarkdown(b.content) + (b.svg ? '<div class="fig">' + sanitizeSvg(b.svg) + '</div>' : '') + co, BLOCK_COLOR[b.type] || 1, b.title, BLOCK_PEDAGOGY[b.type] || '');
+      cur.html += card(n, BLOCK_TYPES[b.type][1], b.title, renderMarkdown(b.content) + (b.svg ? '<div class="fig">' + sanitizeSvg(b.svg) + '</div>' : '') + renderBlockImageHtml(b.image) + co, BLOCK_COLOR[b.type] || 1, b.title, BLOCK_PEDAGOGY[b.type] || '');
       cur.items.push({ n: n, title: b.title });
     });
 
@@ -1946,5 +1979,5 @@
     return '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><title>' + esc(titulo) + '</title>' + getKatexStyleTag() + '<style>' + DOC_CSS + 'ol li{margin:12px 0}small{color:#55607a;display:block}.gab{page-break-before:always}</style></head><body><div class="doc"><h1>' + esc(titulo) + '</h1><div class="meta">' + it.length + ' questão(ões) · Rascunho: aguarda revisão do professor</div><ol>' + q + '</ol>' + g + '</div></body></html>';
   }
 
-  return { BLUEPRINT_SCHEMA, UNIT_SCHEMA, estadoAcumulado, buildBlueprintRequest, normalizeBlueprint, importBlueprint, hashBlueprint, estadoBlueprint, approveBlueprint, proximaUnidade, buildUnitRequest, applyUnit, problemasParaReparo, buildRepairPrompt, applyRepair, REPAIR_SCHEMA, avisosDeImportacao, VERSION, SCHEMA, hashConteudo, estadoRevisao, DEFAULT_AUTHOR, REGISTROS, DESTINATARIOS, INTERIOR_STYLES, AVATAR_OPTIONS, LOGO_OPTIONS, EDITORIAL_IDENTITY, PROFESSOR_ALE_IDENTITY, PROFESSOR_ALE_DISCIPLINE_LABELS, getProfessorAleContext, BLOCK_PEDAGOGY, CONTENT_PROFILES, SECTION_CATALOG, PROFILE_SECTIONS, STAGE_PROFILES, calibrateStage, emblemFor, epistemicEmblemSvg: emblemFor, EPISTEMIC, BLOCK_TYPES, POSTER_THEMES, COVER_CSS, POSTER_CSS, INFOGRAPHIC_CSS, DOC_CSS, VISUALS, esc, uid, wc, clone, detectType, sanitizeSvg, renderMathExpr, getKatexStyleTag, renderMarkdown, renderCleanCover, renderPoster, renderOpeningInfographic, buildImagePrompt, buildCoverPrompt, coverArtOk, buildRequestText, normalize, fromV2, parseModelJson, importFromText, audit, toMarkdown, toHTML, toApostila, CALLOUTS, scaffold, demo, slidePlan, toSlides, BANK_SCHEMA, extrairQuestoes, bancoDeQuestoes, listaDeExercicios };
+  return { BLUEPRINT_SCHEMA, UNIT_SCHEMA, estadoAcumulado, buildBlueprintRequest, normalizeBlueprint, importBlueprint, hashBlueprint, estadoBlueprint, approveBlueprint, proximaUnidade, buildUnitRequest, applyUnit, problemasParaReparo, buildRepairPrompt, applyRepair, REPAIR_SCHEMA, avisosDeImportacao, VERSION, SCHEMA, hashConteudo, estadoRevisao, DEFAULT_AUTHOR, REGISTROS, DESTINATARIOS, INTERIOR_STYLES, AVATAR_OPTIONS, LOGO_OPTIONS, EDITORIAL_IDENTITY, PROFESSOR_ALE_IDENTITY, PROFESSOR_ALE_DISCIPLINE_LABELS, getProfessorAleContext, BLOCK_PEDAGOGY, CONTENT_PROFILES, SECTION_CATALOG, PROFILE_SECTIONS, STAGE_PROFILES, calibrateStage, emblemFor, epistemicEmblemSvg: emblemFor, EPISTEMIC, BLOCK_TYPES, POSTER_THEMES, COVER_CSS, POSTER_CSS, INFOGRAPHIC_CSS, DOC_CSS, VISUALS, esc, uid, wc, clone, detectType, sanitizeSvg, renderMathExpr, getKatexStyleTag, renderMarkdown, renderCleanCover, renderPoster, renderOpeningInfographic, buildImagePrompt, buildCoverPrompt, coverArtOk, normalizeBridgeImage, renderBlockImageHtml, buildRequestText, normalize, fromV2, parseModelJson, importFromText, audit, toMarkdown, toHTML, toApostila, CALLOUTS, scaffold, demo, slidePlan, toSlides, BANK_SCHEMA, extrairQuestoes, bancoDeQuestoes, listaDeExercicios };
 });

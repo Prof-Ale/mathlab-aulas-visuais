@@ -37,6 +37,7 @@
       "items": { "$ref": "#/$defs/reference" }
     },
     "poster": { "type": ["object", "null"] },
+    "coverImage": { "$ref": "#/$defs/image" },
     "claims": { "type": "array", "items": { "$ref": "#/$defs/claim" } },
     "calculations": { "type": "array", "items": { "$ref": "#/$defs/calculation" } },
     "provenance": { "$ref": "#/$defs/provenance" },
@@ -45,6 +46,21 @@
   },
   "$defs": {
     "id": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,39}$" },
+
+    "image": {
+      "description": "Imagem opcional (PNG, JPEG ou WebP em base64, até 3 MB) com texto alternativo, transportada entre App Node e Site.",
+      "type": ["object", "null"],
+      "required": ["mime", "data"],
+      "properties": {
+        "mime": { "enum": ["image/png", "image/jpeg", "image/webp"] },
+        "data": { "type": "string", "minLength": 1 },
+        "alt": { "type": "string" },
+        "caption": { "type": "string" },
+        "credit": { "type": "string" },
+        "width": { "type": "number", "minimum": 1 },
+        "height": { "type": "number", "minimum": 1 }
+      }
+    },
 
     "block": {
       "type": "object",
@@ -55,6 +71,7 @@
         "title": { "type": "string" },
         "content": { "type": "string" },
         "svg": { "type": "string" },
+        "image": { "$ref": "#/$defs/image" },
         "callout": {
           "type": ["object", "null"],
           "properties": {

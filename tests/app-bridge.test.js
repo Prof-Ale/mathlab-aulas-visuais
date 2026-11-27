@@ -46,3 +46,20 @@ test('arquivo do App adulterado com revisão aprovada tem a revisão ignorada co
   assert.strictEqual(r.material.revisao.aprovado, false);
   assert.ok(r.warnings.some((w) => /revisão marcada como aprovada/.test(w)));
 });
+
+test('ponte de imagens: coverImage e blocks[].image do App são preservados e renderizados em HTML/Apostila', () => {
+  const TINY_PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
+  const o = JSON.parse(txt);
+  o.coverImage = { mime: 'image/png', data: TINY_PNG, alt: 'Capa vinda do App', width: 1, height: 1 };
+  o.blocks[0].image = { mime: 'image/png', data: TINY_PNG, alt: 'Figura do bloco', caption: 'Ilustração didática', credit: 'Acervo MathLab' };
+  o.poster = { title: o.title, sections: [] };
+  const r = C.importFromText(JSON.stringify(o));
+  assert.strictEqual(r.ok, true);
+  assert.strictEqual(r.material.coverImage.alt, 'Capa vinda do App');
+  assert.ok(r.material.poster.coverArt.startsWith('data:image/png;base64,'), 'coverImage alimenta poster.coverArt');
+  assert.strictEqual(r.material.blocks[0].image.caption, 'Ilustração didática');
+  const html = C.toHTML(r.material);
+  const ap = C.toApostila(r.material);
+  assert.ok(html.includes('Ilustração didática · Crédito: Acervo MathLab'), 'HTML renderiza legenda e crédito da figura');
+  assert.ok(ap.includes('alt="Figura do bloco"'), 'Apostila renderiza figura do bloco com alt');
+});
