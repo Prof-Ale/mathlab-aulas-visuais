@@ -667,6 +667,8 @@
 
   /* ---------- Diário & Portfólio Docente ---------- */
   function saveDiario() { try { localStorage.setItem('mathlab.diario.v1', JSON.stringify(S.diario)); } catch (e) { /* ignora */ } }
+  function savePort() { try { localStorage.setItem('mathlab.portfolio.cfg', JSON.stringify({ perfil: S.portPerfil || 'escolar', cfg: S.portCfg || null })); } catch (e) { /* ignora */ } }
+  function loadPort() { try { const j = JSON.parse(localStorage.getItem('mathlab.portfolio.cfg') || 'null'); if (j) { S.portPerfil = j.perfil; S.portCfg = j.cfg; } } catch (e) { /* ignora */ } }
   function demoDiario() {
     return {
       schema_versao: 'diario.1', ano_letivo: new Date().getFullYear(), professor: C.DEFAULT_AUTHOR, escola: 'Escola MathLab', area: 'Matemática',
@@ -682,22 +684,43 @@
       ],
     };
   }
+  function portCfg(d) {
+    const P = window.MathLabPortfolio;
+    const perfil = P.PERFIS[S.portPerfil] ? S.portPerfil : (S.portCfg && P.PERFIS[S.portCfg.perfil] ? S.portCfg.perfil : 'escolar');
+    if (!S.portCfg) return P.CFG_PADRAO(d, perfil);
+    const cfg = Object.assign({}, S.portCfg, { perfil: perfil });
+    if ((S.portCfg.perfil || 'escolar') !== perfil) delete cfg.secoes;
+    if (!Array.isArray(cfg.periodos_ids) || !cfg.periodos_ids.length) cfg.periodos_ids = d.periodos.map((x) => x.id);
+    return cfg;
+  }
+  function perfilSelectHtml(cfg) {
+    const P = window.MathLabPortfolio;
+    return '<div class="row" style="align-items:end"><div><label for="pf-perfil">Perfil do portfólio</label><select id="pf-perfil" data-a="portperfil">' +
+      Object.keys(P.PERFIS).map((k) => '<option value="' + k + '"' + (cfg.perfil === k ? ' selected' : '') + '>' + esc(P.PERFIS[k].rotulo) + '</option>').join('') + '</select></div>' +
+      '<div><label class="b ghost sm" style="display:inline-block;margin:0;cursor:pointer">Importar configuração (portfolio.json)<input type="file" accept=".json,application/json" data-a="importportcfg" style="display:none"></label>' +
+      (S.portCfg ? ' <button class="b ghost sm" data-a="limparportcfg">Voltar ao padrão</button>' : '') + '</div></div>' +
+      '<p class="muted">' + (cfg.perfil === 'processo_seletivo' ? 'Processo seletivo: trajetória, competências com evidências e até 3 práticas por turma. Peça para o Claude montar o portfolio.json com seus dados.' : cfg.perfil === 'pos_graduacao' ? 'Pós-graduação: fundamentação, questão de investigação e reflexão em cada prática. As referências são suas; o MathLab não cria citações.' : 'Portfólio escolar: cobertura curricular, linha do período, avaliações e evolução, para direção e coordenação.') +
+      (cfg.perfil !== 'escolar' && !S.portCfg ? ' Sem o portfolio.json, as seções de trajetória, competências e fundamentação saem vazias e o gerador avisa.' : '') + '</p>';
+  }
   function vDiario() {
     const P = window.MathLabPortfolio;
+    if (!S._portLoaded) { S._portLoaded = true; loadPort(); }
     const betaNotice = '<div class="find warn" style="margin:0 0 12px">⚠️ <b>Beta (em evolução):</b> faça backup antes de usar como registro oficial.</div>';
     if (!S.diario) {
       return '<div class="card empty">' + betaNotice + '<h2>Diário de Aula & Portfólio Docente <span class="beta-tag">Beta</span></h2><p>Registre suas aulas e avaliações e gere um portfólio em A4 com cobertura curricular por habilidade, evolução e privacidade garantida.</p>' +
         '<div class="btns" style="justify-content:center"><button class="b gold" data-a="demodiario">Carregar exemplo de diário</button>' +
         '<label class="b ghost" style="display:inline-block;margin:0;cursor:pointer">Importar arquivo do diário<input type="file" accept=".json,application/json" data-a="importdiario" style="display:none"></label></div></div>';
     }
-    const d = S.diario, cfg = P.CFG_PADRAO(d), ach = P.verificar(d, cfg);
+    const d = S.diario, cfg = portCfg(d), ach = P.verificar(d, cfg);
     const nb = ach.filter((x) => x.nivel === 'bloqueante').length;
     const htmlPort = nb ? '' : P.montarHtml(d, cfg);
     return '<div class="card">' + betaNotice + '<div class="btns" style="justify-content:space-between"><h2 style="margin:0">Diário & Portfólio <span class="beta-tag">Beta</span> — ' + esc(d.professor || C.DEFAULT_AUTHOR) + '</h2>' +
       '<div class="btns"><button class="b ghost sm" data-a="dldiario">Baixar diario.json</button><label class="b ghost sm" style="display:inline-block;margin:0;cursor:pointer">Importar JSON<input type="file" accept=".json,application/json" data-a="importdiario" style="display:none"></label></div></div>' +
       '<p class="muted">' + d.turmas.length + ' turma(s) · ' + d.entradas.length + ' registro(s) · ' + (d.avaliacoes || []).length + ' avaliação(ões)</p>' +
       (ach.length ? '<div style="margin:8px 0">' + ach.map((x) => '<div class="find ' + (x.nivel === 'bloqueante' ? 'hard' : 'warn') + '">' + (x.nivel === 'bloqueante' ? '⛔' : '⚠️') + ' <b>' + esc(x.regra) + '</b>: ' + esc(x.msg) + '</div>').join('') + '</div>' : '') +
-      '<div class="btns"><button class="b gold" data-a="dlportfolio"' + (nb ? ' disabled' : '') + '>📘 Baixar Portfólio (HTML)</button><button class="b" data-a="printportfolio"' + (nb ? ' disabled' : '') + '>🖨️ Imprimir / salvar PDF</button></div></div>' +
+      perfilSelectHtml(cfg) +
+      '<div class="btns"><button class="b gold" data-a="dlportfolio"' + (nb ? ' disabled' : '') + '>📘 Baixar Portfólio (HTML)</button><button class="b" data-a="dlflipbook"' + (nb ? ' disabled' : '') + '>📖 Baixar para folhear (flipbook)</button><button class="b" data-a="printportfolio"' + (nb ? ' disabled' : '') + '>🖨️ Imprimir / salvar PDF</button></div>' +
+      '<p class="muted">PDF acessível (marcado, com estrutura e marcadores): use <code>node tools/portfolio.mjs diario.json portfolio.json --pacote pasta</code>, que gera HTML, flipbook e PDF juntos. O PDF do navegador (Imprimir) não garante a marcação para leitor de tela.</p></div>' +
       '<div class="card"><h3>Novo registro no diário</h3><div class="row"><div><label for="dr-data">Data</label><input id="dr-data" type="date" value="' + new Date().toISOString().slice(0, 10) + '"></div>' +
       '<div><label for="dr-turma">Turma</label><select id="dr-turma">' + d.turmas.map((t) => '<option value="' + esc(t.id) + '">' + esc(t.nome) + '</option>').join('') + '</select></div>' +
       '<div><label for="dr-tipo">Tipo</label><select id="dr-tipo"><option value="aula">Aula</option><option value="retomada">Retomada</option><option value="avaliacao">Avaliação</option><option value="projeto">Projeto</option></select></div>' +
@@ -1021,8 +1044,25 @@
       S.diario.entradas.push({ id: C.uid('e'), data: $('#dr-data').value || new Date().toISOString().slice(0, 10), turma_id: $('#dr-turma').value, tipo: $('#dr-tipo').value, tema, habilidades: habs, resumo: $('#dr-resumo').value.trim(), reflexao: $('#dr-refl').value.trim(), destaque: !!$('#dr-resumo').value.trim() });
       saveDiario(); render(); toast('Registro adicionado ao diário.');
     },
-    dlportfolio: () => { const P = window.MathLabPortfolio; if (S.diario && P) dl('portfolio-docente.html', 'text/html', P.montarHtml(S.diario, P.CFG_PADRAO(S.diario))); },
-    printportfolio: () => { const P = window.MathLabPortfolio; if (S.diario && P) printHTML(P.montarHtml(S.diario, P.CFG_PADRAO(S.diario))); },
+    dlportfolio: () => { const P = window.MathLabPortfolio; if (S.diario && P) dl('portfolio-docente.html', 'text/html', P.montarHtml(S.diario, portCfg(S.diario))); },
+    printportfolio: () => { const P = window.MathLabPortfolio; if (S.diario && P) printHTML(P.montarHtml(S.diario, portCfg(S.diario))); },
+    dlflipbook: async () => {
+      const P = window.MathLabPortfolio; if (!S.diario || !P) return;
+      try {
+        const r = await fetch('assets/vendor/page-flip/page-flip.browser.js'); if (!r.ok) throw new Error('HTTP ' + r.status);
+        dl('portfolio-docente-flipbook.html', 'text/html', P.montarFlipbook(S.diario, portCfg(S.diario), { lib: await r.text() }));
+      } catch (e) { toast('O flipbook precisa da versão publicada (http) ou de um servidor local; no arquivo aberto do disco use o comando node tools/portfolio.mjs. (' + e.message + ')', true); }
+    },
+    portperfil: (el) => { S.portPerfil = el.value; savePort(); render(); },
+    importportcfg: (el) => {
+      const f = el.files && el.files[0]; if (!f) return; const rd = new FileReader();
+      rd.onload = () => {
+        try { const j = JSON.parse(rd.result); if (j.schema_versao !== 'portfolio.1') throw new Error('arquivo não é portfolio.1'); S.portCfg = j; S.portPerfil = window.MathLabPortfolio.PERFIS[j.perfil] ? j.perfil : 'escolar'; savePort(); render(); toast('Configuração do portfólio importada.'); }
+        catch (e) { toast('Configuração inválida: ' + e.message, true); }
+      };
+      rd.readAsText(f);
+    },
+    limparportcfg: () => { S.portCfg = null; S.portPerfil = 'escolar'; savePort(); render(); },
   };
 
   document.addEventListener('click', (e) => { const el = e.target.closest('[data-a]'); if (!el || el.type === 'checkbox' || el.type === 'file') return; if (A[el.dataset.a]) A[el.dataset.a](el, e); });
@@ -1038,7 +1078,7 @@
       S.form[el.dataset.form] = el.value;
       render(); return;
     }
-    if ((el.type === 'checkbox' || el.type === 'file') && el.dataset.a && A[el.dataset.a]) A[el.dataset.a](el, e);
+    if ((el.type === 'checkbox' || el.type === 'file' || el.tagName === 'SELECT') && el.dataset.a && A[el.dataset.a]) A[el.dataset.a](el, e);
     else if (el.dataset.vis === 'kind') { S.vis.kind = el.value; S.vis.text = { numberLine: '-6, 6, -2, 5', timeline: '1789 | Revolução Francesa\n1822 | Independência do Brasil', flow: 'Observar\nFormular hipótese\nTestar\nConcluir', conceptMap: 'Tema central\nConceito A\nConceito B\nConceito C' }[el.value]; render(); }
   });
   document.addEventListener('input', (e) => {
