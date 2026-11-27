@@ -143,6 +143,14 @@
   }
 
   /* opts: { title, subtitle, author, glossary, answers, references, inlineFigures (figuras dentro do .md como data URI), agora } */
+  /* ISBN-13 válido (dígito verificador). Só confere o que o autor informou; nunca inventa número. */
+  const isbnValido = (v) => { const d = String(v || '').replace(/[\s-]/g, ''); if (!/^\d{13}$/.test(d)) return false; let t = 0; for (let i = 0; i < 12; i++) t += (+d[i]) * (i % 2 ? 3 : 1); return (10 - (t % 10)) % 10 === +d[12]; };
+  const CREDITOS = [['editora', 'Editora / responsável'], ['edicao', 'Edição'], ['ano', 'Ano'], ['isbn', 'ISBN'], ['licenca', 'Licença'], ['contato', 'Contato']];
+  function fichaTecnicaMd(cr) {
+    const c = cr || {}; const linhas = CREDITOS.filter(([k]) => String(c[k] || '').trim()).map(([k, r]) => '**' + r + ':** ' + paraPandoc(String(c[k]).trim()));
+    return linhas.length ? ['# Ficha técnica {-}', '', linhas.join('\n'), ''] : [];
+  }
+
   function compileBookMarkdown(materiais, opts) {
     opts = opts || {};
     const base = compileBook(materiais, Object.assign({}, opts));
@@ -177,6 +185,9 @@
       'revisao: "' + validados + ' de ' + caps.length + (caps.length === 1 ? ' capítulo tem' : ' capítulos têm') + ' validação do professor"',
       '---', ''];
 
+    const cr = opts.credits || {};
+    if (String(cr.isbn || '').trim() && !isbnValido(cr.isbn)) base.warnings.push('O ISBN informado (' + cr.isbn + ') não tem dígito verificador válido de ISBN-13. Confira o número.');
+    fichaTecnicaMd(cr).forEach((l) => o.push(l));
     o.push('# Ficha de revisão {-}', '', 'Estado real de cada capítulo. A compilação não valida nada: só o professor valida, no Editor de cada material.', '',
       '| Capítulo | Estado |', '|:---------|:-------|', ...caps.map((m, i) => '| ' + (i + 1) + '. ' + mdTitulo(m.title) + ' | ' + mdTitulo(estados[i].texto) + ' |'), '',
       validados === caps.length ? 'Todos os capítulos têm validação do professor atualizada.' : '**Atenção:** ' + validados + ' de ' + caps.length + (caps.length === 1 ? ' capítulo tem' : ' capítulos têm') + ' validação do professor. Este livro ainda não é uma obra validada.', '');
@@ -219,5 +230,5 @@
     return { ok: true, markdown: o.join('\n').replace(/\n{3,}/g, '\n\n') + '\n', files, title: base.title, author: autor, subtitle: subt, chapters: caps.length, validated: validados, figures: nfig, warnings: base.warnings };
   }
 
-  return { compileBook, compileBookMarkdown, paraPandoc, glossario, referencias };
+  return { compileBook, compileBookMarkdown, paraPandoc, isbnValido, glossario, referencias };
 });
