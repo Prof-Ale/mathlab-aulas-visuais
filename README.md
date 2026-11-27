@@ -116,6 +116,25 @@ A aba **Livro** (`js/livro.js`) reúne vários materiais da Biblioteca em uma ú
 - **Avisos prévios:** título repetido, capítulo sem blocos e exercícios sem gabarito.
 - **Limitação conhecida:** números de página não aparecem no sumário HTML (o navegador não calcula paginação no DOM); os links internos funcionam normalmente.
 
+### Livro de alta qualidade (PDF editorial + EPUB)
+
+Além do HTML, o mesmo livro pode virar **Markdown** (dialeto do Pandoc) e, a partir dele, **PDF de qualidade gráfica** (XeLaTeX) e **EPUB3**. O JSON continua sendo a fonte de verdade (validado, com BNCC); o Markdown é só uma camada de saída, então o livro herda as mesmas regras de honestidade: a ficha de revisão mostra o estado real de cada capítulo e o livro nunca se declara validado.
+
+- **Pelo app:** aba **Livro → 📚 Baixar Markdown (livro de alta qualidade)** (figuras SVG embutidas no próprio `.md`).
+- **Pela linha de comando (no seu computador):**
+
+```bash
+node tools/livro.mjs cap1.mathlab.json cap2.mathlab.json --titulo "Caderno de Matemática" --subtitulo "7º e 8º anos" --saida livro/
+# opções: --formato pdf,epub,md   --papel a4|a5   --modelo didatico|narrativo   --sem-gabarito   --sem-glossario   --sem-referencias
+node tools/livro.mjs --demo --saida /tmp/livro      # material de demonstração
+```
+
+- **Requisitos (só para PDF/EPUB):** Pandoc 3, TeX Live com XeLaTeX e `texlive-lang-portuguese` (hifenização), fontes TeX Gyre (Pagella, Heros) e, de preferência, Fira Sans; `rsvg-convert` (librsvg) para figuras SVG no PDF e capa do EPUB. Em Debian/Ubuntu: `apt install pandoc texlive-xetex texlive-latex-extra texlive-fonts-extra texlive-lang-portuguese librsvg2-bin`.
+- **Modelos:** `didatico` (padrão: capa azul, número de capítulo grande, caixas coloridas por tipo de bloco, A4) e `narrativo` (livro de leitura: serifada clássica, capa clara, blocos discretos com filete lateral, páginas espelhadas com margens de livro, A5 por padrão; `--papel a4` continua valendo).
+- **O que sai:** capa, sumário com páginas, ficha de revisão, capítulos com número grande, caixas coloridas por tipo de bloco (conceito, exemplo, atividade, exercícios…), fórmulas em LaTeX, tabelas, figuras com legenda, glossário, caderno de respostas e referências. No EPUB, fórmulas em MathML e as mesmas caixas via CSS.
+- **Limitações declaradas:** o PDF do LaTeX **não é marcado para acessibilidade** (use o EPUB3 ou o HTML como formatos acessíveis); sem PDF/A, índice remissivo, ISBN/ficha catalográfica nem modo de sangria para gráfica; o PDF/EPUB só são gerados localmente (o app no navegador gera apenas o Markdown).
+- **Crédito:** a ideia de "Markdown + Pandoc + XeLaTeX" vem de [romankurnovskii/markdown-to-pdf-book-converter](https://github.com/romankurnovskii/markdown-to-pdf-book-converter) (MIT); os arquivos de `tools/livro/` são originais deste projeto.
+
 ---
 
 ## Geração de PDF
@@ -216,7 +235,7 @@ Veja o passo a passo completo para configurar **Claude (Skill)**, **Gemini (Gem)
 | Versão | Destaques |
 | --- | --- |
 | **1.6.0** *(motor 2.0.0, contrato 2.1)* | Redesign UI/UX v2 (3 grupos de navegação, modo escuro, busca na biblioteca, stepper de 4 passos), formulário pedagógico com calibração por etapa e seções modulares, emblemas editoriais geométricos por área (`emblemFor`), PDF reproduzível e acessível (tagged `pt-BR`), manifesto único de versões (`manifest.json`), incorporação da identidade editorial e da Ficha Oficial do Professor Alê v1.0. |
-| **Em validação** *(26/11/2026, sem nova versão publicada)* | KaTeX offline, Infográfico de Abertura, seletor contextual do Professor Alê, Capa Clean sem foto, arte de capa opcional e correções de fórmula em bloco e de `R$`, **slides HTML interativos** (Exportar → Apresentação em sala; gabarito fora por padrão), **banco de questões por habilidade BNCC** (`mathlab.bank/1`, só habilidades escritas no material, nunca inventadas) e **conferência de ortografia pt-BR offline** (Auditoria; só em páginas servidas por http, não no arquivo único). Aguardam a validação do professor em uso real antes de subir a versão no `manifest.json`. |
+| **Em validação** *(26/11/2026, sem nova versão publicada)* | KaTeX offline, Infográfico de Abertura, seletor contextual do Professor Alê, Capa Clean sem foto, arte de capa opcional e correções de fórmula em bloco e de `R$`, **slides HTML interativos** (Exportar → Apresentação em sala; gabarito fora por padrão), **banco de questões por habilidade BNCC** (`mathlab.bank/1`, só habilidades escritas no material, nunca inventadas) e **conferência de ortografia pt-BR offline** (Auditoria; só em páginas servidas por http, não no arquivo único) e **livro de alta qualidade** (Livro → Markdown; `tools/livro.mjs` gera PDF editorial e EPUB3 com Pandoc, localmente). Aguardam a validação do professor em uso real antes de subir a versão no `manifest.json`. |
 | **1.5.x** | Plano por unidades (`mathlab.blueprint/1` e `mathlab.unit/1`), memória acumulada, conferência e reparo (`mathlab.repair/1`), pacotes de domínio (`mathlab.domain/1`), fontes do autor (`[F1]`…), compilação de Livro/Caderno e interoperabilidade com o App Node (`mathlab.material/2` v2.1). |
 | **1.3 – 1.4** | Capa Clean, Folha de Rosto, Miolo Editorial Clean com pílula de página, etiquetas Histórico-Culturais e caixa *Minha Síntese*. |
 | **1.2** | Remoção do teto de 6 páginas, perfis modulares (`completo`, `expositivo`, `expositivo_visual`, `pratica`) e auditoria coerente com o perfil. |

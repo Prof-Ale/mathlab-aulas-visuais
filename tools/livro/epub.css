@@ -1,0 +1,19 @@
+/* MathLab: estilo do EPUB. Cores iguais às do PDF. */
+body { font-family: Georgia, "Times New Roman", serif; line-height: 1.5; margin: 0 4%; color: #1d2433; }
+h1 { color: #14264f; border-bottom: 3px solid #f2b705; padding-bottom: .2em; margin-top: 1.4em; page-break-before: always; }
+h2, h3 { color: #14264f; font-family: Arial, Helvetica, sans-serif; }
+.caixa { border-left: 5px solid #14264f; background: #f6f8fc; padding: .5em 1em; margin: 1em 0; border-radius: 0 6px 6px 0; }
+.caixa-rotulo { font: bold .72em Arial, Helvetica, sans-serif; text-transform: uppercase; letter-spacing: .06em; color: #14264f; }
+.caixa-titulo { font-family: Arial, Helvetica, sans-serif; margin: .1em 0 .4em; }
+.caixa-exemplo { border-color: #22a559; background: #f1faf4; } .caixa-exemplo .caixa-rotulo { color: #1a7f45; }
+.caixa-atividade { border-color: #f28a1f; background: #fff7ee; } .caixa-atividade .caixa-rotulo { color: #b8610c; }
+.caixa-exercicios, .caixa-avaliacao { border-color: #7a4bd1; background: #f7f3ff; } .caixa-exercicios .caixa-rotulo, .caixa-avaliacao .caixa-rotulo { color: #7a4bd1; }
+.caixa-gabarito, .caixa-contexto { border-color: #1e6fd9; background: #eef5ff; } .caixa-gabarito .caixa-rotulo, .caixa-contexto .caixa-rotulo { color: #1e6fd9; }
+.caixa-nota { border-color: #d6453d; background: #fff3f2; } .caixa-nota .caixa-rotulo { color: #d6453d; }
+.caixa-acessibilidade, .caixa-visual { border-color: #0e8f8f; background: #effafa; } .caixa-acessibilidade .caixa-rotulo, .caixa-visual .caixa-rotulo { color: #0e8f8f; }
+.caixa-problematizacao, .caixa-destaque { border-color: #f2b705; background: #fffbe6; } .caixa-problematizacao .caixa-rotulo, .caixa-destaque .caixa-rotulo { color: #8a6a00; }
+.caixa-previos { border-color: #55607a; background: #f3f5f9; }
+img { max-width: 100%; height: auto; }
+figure { margin: .8em 0; text-align: center; } figcaption { font-size: .85em; color: #55607a; }
+table { border-collapse: collapse; margin: .6em 0; } th, td { border: 1px solid #b9c3d9; padding: 3px 9px; } th { background: #e8edf8; }
+dt { font-weight: bold; margin-top: .6em; } dd { margin-left: 1.2em; }

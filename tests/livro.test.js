@@ -74,3 +74,68 @@ test('integração: carregado no site e no standalone, tela usa o compilador', (
   const app = fs.readFileSync(__dirname + '/../js/app.js', 'utf8');
   for (const k of ['vLivro', 'compileBook', 'dlbook2']) assert.ok(app.includes(k), k);
 });
+
+// ---------- Exportação em Markdown (Pandoc) para o livro de alta qualidade ----------
+const matMd = () => mat('Equações', {
+  blocks: [
+    { type: 'conceito', title: 'Equação', content: 'Sendo \\(a \\neq 0\\), a solução é\n\n\\[x = -\\frac{b}{a}\\]\n\nPreço: R$ 12,50 e saldo $-R$ 60$ e $x = 2$.' },
+    { type: 'exercicios', title: 'Pratique', content: '1. Resolva $2x = 4$.' },
+    { type: 'gabarito', title: 'Respostas', content: '1. $x = 2$.' },
+  ],
+});
+
+test('Markdown: front matter, capítulo ancorado, caixas e ficha de revisão honesta', () => {
+  const r = L.compileBookMarkdown([matMd()], { title: 'Caderno', author: 'Prof. Teste' });
+  assert.ok(r.ok);
+  for (const k of ['title: "Caderno"', 'lang: pt-BR', 'toc-title: "Sumário"', '# Equações {#cap-1}', '::: {.caixa tipo="conceito"', '# Ficha de revisão {-}', '# Glossário {-}', '# Referências {-}']) assert.ok(r.markdown.includes(k), k);
+  assert.equal(r.validated, 0);
+  assert.ok(!/material validado|validado pelo professor\b(?!\))/i.test(r.markdown.split('# Equações')[0].replace(/não valida|0 de 1/gi, '')), 'a ficha não afirma validação');
+});
+test('Markdown: matemática preservada, \\(..\\) e \\[..\\] viram $ e $$, dinheiro escapado', () => {
+  const md = L.paraPandoc('Sendo \\(a+b\\) e \\[x^2\\]. R$ 12,50 e $y = 1$ e $-R$ 60$.');
+  assert.ok(md.includes('$a+b$') && md.includes('$$x^2$$'));
+  assert.ok(md.includes('R\\$ 12,50'), 'cifrão de dinheiro escapado');
+  assert.ok(md.includes('$y = 1$'), 'matemática inline intacta');
+  assert.ok(md.includes('-R\\$ 60'), 'valor negativo em dinheiro');
+  assert.ok(!md.includes('\\('));
+});
+test('Markdown: não mexe em código nem em matemática com cifrão dentro', () => {
+  const md = L.paraPandoc('`R$ 5` e $a = 3$');
+  assert.ok(md.includes('`R$ 5`') && md.includes('$a = 3$'));
+});
+test('Markdown: gabarito vai para o caderno de respostas e sai do capítulo', () => {
+  const r = L.compileBookMarkdown([matMd()]);
+  const cap = r.markdown.split('# Glossário')[0];
+  assert.ok(!/tipo="gabarito"/.test(cap));
+  assert.ok(/# Caderno de respostas \{-\}/.test(r.markdown) && /tipo="gabarito"/.test(r.markdown.split('# Caderno de respostas')[1]));
+  const sem = L.compileBookMarkdown([matMd()], { answers: false });
+  assert.ok(!/# Caderno de respostas/.test(sem.markdown), 'sem caderno de respostas');
+  assert.ok(/tipo="gabarito"/.test(sem.markdown.split('# Referências')[0]), 'sem o caderno, o gabarito permanece no capítulo');
+});
+test('Markdown: figuras SVG como arquivos ou como data URI', () => {
+  const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4"/></svg>';
+  const m = mat('Fig', { blocks: [{ type: 'visual', title: 'Reta', content: 'Veja.', svg }] });
+  const a = L.compileBookMarkdown([m]);
+  assert.equal(a.files.length, 1); assert.match(a.files[0].path, /^figs\/cap1-fig\d+\.svg$/); assert.ok(a.markdown.includes('figs/cap1-fig'));
+  const b = L.compileBookMarkdown([m], { inlineFigures: true });
+  assert.equal(b.files.length, 0); assert.ok(b.markdown.includes('data:image/svg+xml;base64,'));
+});
+test('Markdown: plural correto na ficha e compileBook intacto', () => {
+  const um = L.compileBookMarkdown([matMd()]).markdown, dois = L.compileBookMarkdown([matMd(), mat('Outro')]).markdown;
+  assert.ok(/1 de 1 capítulo tem|0 de 1 capítulo tem/.test(um), 'singular');
+  assert.ok(/0 de 2 capítulos têm/.test(dois), 'plural');
+  assert.ok(L.compileBook([matMd()]).ok);
+});
+test('Markdown: sem materiais devolve erro claro', () => {
+  const r = L.compileBookMarkdown([]);
+  assert.equal(r.ok, false);
+});
+
+test('CLI: --modelo aceita didatico/narrativo; narrativo usa A5 por padrão e respeita --papel', async () => {
+  const { lerArgs } = await import('../tools/livro.mjs');
+  assert.equal(lerArgs(['a.json']).modelo, 'didatico');
+  assert.equal(lerArgs(['a.json']).papel, 'a4');
+  assert.equal(lerArgs(['a.json', '--modelo', 'narrativo']).papel, 'a5');
+  assert.equal(lerArgs(['a.json', '--modelo', 'narrativo', '--papel', 'a4']).papel, 'a4');
+  assert.throws(() => lerArgs(['a.json', '--modelo', 'comic']), /didatico ou narrativo/);
+});

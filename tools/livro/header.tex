@@ -1,0 +1,102 @@
+% MathLab: acabamento editorial do livro (XeLaTeX). Incluído pelo Pandoc com -H.
+% Fontes: TeX Gyre Pagella (texto), Fira Sans ou TeX Gyre Heros (títulos). Se faltarem, cai para Latin Modern.
+\usepackage{xcolor}
+\definecolor{ml-navy}{HTML}{14264F}
+\definecolor{ml-ouro}{HTML}{F2B705}
+\definecolor{ml-verde}{HTML}{22A559}
+\definecolor{ml-laranja}{HTML}{F28A1F}
+\definecolor{ml-roxo}{HTML}{7A4BD1}
+\definecolor{ml-azul}{HTML}{1E6FD9}
+\definecolor{ml-vermelho}{HTML}{D6453D}
+\definecolor{ml-teal}{HTML}{0E8F8F}
+\definecolor{ml-cinza}{HTML}{55607A}
+
+\usepackage{etoolbox}
+\providecommand{\mlsubtitulo}{}
+% o Pandoc cola o subtítulo no título; aqui ele vai para a capa, em linha própria
+\def\subtitle#1{\gdef\mlsubtitulo{#1}}
+\IfFontExistsTF{TeX Gyre Pagella}{\setmainfont{TeX Gyre Pagella}}{}
+\IfFontExistsTF{Fira Sans}{\setsansfont{Fira Sans}}{\IfFontExistsTF{TeX Gyre Heros}{\setsansfont{TeX Gyre Heros}}{}}
+\IfFontExistsTF{TeX Gyre Pagella Math}{\setmathfont{TeX Gyre Pagella Math}}{}
+
+\usepackage{enumitem}
+\setlist{itemsep=0.15em,topsep=0.35em,parsep=0pt}
+\setlist[itemize]{leftmargin=1.3em}
+\setlist[enumerate]{leftmargin=1.7em}
+\setlength{\emergencystretch}{3em}
+\widowpenalty=10000 \clubpenalty=10000
+
+% ---------- capítulos, seções, cabeçalho e rodapé ----------
+\usepackage{titlesec}
+\titleformat{\chapter}[display]
+  {\sffamily\bfseries}
+  {{\color{ml-ouro}\fontsize{58}{58}\selectfont\thechapter}\\[-0.2em]{\large\color{ml-cinza}\MakeUppercase{\chaptername}}}
+  {0.2em}
+  {\color{ml-navy}\huge\raggedright}
+  [{\vspace{0.5em}\color{ml-ouro}\titlerule[2.2pt]}]
+\titleformat{name=\chapter,numberless}[display]
+  {\sffamily\bfseries}{}{0pt}
+  {\color{ml-navy}\huge\raggedright}
+  [{\vspace{0.5em}\color{ml-ouro}\titlerule[2.2pt]}]
+\titlespacing*{\chapter}{0pt}{-1.5em}{2.2em}
+\titleformat{\section}{\sffamily\bfseries\Large\color{ml-navy}}{\thesection}{0.6em}{}
+\titleformat{\subsection}{\sffamily\bfseries\large\color{ml-navy}}{\thesubsection}{0.6em}{}
+
+\usepackage{fancyhdr}
+\renewcommand{\chaptermark}[1]{\markboth{#1}{}}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\sffamily\small\color{ml-cinza}\nouppercase{\leftmark}}
+\fancyfoot[C]{\sffamily\small\color{ml-navy}\thepage}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{ml-navy!35}\leaders\hrule height \headrulewidth\hfill}}
+\renewcommand{\headrulewidth}{0.4pt}
+\fancypagestyle{plain}{\fancyhf{}\fancyfoot[C]{\sffamily\small\color{ml-navy}\thepage}\renewcommand{\headrulewidth}{0pt}}
+
+% ---------- capa ----------
+\makeatletter
+\renewcommand{\maketitle}{%
+  \begin{titlepage}
+  \pagecolor{ml-navy}\color{white}\thispagestyle{empty}
+  \vspace*{0.14\textheight}
+  {\noindent\color{ml-ouro}\rule{0.22\textwidth}{3pt}\par}
+  \vspace{1.6em}
+  \begin{flushleft}\setlength{\parindent}{0pt}
+  {\sffamily\bfseries\fontsize{34}{40}\selectfont\@title\par}
+  \ifdefempty{\mlsubtitulo}{}{\vspace{0.9em}{\sffamily\Large\color{ml-ouro}\mlsubtitulo\par}}
+  \end{flushleft}
+  \vfill
+  \noindent{\sffamily\Large\bfseries\@author\par}
+  \vspace{0.4em}
+  \noindent{\sffamily\small\color{ml-ouro}\MakeUppercase{MathLab Aulas Visuais}\par}
+  \vspace{2.2em}
+  \end{titlepage}
+  \clearpage\nopagecolor\color{black}%
+}
+\makeatother
+
+% ---------- caixas didáticas ----------
+\usepackage{tcolorbox}
+\tcbuselibrary{skins,breakable}
+\newcommand{\caixacab}[3]{\ifstrempty{#2}{}{{\sffamily\bfseries\footnotesize\color{#1}\MakeUppercase{#2}\par\nobreak}\vspace{1pt}}%
+  \ifstrempty{#3}{}{{\sffamily\bfseries\color{black!85}#3\par\nobreak}\vspace{3pt}}}
+\tcbset{caixabase/.style={enhanced,breakable,frame hidden,boxrule=0pt,arc=2pt,
+  colback=#1!6,borderline west={3pt}{0pt}{#1},left=11pt,right=9pt,top=6pt,bottom=6pt,
+  before skip=0.9em,after skip=0.9em,
+  before upper={\setlength{\parindent}{0pt}\setlength{\parskip}{0.45em}}}}
+\newtcolorbox{caixaobjetivos}[2]{caixabase=ml-navy,before upper={\caixacab{ml-navy}{#1}{#2}}}
+\newtcolorbox{caixaprevios}[2]{caixabase=ml-cinza,before upper={\caixacab{ml-cinza}{#1}{#2}}}
+\newtcolorbox{caixaproblematizacao}[2]{caixabase=ml-ouro,before upper={\caixacab{ml-ouro!70!black}{#1}{#2}}}
+\newtcolorbox{caixacontexto}[2]{caixabase=ml-azul,before upper={\caixacab{ml-azul}{#1}{#2}}}
+\newtcolorbox{caixaconceito}[2]{caixabase=ml-navy,before upper={\caixacab{ml-navy}{#1}{#2}}}
+\newtcolorbox{caixaexemplo}[2]{caixabase=ml-verde,before upper={\caixacab{ml-verde!80!black}{#1}{#2}}}
+\newtcolorbox{caixavisual}[2]{caixabase=ml-teal,before upper={\caixacab{ml-teal}{#1}{#2}}}
+\newtcolorbox{caixaatividade}[2]{caixabase=ml-laranja,before upper={\caixacab{ml-laranja!85!black}{#1}{#2}}}
+\newtcolorbox{caixaexercicios}[2]{caixabase=ml-roxo,before upper={\caixacab{ml-roxo}{#1}{#2}}}
+\newtcolorbox{caixagabarito}[2]{caixabase=ml-azul,before upper={\caixacab{ml-azul}{#1}{#2}}}
+\newtcolorbox{caixaavaliacao}[2]{caixabase=ml-roxo,before upper={\caixacab{ml-roxo}{#1}{#2}}}
+\newtcolorbox{caixaacessibilidade}[2]{caixabase=ml-teal,before upper={\caixacab{ml-teal}{#1}{#2}}}
+\newtcolorbox{caixanota}[2]{caixabase=ml-vermelho,before upper={\caixacab{ml-vermelho}{#1}{#2}}}
+\newtcolorbox{caixadestaque}[2]{caixabase=ml-ouro,colback=ml-ouro!14,before upper={\caixacab{ml-ouro!60!black}{#1}{#2}}}
+
+\usepackage{caption}
+\captionsetup{font={small,sf},labelfont=bf,skip=4pt}
