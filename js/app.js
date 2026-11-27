@@ -191,7 +191,7 @@
       '<div class="btns" style="margin:0"><button class="b sm gold" data-a="savepreviewdemo">Salvar na minha Biblioteca</button><button class="b sm ghost" data-a="exitpreviewdemo">Sair do exemplo</button></div></div>';
   }
   function continueStripHtml() {
-    if (S.draft && S.tab !== 'editor') {
+    if (S.draft && S.tab !== 'editor' && !NEED.includes(S.tab)) {
       return '<div class="continue-strip"><p><b>Continuar de onde parei:</b> “' + esc(S.draft.title) + '” está aberto' + (S.isPreviewExample ? ' (exemplo)' : '') + '.</p><button class="b sm" data-a="tab" data-t="editor">Continuar no Editor</button></div>';
     }
     if (!S.draft && S.form.lastPedido && S.tab !== 'criar') {
@@ -223,6 +223,55 @@
       '<span class="rev-step' + (audAt ? ' ok' : '') + '">' + (audAt ? '✓ Auditado (' + esc(audAt) + ')' : 'Auditoria pendente') + '</span>' +
       '<span class="rev-step ' + (rv.validado ? 'ok' : rv.desatualizada ? 'warn' : '') + '">' + (rv.validado ? '✓ ' : '') + valTxt + '</span>' +
       '<span class="rev-step' + (expAt ? ' ok' : '') + '">' + (expAt ? '✓ Exportado' : 'Exportar') + '</span></nav>';
+  }
+
+  /* ---------- Central de revisão: o ciclo auditar, corrigir, auditar de novo, comparar ---------- */
+  function avisosAtuais() { return S.avisosImport && S.avisosImport.mid === S.mid ? S.avisosImport.list : []; }
+  function snapshotRevisao(d) {
+    const a = C.audit(d), probs = C.problemasParaReparo(d, avisosAtuais());
+    let v2b = 0, v2p = 0;
+    if (d._v2 && window.MathLabAuditV2) { const ach = window.MathLabAuditV2.auditar(d._v2, { final: false }); v2b = ach.filter((x) => x.nivel === 'bloqueante').length; v2p = ach.filter((x) => x.nivel === 'pendencia').length; }
+    return { at: new Date().toISOString(), hash: C.hashConteudo(d), score: a.score, hard: a.hard.length, probs: probs.map((x) => x.texto), v2b: v2b, v2p: v2p };
+  }
+  function auditadoAgora() { return !!(S.audSnap && S.draft && S.audSnap.hash === C.hashConteudo(S.draft)); }
+  function deltaHtml(dl) {
+    const b = dl.before, a = dl.after, sinal = (n) => (n > 0 ? '+' + n : String(n));
+    const resolvidos = b.probs.filter((x) => !a.probs.includes(x)), novos = a.probs.filter((x) => !b.probs.includes(x)), ficam = a.probs.filter((x) => b.probs.includes(x));
+    const li = (arr) => '<ul>' + arr.slice(0, 6).map((x) => '<li>' + esc(x) + '</li>').join('') + (arr.length > 6 ? '<li>e mais ' + (arr.length - 6) + '…</li>' : '') + '</ul>';
+    return '<div class="ra-delta" role="status"><b>' + esc(dl.titulo) + '</b>' +
+      '<div class="ra-nums"><span>Nota <b>' + b.score + ' → ' + a.score + '</b> (' + sinal(a.score - b.score) + ')</span><span>Falhas graves <b>' + b.hard + ' → ' + a.hard + '</b></span><span>Pontos pendentes <b>' + b.probs.length + ' → ' + a.probs.length + '</b></span>' +
+      (dl.changed ? '<span>Blocos trocados <b>' + dl.changed + '</b></span>' : '') + '</div>' +
+      (resolvidos.length ? '<details open><summary>✅ Resolvidos (' + resolvidos.length + ')</summary>' + li(resolvidos) + '</details>' : '') +
+      (novos.length ? '<details open><summary>⚠️ Apareceram agora (' + novos.length + ')</summary>' + li(novos) + '</details>' : '') +
+      (ficam.length ? '<details><summary>⏳ Continuam (' + ficam.length + ')</summary>' + li(ficam) + '</details>' : '') +
+      (!resolvidos.length && !novos.length && !ficam.length && b.score === a.score ? '<p class="muted">Nada mudou nas conferências automáticas.</p>' : '') +
+      (S.revUndo ? '<div class="btns"><button class="b gold sm" type="button" data-a="save">💾 Salvar esta versão</button><button class="b ghost sm" type="button" data-a="undorepair">↩️ Desfazer esta correção</button></div>' : '') + '</div>';
+  }
+  function acoesRevisaoHtml() {
+    if (!NEED.includes(S.tab) || !S.draft) return '';
+    const d = S.draft, rv = C.estadoRevisao(d), probs = C.problemasParaReparo(d, avisosAtuais()), atual = auditadoAgora();
+    let prox;
+    if (!atual) prox = ['auditagain', '🔍 Auditar agora', 'O material mudou ou ainda não foi auditado.'];
+    else if (probs.length) prox = ['copyrepair', '🛠️ Pedir correção à IA', probs.length + (probs.length === 1 ? ' ponto' : ' pontos') + ' para olhar. Copie o pedido, cole no Gem e traga o JSON de volta aqui.'];
+    else if (!rv.validado) prox = ['gotovalidar', '✅ Validar como professor', 'Sem pendências automáticas. Falta a sua leitura e validação.'];
+    else prox = ['openslides', '▶️ Abrir apresentação', 'Material validado. Pronto para usar em aula.'];
+    const nota = S.audSnap && atual ? 'Nota ' + S.audSnap.score + ' · ' + S.audSnap.hard + ' falha(s) grave(s) · ' + probs.length + ' ponto(s) pendente(s)' : 'Auditoria desatualizada';
+    return '<section class="rev-actions" aria-label="Ações da revisão">' +
+      '<div class="ra-next"><button class="b gold" type="button" data-a="' + prox[0] + '">' + prox[1] + '</button><div><b>Próximo passo</b><br><span class="muted">' + esc(prox[2]) + '</span><br><span class="ra-nota">' + esc(nota) + '</span></div></div>' +
+      '<div class="ra-btns" role="group" aria-label="Todas as ações">' +
+        '<button class="b sm" type="button" data-a="auditagain">🔍 Auditar de novo</button>' +
+        '<button class="b sm" type="button" data-a="gotopt">📝 Revisar português</button>' +
+        '<button class="b sm" type="button" data-a="gotoorto">🔤 Ortografia</button>' +
+        '<button class="b sm" type="button" data-a="copyrepair"' + (probs.length ? '' : ' disabled title="Sem pontos pendentes"') + '>🛠️ Pedir correção à IA</button>' +
+        '<button class="b sm" type="button" data-a="togglerepair" aria-expanded="' + (S.revOpen ? 'true' : 'false') + '">📥 Colar JSON de correção</button>' +
+        '<button class="b sm" type="button" data-a="openslides">▶️ Apresentação</button>' +
+        '<button class="b sm" type="button" data-a="tab" data-t="apostila">📘 Apostila</button>' +
+        '<button class="b sm" type="button" data-a="tab" data-t="exportar">📤 Exportar</button></div>' +
+      (S.revOpen ? '<div class="ra-paste"><label for="rp-resp">Cole aqui o JSON que a IA devolveu (formato ' + C.REPAIR_SCHEMA + ', ou o material inteiro revisado no formato de sempre)</label><textarea id="rp-resp" data-form="reparo" rows="5" placeholder="Cole o JSON de correção…">' + esc(S.form.reparo || '') + '</textarea>' +
+        '<div class="btns"><button class="b gold" type="button" data-a="applyrepair">Aplicar correção e auditar de novo</button><button class="b ghost" type="button" data-a="togglerepair">Fechar</button></div>' +
+        '<p class="muted">O reparo troca só blocos que já existem. Se vier o material inteiro, ele substitui o atual (dá para desfazer). Depois a auditoria roda sozinha e você vê o antes e o depois. A validação do professor precisa ser refeita.</p></div>' : '') +
+      (probs.length && atual ? '<details class="ra-probs"><summary>Ver os ' + probs.length + ' ponto(s) pendentes</summary><ul>' + probs.slice(0, 12).map((x) => '<li>' + esc(x.texto) + '</li>').join('') + (probs.length > 12 ? '<li>e mais ' + (probs.length - 12) + '…</li>' : '') + '</ul></details>' : '') +
+      (S.revDelta && S.revDelta.mid === S.mid ? deltaHtml(S.revDelta) : '') + '</section>';
   }
 
   function render() {
@@ -261,7 +310,7 @@
     main.setAttribute('role', 'tabpanel');
     main.setAttribute('aria-labelledby', S.tab === 'ajuda' ? 'helpTopBtn' : 'tab-' + S.tab);
     const body = NEED.includes(S.tab) && !S.draft ? emptyStateFor(S.tab) : v();
-    main.innerHTML = autosaveBannerHtml() + exampleBannerHtml() + revisarProgressHtml() + continueStripHtml() + body;
+    main.innerHTML = autosaveBannerHtml() + exampleBannerHtml() + revisarProgressHtml() + acoesRevisaoHtml() + continueStripHtml() + body;
 
     if (focusSnap) {
       let target = focusSnap.id ? document.getElementById(focusSnap.id) : null;
@@ -493,14 +542,7 @@
         (S.showDiff ? deltaList.map((ch) => '<div class="diff-box"><b>' + (ch.kind === 'added' ? '➕ Adicionado: ' : ch.kind === 'removed' ? '➖ Removido: ' : '✏️ Alterado: ') + esc(ch.label) + '</b><div class="diff-cols">' + (ch.before ? '<div class="diff-old"><b>Antes (validado)</b>\n' + esc(ch.before.slice(0, 600)) + '</div>' : '') + (ch.after ? '<div class="diff-new"><b>Agora (atual)</b>\n' + esc(ch.after.slice(0, 600)) + '</div>' : '') + '</div></div>').join('') : '') : '') +
       '<div class="row"><div><label for="f_revisao_revisadoPor">Quem revisou</label><input id="f_revisao_revisadoPor" data-f="revisao.revisadoPor" value="' + esc(d.revisao.revisadoPor || '') + '" placeholder="Nome do professor"></div>' +
       '<div><label><input type="checkbox" id="f_revisao_aprovado" data-f="revisao.aprovado"' + (d.revisao.aprovado ? ' checked' : '') + '> Revisei e valido este material</label>' + (d.revisao.data ? '<p class="muted">Data da validação: ' + esc(d.revisao.data) + '</p>' : '') + '</div></div></div>';
-    const probs = C.problemasParaReparo(d, S.avisosImport && S.avisosImport.mid === S.mid ? S.avisosImport.list : []);
-    h += '<div class="card" id="card-reparo"><h3>Conferência e reparo</h3>' +
-      (probs.length
-        ? '<p class="muted">A conferência automática achou ' + probs.length + (probs.length === 1 ? ' ponto' : ' pontos') + ' para olhar. Você pode corrigir à mão, ou pedir ao Gem só o que precisa mudar.</p><ul>' + probs.slice(0, 8).map((x) => '<li>' + esc(x.texto) + '</li>').join('') + (probs.length > 8 ? '<li>e mais ' + (probs.length - 8) + '…</li>' : '') + '</ul>' +
-          '<div class="btns"><button class="b gold" data-a="copyrepair">Copiar pedido de reparo</button></div>' +
-          '<label for="rp-resp">Cole aqui a resposta do Gem (formato ' + C.REPAIR_SCHEMA + ')</label><textarea id="rp-resp" data-form="reparo" rows="4" placeholder="Cole o JSON do reparo…">' + esc(S.form.reparo || '') + '</textarea>' +
-          '<div class="btns"><button class="b" data-a="applyrepair">Aplicar reparo</button></div><p class="muted">O reparo só troca blocos que já existem. Depois dele, a validação do professor fica desatualizada e você revisa de novo.</p>'
-        : '<p class="muted">Nenhum ponto pendente na conferência automática. Isso não substitui a sua revisão.</p>') + '</div>';
+    h += '<div class="card" id="card-reparo"><h3>Conferência e reparo</h3><p class="muted">O ciclo de correção (pedir à IA, colar o JSON, auditar de novo e comparar) fica na barra de ações no topo desta página. Para revisar sem sair do Editor, use os botões dela.</p></div>';
     h += '<div class="card"><h3>Blocos do material</h3>' + d.blocks.map((b, i) =>
       '<div class="blk" style="border-left-color:' + (bc[b.type] || '#14264f') + '"><div class="head"><div><label for="ed-bt-' + i + '">Tipo</label><select id="ed-bt-' + i + '" data-f="blocks.' + i + '.type">' + Object.keys(C.BLOCK_TYPES).map((k) => '<option value="' + k + '"' + (b.type === k ? ' selected' : '') + '>' + C.BLOCK_TYPES[k][1] + ' ' + C.BLOCK_TYPES[k][0] + '</option>').join('') + '</select></div><div>' + inp('blocks.' + i + '.title', 'Título do bloco') + '</div>' +
       '<div class="btns"><button class="b ghost sm" data-a="bup" data-i="' + i + '" title="Subir" aria-label="Subir bloco ' + (i + 1) + '">↑</button><button class="b ghost sm" data-a="bdn" data-i="' + i + '" title="Descer" aria-label="Descer bloco ' + (i + 1) + '">↓</button><button class="b danger sm" data-a="bdel" data-i="' + i + '" title="Remover" aria-label="Remover bloco ' + (i + 1) + '">✕</button></div></div>' +
@@ -949,10 +991,35 @@
       toast((await copy(pr.texto)) ? 'Pedido de reparo copiado. Cole no mesmo Gem que gerou o material.' : 'Não consegui copiar automaticamente.', false);
     },
     applyrepair: () => {
-      const r = C.applyRepair(S.draft, S.form.reparo); if (!r.ok) { toast(r.error, true); return; }
-      S.draft = r.material; S.dirty = true; S.form.reparo = '';
-      toast('Reparo aplicado em ' + r.changed.length + (r.changed.length === 1 ? ' bloco.' : ' blocos.') + (r.warnings.length ? ' ' + r.warnings.join(' ') : '') + ' Revise e salve.', false); render();
+      const antes = C.clone(S.draft), snapAntes = snapshotRevisao(S.draft);
+      let r;
+      const pj = C.parseModelJson(S.form.reparo || '');
+      if (pj.ok && pj.data && pj.data.schema !== C.REPAIR_SCHEMA && (Array.isArray(pj.data.blocks) || Array.isArray(pj.data.blocos))) {
+        // a IA devolveu o material inteiro revisado: troca o material (com opção de desfazer) e mantém identidade do projeto
+        const imp = C.importFromText(S.form.reparo);
+        if (!imp.ok) { toast(imp.error, true); return; }
+        const mudou = C.diffMaterialBlocks(S.draft, imp.material);
+        r = { ok: true, material: imp.material, changed: mudou.filter((x) => x.before !== x.after), warnings: ['Material inteiro substituído; a validação do professor volta a zero.'].concat(imp.warnings && imp.warnings.length ? [imp.warnings.length + ' aviso(s) de importação.'] : []) };
+      } else r = C.applyRepair(S.draft, S.form.reparo);
+      if (!r.ok) { toast(r.error, true); return; }
+      S.revUndo = antes; S.draft = r.material; S.dirty = true; S.form.reparo = '';
+      const snapDepois = snapshotRevisao(S.draft); S.audSnap = snapDepois;
+      S.draft.meta = S.draft.meta || {}; S.draft.meta.lastAuditedAt = snapDepois.at;
+      S.revDelta = { mid: S.mid, titulo: 'Depois da correção (' + r.changed.length + (r.changed.length === 1 ? ' bloco trocado)' : ' blocos trocados)'), before: snapAntes, after: snapDepois, changed: r.changed.length };
+      S.revOpen = false;
+      toast('Correção aplicada e auditoria refeita.' + (r.warnings.length ? ' ' + r.warnings.join(' ') : '') + ' Confira o antes e o depois e salve.', false); render();
     },
+    undorepair: () => { if (!S.revUndo) return; S.draft = S.revUndo; S.revUndo = null; S.dirty = true; S.revDelta = null; S.audSnap = snapshotRevisao(S.draft); render(); toast('Correção desfeita.', false); },
+    auditagain: () => {
+      const ant = S.audSnap, atual = snapshotRevisao(S.draft);
+      S.draft.meta = S.draft.meta || {}; S.draft.meta.lastAuditedAt = atual.at; S.audSnap = atual;
+      S.revDelta = ant && ant.hash !== atual.hash ? { mid: S.mid, titulo: 'Desde a última auditoria', before: ant, after: atual, changed: 0 } : (S.revDelta && S.revDelta.mid === S.mid ? S.revDelta : null);
+      render(); toast('Auditoria refeita: nota ' + atual.score + ', ' + atual.probs.length + ' ponto(s) pendente(s).', false);
+    },
+    togglerepair: () => { S.revOpen = !S.revOpen; render(); if (S.revOpen) { const t = $('#rp-resp'); if (t) t.focus(); } },
+    gotopt: () => { S.tab = 'auditoria'; render(); setTimeout(() => { const c = $('#ptOut'); if (c) { c.scrollIntoView({ block: 'center' }); A.revisarpt(); } }, 60); },
+    gotoorto: () => { S.tab = 'auditoria'; render(); setTimeout(() => { const c = $('#ortoOut'); if (c) { c.scrollIntoView({ block: 'center' }); A.ortografia(); } }, 60); },
+    gotovalidar: () => { S.tab = 'editor'; render(); setTimeout(() => { const c = $('#f_revisao_revisadoPor'); if (c) { c.scrollIntoView({ block: 'center' }); c.focus(); } }, 60); },
     importjson: () => {
       const r = C.importFromText(S.form.pasted); if (!r.ok) { toast(r.error, true); return; }
       const m = r.material; const p = (S.form.target && proj(S.form.target)) || newProject(m.discipline || m.title, m.discipline, m.level);

@@ -219,3 +219,17 @@ html,body{overflow-x:clip}
 .card,.blk,.list-item,.row>*{min-width:0}
 @media (pointer:coarse){button.b,label.b,button.b.sm,.subtab,.group-btn,.top-btn,summary{min-height:44px}}
 @media print{.top,.intro,.navzone,.continue-strip,.example-banner,.autosave-banner,.rev-strip,.foot,#toast{display:none!important}}
+
+/* Central de revisão */
+.rev-actions{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--gold);border-radius:12px;padding:12px 14px;margin-bottom:14px;box-shadow:var(--shadow)}
+.ra-next{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.ra-next .b{min-height:44px;font-size:1rem}
+.ra-nota{font-size:.82rem;color:var(--ink2);font-weight:700}
+.ra-btns{display:flex;flex-wrap:wrap;gap:6px}
+.ra-paste{margin-top:12px;border-top:1px dashed var(--line);padding-top:10px}
+.ra-paste textarea{width:100%}
+.ra-probs{margin-top:10px;font-size:.88rem}
+.ra-delta{margin-top:12px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--surface2)}
+.ra-nums{display:flex;flex-wrap:wrap;gap:6px 16px;margin:6px 0;font-size:.9rem}
+.ra-delta details{margin:4px 0;font-size:.88rem}
+@media print{.rev-actions{display:none!important}}

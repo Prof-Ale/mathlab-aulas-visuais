@@ -168,6 +168,7 @@ O projeto oferece dois caminhos para PDF:
 | **PDF** via navegador e **PDF reproduzível/acessível** via CLI (`npm run pdf`) | **Implementado** | `tools/gerar-pdf.mjs` (requer `playwright` + Chromium) |
 | Plano por unidades, memória acumulada, reparo localizado, pacotes de domínio e fontes do autor | **Implementado** | `js/core.js`, `js/dominios.js`, `js/fontes.js` |
 | Auditoria automática v1/v2, validação humana por hash e verificação de acessibilidade (`tools/audit-a11y.js`) | **Implementado** | `js/core.js`, `js/auditar-v2.js`, `tools/audit-a11y.js` |
+| **Central de revisão** (barra nas abas Revisar): próximo passo, auditar de novo, pedir correção à IA, colar o JSON de correção (reparo ou material inteiro), antes e depois com notas e pontos resolvidos, desfazer, revisar português, ortografia e apresentação | **Implementado** | `js/app.js` (`acoesRevisaoHtml`), `tests/central-revisao.test.js` com Chromium |
 | Flipbook do portfólio com **StPageFlip** (MIT, 44 KB, embutida) | **Implementado** | `assets/vendor/page-flip/` com a licença; sem rede, sem CDN |
 | Diário de bordo e Portfólio docente (`js/racional.js`, `js/portfolio.js`, `tools/portfolio.mjs`) | **Experimental** | Schemas `diario.v1` e `portfolio.v1` em `schema/`; três perfis (escolar, processo seletivo, pós-graduação); saídas HTML A4, flipbook offline (StPageFlip) e PDF acessível pelo comando. Ver `docs/docs/07-diario-e-portfolio.md` |
 | Renderização matemática **KaTeX 100% offline** (`$...$`, `$$...$$`, `\(...\)`, `\[...\]`, protegendo `R$`) | **Implementado** | `assets/vendor/katex/` (MIT, zero dependência npm) + `js/core.js` + `js/livro.js` + `dist/mathlab-standalone.html` |
@@ -212,7 +213,7 @@ As diretrizes visuais oficiais e a **Ficha Oficial do Personagem Professor Alê 
 
 ### Comandos
 ```bash
-npm test                                  # executa todas as 20 suítes em tests/
+npm test                                  # executa todas as 21 suítes em tests/
 npm run build                             # gera dist/mathlab-standalone.html
 npm run pdf -- --demo apostila-demo.pdf   # gera PDF acessível e reproduzível (requer Playwright)
 ```
@@ -228,7 +229,7 @@ Veja o passo a passo completo para configurar **Claude (Skill)**, **Gemini (Gem)
 
 ## Testes e limitações conhecidas
 
-- **Suíte automatizada:** `npm test` executa 20 arquivos de teste (`core`, `instrucoes`, `validacao`, `contrato`, `avisos`, `reparo`, `plano`, `app-bridge`, `pdf`, `dominios`, `livro`, `fontes`, `manifesto`, `capa-formulas`, `slides`, `banco`, `ortografia`, `revisor-portugues`, `portfolio-perfis`, `ui-ux-roadmap`). Os 2 testes end-to-end de geração de PDF em `tests/pdf.test.js` são ignorados automaticamente quando o `playwright` não está instalado.
+- **Suíte automatizada:** `npm test` executa 21 arquivos de teste (`core`, `instrucoes`, `validacao`, `contrato`, `avisos`, `reparo`, `plano`, `app-bridge`, `pdf`, `dominios`, `livro`, `fontes`, `manifesto`, `capa-formulas`, `slides`, `banco`, `ortografia`, `revisor-portugues`, `portfolio-perfis`, `central-revisao`, `ui-ux-roadmap`). Os 2 testes end-to-end de geração de PDF em `tests/pdf.test.js` são ignorados automaticamente quando o `playwright` não está instalado.
 - **Limitações conhecidas:**
   - Não exporta `.docx` nem `.pptx` neste repositório (disponíveis no App Node `mathlab-aulas-visuais-app`).
   - Persistência em `localStorage` depende do navegador/perfil local (use o backup JSON da Biblioteca).
