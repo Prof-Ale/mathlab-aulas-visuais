@@ -139,3 +139,22 @@ test('CLI: --modelo aceita didatico/narrativo; narrativo usa A5 por padrão e re
   assert.equal(lerArgs(['a.json', '--modelo', 'narrativo', '--papel', 'a4']).papel, 'a4');
   assert.throws(() => lerArgs(['a.json', '--modelo', 'comic']), /didatico ou narrativo/);
 });
+
+test('Ficha técnica: só aparece com dados informados; ISBN inválido gera aviso e nunca é inventado', () => {
+  assert.ok(!L.compileBookMarkdown([mat('A')]).markdown.includes('# Ficha técnica'));
+  const r = L.compileBookMarkdown([mat('A')], { credits: { editora: 'Prof. Teste', isbn: '978-85-359-0277-8', ano: '2026' } });
+  assert.ok(r.markdown.includes('# Ficha técnica {-}') && r.markdown.includes('**ISBN:** 978-85-359-0277-8') && r.markdown.includes('**Ano:** 2026'));
+  assert.ok(r.markdown.indexOf('# Ficha técnica') < r.markdown.indexOf('# Ficha de revisão'));
+  assert.ok(!r.warnings.some((w) => /ISBN/.test(w)));
+  const ruim = L.compileBookMarkdown([mat('A')], { credits: { isbn: '978-85-359-0277-5' } });
+  assert.ok(ruim.warnings.some((w) => /ISBN/.test(w)));
+  assert.ok(L.isbnValido('9788535902778') && !L.isbnValido('9788535902775') && !L.isbnValido('123'));
+});
+test('CLI: sangria em mm (0 a 10) e campos da ficha técnica', async () => {
+  const { lerArgs } = await import('../tools/livro.mjs');
+  const a = lerArgs(['a.json', '--sangria', '3', '--editora', 'X', '--isbn', '9788535902778', '--ano', '2026']);
+  assert.equal(a.sangria, 3); assert.deepEqual(a.opts.credits, { editora: 'X', isbn: '9788535902778', ano: '2026' });
+  assert.equal(lerArgs(['a.json']).sangria, 0);
+  assert.throws(() => lerArgs(['a.json', '--sangria', '30']), /milímetros/);
+  assert.throws(() => lerArgs(['a.json', '--sangria', 'abc']), /milímetros/);
+});
