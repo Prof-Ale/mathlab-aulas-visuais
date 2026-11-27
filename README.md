@@ -221,7 +221,7 @@ Veja o passo a passo completo para configurar **Claude (Skill)**, **Gemini (Gem)
 
 ### Manter as instruções e versões em sincronia
 - `manifest.json` é a fonte única de versões. Ao subir de versão, atualize primeiro `manifest.json` e depois os arquivos verificados por `tests/manifesto.test.js`.
-- `skill/SKILL.md` é a fonte completa das instruções; `gemini/GEM_INSTRUCOES.md` e `chatgpt/CHATGPT_GPT_INSTRUCOES.md` devem acompanhá-la (`tests/instrucoes.test.js` confere os campos, a versão e o limite de 8.000 caracteres do GPT).
+- `skill/SKILL.md` é a fonte completa das instruções (v2.0.0, incluindo a Arquitetura Pedagógica Brasileira — seções 11 a 19); `gemini/GEM_INSTRUCOES.md` e `chatgpt/CHATGPT_GPT_INSTRUCOES.md` trazem o mesmo conteúdo integral (`tests/instrucoes.test.js` confere os campos, a versão em `manifest.json` e a integridade das 19 seções).
 
 ---
 

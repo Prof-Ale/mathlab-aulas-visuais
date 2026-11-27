@@ -11,7 +11,7 @@
     "dominio": "mathlab.domain/1"
   },
   "instrucoes": {
-    "versao": "1.6.0",
+    "versao": "2.0.0",
     "arquivos": ["skill/SKILL.md", "gemini/GEM_INSTRUCOES.md", "chatgpt/CHATGPT_GPT_INSTRUCOES.md"]
   },
   "modulos": ["js/racional.js", "js/auditar-v2.js", "js/portfolio.js", "js/core.js", "js/dominios.js", "js/livro.js", "js/fontes.js", "js/app.js"],

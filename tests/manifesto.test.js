@@ -35,8 +35,9 @@ test('as três instruções (Skill, Gem, GPT) estão na versão do manifesto e n
     assert.ok(t.includes('v' + v), a + ' não declara v' + v);
     assert.ok(!/v1\.[0-5]\.\d/.test(t.split('\n').slice(0, 10).join('\n')), a + ' ainda cita versão antiga no cabeçalho');
   });
-  assert.ok(ler('gemini/GEM_INSTRUCOES.md').includes('"version":"' + v + '"'));
+  assert.ok(ler('gemini/GEM_INSTRUCOES.md').includes('"version":"' + v + '"') || ler('gemini/GEM_INSTRUCOES.md').includes('"version": "' + v + '"'));
   assert.ok(ler('skill/SKILL.md').includes('"version": "' + v + '"'));
+  assert.ok(ler('chatgpt/CHATGPT_GPT_INSTRUCOES.md').includes('"version": "' + v + '"') || ler('chatgpt/CHATGPT_GPT_INSTRUCOES.md').includes('"version":"' + v + '"'));
 });
 test('módulos de script: index.html, manifesto e build-standalone listam os mesmos, na mesma ordem', () => {
   const html = [...ler('index.html').matchAll(/<script src="(js\/[^"]+)"/g)].map((m) => m[1]);
