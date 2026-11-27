@@ -1722,5 +1722,229 @@
     });
   }
 
-  return { BLUEPRINT_SCHEMA, UNIT_SCHEMA, estadoAcumulado, buildBlueprintRequest, normalizeBlueprint, importBlueprint, hashBlueprint, estadoBlueprint, approveBlueprint, proximaUnidade, buildUnitRequest, applyUnit, problemasParaReparo, buildRepairPrompt, applyRepair, REPAIR_SCHEMA, avisosDeImportacao, VERSION, SCHEMA, hashConteudo, estadoRevisao, DEFAULT_AUTHOR, REGISTROS, DESTINATARIOS, INTERIOR_STYLES, AVATAR_OPTIONS, LOGO_OPTIONS, EDITORIAL_IDENTITY, PROFESSOR_ALE_IDENTITY, PROFESSOR_ALE_DISCIPLINE_LABELS, getProfessorAleContext, BLOCK_PEDAGOGY, CONTENT_PROFILES, SECTION_CATALOG, PROFILE_SECTIONS, STAGE_PROFILES, calibrateStage, emblemFor, epistemicEmblemSvg: emblemFor, EPISTEMIC, BLOCK_TYPES, POSTER_THEMES, COVER_CSS, POSTER_CSS, INFOGRAPHIC_CSS, DOC_CSS, VISUALS, esc, uid, wc, clone, detectType, sanitizeSvg, renderMathExpr, getKatexStyleTag, renderMarkdown, renderCleanCover, renderPoster, renderOpeningInfographic, buildImagePrompt, buildCoverPrompt, coverArtOk, buildRequestText, normalize, fromV2, parseModelJson, importFromText, audit, toMarkdown, toHTML, toApostila, CALLOUTS, scaffold, demo };
+  /* ---------- Slides HTML interativos (apresentação em sala) ---------- */
+  /* slidePlan: dados puros (testáveis). toSlides: um HTML único, autocontido, com navegação por teclado. */
+  function slidePlan(m, o) {
+    m = normalize(m); o = o || {};
+    const maxW = o.maxPalavras > 20 ? o.maxPalavras : 70;
+    const maxWFig = Math.min(maxW, 35);
+    const rev = estadoRevisao(m);
+    const slides = [];
+    const rep = { slides: 0, blocosDivididos: 0, gabaritoOmitido: 0, densos: 0 };
+    slides.push({ kind: 'capa', title: m.title, meta: [m.discipline, m.level, m.duration, m.author].filter(Boolean), status: rev.texto, validado: rev.validado });
+    if (m.objectives.length) slides.push({ kind: 'lista', icon: '🎯', title: 'Objetivos de aprendizagem', items: m.objectives.slice() });
+    if (m.prerequisites.length && o.prerequisitos !== false) slides.push({ kind: 'lista', icon: '🔑', title: 'Conhecimentos prévios', items: m.prerequisites.slice() });
+    const listItemRe = /^\s*(?:\d+[.)]|[-*+])\s+/;
+    const splitChunk = (chunk) => {
+      const lines = chunk.split('\n');
+      if (lines.length > 1 && lines.every((l) => listItemRe.test(l) || /^\s+\S/.test(l))) {
+        const items = []; lines.forEach((l) => { if (listItemRe.test(l) || !items.length) items.push(l); else items[items.length - 1] += '\n' + l; });
+        return items;
+      }
+      return [chunk];
+    };
+    m.blocks.forEach((b) => {
+      if (b.type === 'gabarito' && !o.gabarito) { rep.gabaritoOmitido++; return; }
+      const [label, icon] = BLOCK_TYPES[b.type] || BLOCK_TYPES.nota;
+      const raw = String(b.content || '').replace(/\r\n?/g, '\n').trim();
+      const limite = b.svg ? maxWFig : maxW;
+      const pieces = [];
+      raw.split(/\n{2,}/).forEach((c) => { if (c.trim()) splitChunk(c).forEach((x) => pieces.push(x)); });
+      const groups = []; let cur = [], w = 0;
+      pieces.forEach((p) => {
+        const pw = wc(p);
+        if (cur.length && w + pw > limite) { groups.push(cur); cur = []; w = 0; }
+        cur.push(p); w += pw;
+      });
+      if (cur.length) groups.push(cur);
+      if (!groups.length) groups.push([]);
+      if (groups.length > 1) rep.blocosDivididos++;
+      groups.forEach((g, i) => {
+        const text = g.join('\n\n');
+        const mm = /^\s*(\d+)[.)]\s/.exec(text);
+        slides.push({
+          kind: 'bloco', tipo: b.type, icon, label, blockId: b.id,
+          title: b.title + (groups.length > 1 ? ' (' + (i + 1) + '/' + groups.length + ')' : ''),
+          content: text, start: mm ? Number(mm[1]) : 0,
+          callout: i === groups.length - 1 && !(b.svg && wc(raw) > maxWFig) ? b.callout : null,
+          svg: i === groups.length - 1 && b.svg && wc(raw) <= maxWFig ? b.svg : '',
+          words: wc(text),
+        });
+      });
+      if (b.svg && wc(raw) > maxWFig) slides.push({ kind: 'figura', tipo: b.type, icon, label, blockId: b.id, title: b.title + ' · figura', svg: b.svg, callout: b.callout, words: 0 });
+    });
+    if (m.references.length) slides.push({ kind: 'refs', icon: '📚', title: 'Referências', items: m.references.map((r) => [r.authors, r.year ? '(' + r.year + ')' : '', r.title, r.venue].filter(Boolean).join(' ') + (r.doi ? ' DOI: ' + r.doi : '')) });
+    if (m.limitations.length) slides.push({ kind: 'lista', icon: '⚠️', title: 'Limitações documentais', items: m.limitations.slice() });
+    slides.push({ kind: 'fim', title: 'Fim', meta: [m.title], status: rev.texto, validado: rev.validado });
+    slides.forEach((s) => { if (s.words > maxW * 1.4) rep.densos++; });
+    rep.slides = slides.length;
+    return { slides, relatorio: rep, titulo: m.title, idioma: 'pt-BR' };
+  }
+
+  const SLIDES_CSS = [
+    ':root{--navy:#0D2B5B;--gold:#F7B500;--bg:#F8F3E6;--ink:#1d2433}',
+    '*{box-sizing:border-box}html,body{margin:0;height:100%;background:#0b1730;color:var(--ink);font-family:"Segoe UI",Arial,sans-serif}',
+    '.sr{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}',
+    '.skip{position:absolute;left:8px;top:-60px;background:#fff;color:var(--navy);padding:8px 12px;border-radius:6px;z-index:50}.skip:focus{top:8px}',
+    '.slide{background:var(--bg);color:var(--ink);width:1280px;height:720px;padding:44px 64px 56px;position:relative;overflow:hidden;display:flex;flex-direction:column;border-radius:14px;margin:0 auto 24px}',
+    '.slide>h2{font-size:46px;line-height:1.1;margin:0 0 18px;color:var(--navy);border-left:10px solid var(--gold);padding-left:18px}',
+    '.slide .tag{font-size:22px;font-weight:700;color:#5a4300;background:#fff3c4;border-radius:99px;padding:2px 16px;align-self:flex-start;margin-bottom:10px}',
+    '.slide .body{font-size:32px;line-height:1.42;flex:1;overflow:auto;padding-right:6px}',
+    '.slide .body p{margin:.35em 0}.slide .body ul,.slide .body ol{margin:.3em 0;padding-left:1.3em}.slide .body li{margin:.25em 0}',
+    '.slide .body table{border-collapse:collapse;font-size:.9em}.slide .body th,.slide .body td{border:2px solid var(--navy);padding:4px 14px}.slide .body th{background:#e8edf8}',
+    '.slide .body blockquote{border-left:6px solid var(--gold);margin:.4em 0;padding:2px 16px;background:#fffbea}',
+    '.slide .body .math{font-family:Cambria,"Times New Roman",serif;font-style:italic}',
+    '.slide .fig{text-align:center;margin:8px 0;flex:1;min-height:0}.slide .fig svg{max-width:100%;max-height:100%;height:auto;width:auto}',
+    '.slide .co{border-left:10px solid var(--navy);background:#fff;border-radius:10px;padding:10px 18px;margin-top:12px;font-size:.78em;line-height:1.35}',
+    '.slide .co.gold{border-color:#b07d00;background:#fff3b8}.slide .co.know{border-color:#0369a1;background:#e0f2fe}.slide .co.warn{border-color:#b91c1c;background:#fee2e2}.slide .co.prova{border-color:#6d28d9;background:#efe6ff}',
+    '.slide .co b{display:block;font-size:.8em;letter-spacing:.3px}',
+    '.slide.capa,.slide.fim{justify-content:center;background:var(--navy);color:#fff}',
+    '.slide.capa h1,.slide.fim h1{font-size:68px;line-height:1.08;margin:0 0 20px;color:#fff;border-bottom:8px solid var(--gold);padding-bottom:14px}',
+    '.slide.capa .meta,.slide.fim .meta{font-size:30px;color:#dbe6ff}',
+    '.slide .status{margin-top:28px;font-size:24px;background:#fff;color:var(--navy);border-radius:10px;padding:8px 16px;align-self:flex-start;font-weight:700}',
+    '.slide .num{position:absolute;right:28px;bottom:14px;font-size:20px;color:#475569}.slide.capa .num,.slide.fim .num{color:#c6d4f5}',
+    '.slide .foot{position:absolute;left:64px;bottom:14px;font-size:18px;color:#475569}',
+    /* sem JS ou impressão: slides empilhados */
+    'body.no-js .slide{height:auto;min-height:720px}body.no-js .hud,body.no-js #ov{display:none}',
+    /* com JS: um slide por vez, escalado */
+    'body.js{overflow:hidden}body.js #deck{position:fixed;left:0;right:0;top:0;bottom:52px;display:flex;align-items:center;justify-content:center}',
+    'body.js .slide{position:absolute;left:50%;top:50%;margin:0;transform-origin:center center;transform:translate(-50%,-50%) scale(var(--k,1));visibility:hidden}',
+    'body.js .slide.on{visibility:visible}',
+    '@media(prefers-reduced-motion:no-preference){body.js .slide.on{animation:fade .18s ease-out}@keyframes fade{from{opacity:.4}to{opacity:1}}}',
+    '.hud{position:fixed;left:0;right:0;bottom:0;display:flex;align-items:center;gap:10px;padding:8px 14px;background:rgba(11,23,48,.92);color:#fff;z-index:20;font-size:15px}',
+    '.hud button{font:inherit;background:#fff;color:var(--navy);border:2px solid var(--gold);border-radius:8px;padding:5px 12px;cursor:pointer;min-height:34px}',
+    '.hud button:focus-visible,.skip:focus-visible,#ov a:focus-visible{outline:3px solid var(--gold);outline-offset:2px}',
+    '.hud .bar{flex:1;height:8px;background:#35476f;border-radius:99px;overflow:hidden}.hud .bar i{display:block;height:100%;background:var(--gold);width:0}',
+    '#ov{position:fixed;inset:0;background:rgba(11,23,48,.97);color:#fff;z-index:30;overflow:auto;padding:28px 36px}',
+    '#ov[hidden]{display:none}#ov h2{margin:0 0 12px}#ov ol{columns:2;column-gap:36px;padding-left:1.4em;font-size:19px;line-height:1.7}#ov a{color:#ffe08a}',
+    '#help{position:fixed;right:14px;bottom:56px;background:#fff;color:var(--ink);border:3px solid var(--navy);border-radius:12px;padding:12px 16px;z-index:40;max-width:360px;font-size:15px;line-height:1.5}#help[hidden]{display:none}',
+    '@page{size:A4 landscape;margin:0}',
+    '@media print{html,body{background:#fff!important;height:auto!important;overflow:visible!important}body.js #deck{position:static;display:block}',
+    'body.js .slide,.slide{position:relative!important;left:0!important;top:0!important;transform:none!important;visibility:visible!important;width:297mm;height:209mm;margin:0;border-radius:0;page-break-after:always;break-after:page;overflow:hidden;animation:none}',
+    'body .slide:last-of-type,body.js .slide:last-of-type{page-break-after:auto!important;break-after:auto!important}.hud,#ov,#help,.skip{display:none!important}.slide,.slide *{-webkit-print-color-adjust:exact;print-color-adjust:exact}}',
+  ].join('\n');
+
+  const SLIDES_JS = '(function(){var d=document,b=d.body;var S=[].slice.call(d.querySelectorAll(".slide"));if(!S.length)return;b.className="js";var i=0,live=d.getElementById("live"),bar=d.getElementById("bar"),cnt=d.getElementById("cnt"),ov=d.getElementById("ov"),help=d.getElementById("help");' +
+    'function fit(){var k=Math.min(innerWidth/1280,(innerHeight-52)/720);S.forEach(function(s){s.style.setProperty("--k",String(k))});}' +
+    'function shrink(s){var bd=s.querySelector(".body");if(!bd)return;bd.style.fontSize="";var f=1;while(bd.scrollHeight>bd.clientHeight+2&&f>0.62){f-=0.06;bd.style.fontSize=(32*f)+"px";}}' +
+    'function show(n,say){i=Math.max(0,Math.min(S.length-1,n));S.forEach(function(s,j){s.classList.toggle("on",j===i);s.setAttribute("aria-hidden",j===i?"false":"true")});shrink(S[i]);cnt.textContent=(i+1)+" / "+S.length;bar.style.width=((i+1)/S.length*100)+"%";' +
+    'if(say!==false)live.textContent="Slide "+(i+1)+" de "+S.length+": "+(S[i].getAttribute("data-title")||"");try{history.replaceState(null,"","#s"+(i+1))}catch(e){}}' +
+    'function go(n){show(n)}function next(){go(i+1)}function prev(){go(i-1)}' +
+    'function toggle(el,on){el.hidden=on===undefined?!el.hidden:!on}' +
+    'function openOv(){var l=d.getElementById("ovl");l.innerHTML=S.map(function(s,j){return \'<li><a href="#s\'+(j+1)+\'" data-n="\'+j+\'">\'+(s.getAttribute("data-title")||"Slide "+(j+1)).replace(/</g,"&lt;")+"</a></li>"}).join("");toggle(ov,true);var a=l.querySelector("a");if(a)a.focus()}' +
+    'function fs(){if(d.fullscreenElement){d.exitFullscreen()}else if(d.documentElement.requestFullscreen){d.documentElement.requestFullscreen()}}' +
+    'd.addEventListener("keydown",function(e){if(e.ctrlKey||e.metaKey||e.altKey)return;var k=e.key;if(!ov.hidden){if(k==="Escape"||k==="o"||k==="O"){toggle(ov,false);e.preventDefault()}return}' +
+    'if(k==="ArrowRight"||k==="PageDown"||k===" "||k==="Enter"){if(e.target.tagName==="BUTTON"&&(k===" "||k==="Enter"))return;next();e.preventDefault()}' +
+    'else if(k==="ArrowLeft"||k==="PageUp"||k==="Backspace"){prev();e.preventDefault()}else if(k==="Home"){go(0);e.preventDefault()}else if(k==="End"){go(S.length-1);e.preventDefault()}' +
+    'else if(k==="f"||k==="F"){fs()}else if(k==="o"||k==="O"){openOv()}else if(k==="?"||k==="h"||k==="H"){toggle(help)}else if(k==="Escape"){toggle(help,false)}});' +
+    'd.getElementById("ovl").addEventListener("click",function(e){var a=e.target.closest("a");if(!a)return;e.preventDefault();toggle(ov,false);go(+a.getAttribute("data-n"))});' +
+    'd.getElementById("bPrev").onclick=prev;d.getElementById("bNext").onclick=next;d.getElementById("bOv").onclick=openOv;d.getElementById("bFs").onclick=fs;d.getElementById("bHelp").onclick=function(){toggle(help)};' +
+    'var x0=null;d.addEventListener("touchstart",function(e){x0=e.touches[0].clientX},{passive:true});d.addEventListener("touchend",function(e){if(x0===null)return;var dx=e.changedTouches[0].clientX-x0;if(Math.abs(dx)>50){dx<0?next():prev()}x0=null},{passive:true});' +
+    'addEventListener("resize",function(){fit();shrink(S[i])});addEventListener("hashchange",function(){var m=/^#s(\\d+)$/.exec(location.hash);if(m)show(+m[1]-1)});' +
+    'fit();var m0=/^#s(\\d+)$/.exec(location.hash);show(m0?+m0[1]-1:0,false);})();';
+
+  function toSlides(m, o) {
+    o = o || {};
+    const plan = slidePlan(m, o);
+    const n = plan.slides.length;
+    const parts = plan.slides.map((s, idx) => {
+      const id = 's' + (idx + 1), num = '<span class="num" aria-hidden="true">' + (idx + 1) + '/' + n + '</span>';
+      const label = (idx + 1) + ' de ' + n + ': ' + s.title;
+      const head = '<section class="slide ' + s.kind + '" id="' + id + '" data-title="' + esc(s.title) + '" role="group" aria-roledescription="slide" aria-label="' + esc(label) + '">';
+      if (s.kind === 'capa' || s.kind === 'fim') {
+        return head + '<h1>' + esc(s.title) + '</h1><div class="meta">' + s.meta.map(esc).join(' · ') + '</div><div class="status">' + esc(s.status) + '</div>' + num + '</section>';
+      }
+      if (s.kind === 'lista' || s.kind === 'refs') {
+        const tag = s.kind === 'refs' ? 'ul' : 'ul';
+        return head + '<h2><span aria-hidden="true">' + s.icon + '</span> ' + esc(s.title) + '</h2><div class="body"><' + tag + '>' + s.items.map((x) => '<li>' + inline(x) + '</li>').join('') + '</' + tag + '></div>' + num + '</section>';
+      }
+      let body = '';
+      if (s.kind === 'bloco') {
+        body = renderMarkdown(s.content);
+        if (s.start > 1) body = body.replace('<ol>', '<ol start="' + s.start + '">');
+      }
+      const fig = s.svg ? '<div class="fig">' + sanitizeSvg(s.svg) + '</div>' : '';
+      const co = s.callout ? '<div class="co ' + CALLOUTS[s.callout.kind][1] + '"><b>' + esc(CALLOUTS[s.callout.kind][0]) + '</b>' + inline(s.callout.text) + '</div>' : '';
+      return head + '<span class="tag"><span aria-hidden="true">' + s.icon + '</span> ' + esc(s.label) + '</span><h2>' + esc(s.title) + '</h2>' + (body ? '<div class="body">' + body + '</div>' : '') + fig + co + num + '</section>';
+    });
+    const titulo = esc(plan.titulo);
+    return '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + titulo + ' · apresentação</title>' + getKatexStyleTag() + '<style>' + SLIDES_CSS + '</style></head>' +
+      '<body class="no-js"><a class="skip" href="#deck">Ir para a apresentação</a><main id="deck" aria-label="Apresentação: ' + titulo + '">' + parts.join('\n') + '</main>' +
+      '<div id="live" class="sr" aria-live="polite" role="status"></div>' +
+      '<nav class="hud" aria-label="Controles da apresentação"><button id="bPrev" type="button" aria-label="Slide anterior">◀</button><button id="bNext" type="button" aria-label="Próximo slide">▶</button><span id="cnt" aria-hidden="true">1 / ' + n + '</span><div class="bar" aria-hidden="true"><i id="bar"></i></div>' +
+      '<button id="bOv" type="button">Índice (O)</button><button id="bFs" type="button">Tela cheia (F)</button><button id="bHelp" type="button">Ajuda (?)</button></nav>' +
+      '<div id="ov" hidden role="dialog" aria-modal="true" aria-label="Índice dos slides"><h2>Índice</h2><ol id="ovl"></ol><p>Esc fecha.</p></div>' +
+      '<div id="help" hidden role="dialog" aria-label="Atalhos"><b>Atalhos</b><br>→ ↓ Espaço: próximo · ← ↑: anterior<br>Home/End: primeiro/último · O: índice · F: tela cheia<br>Imprimir (Ctrl+P): um slide por página.</div>' +
+      '<script>' + SLIDES_JS + '</script></body></html>';
+  }
+
+  /* ---------- Banco de questões por habilidade (mathlab.bank/1) ---------- */
+  const BANK_SCHEMA = 'mathlab.bank/1';
+  const HABILIDADE_RE = /\b(?:EF|EM|EI)\d{2}[A-Z]{2,3}\d{2,3}[A-Z]?\b|\b(?:EF|EM|EI)\d{2}[A-Z]{2,3}\d{2,3}\b/g;
+  const codigosEm = (s) => Array.from(new Set((String(s || '').toUpperCase().match(HABILIDADE_RE) || [])));
+  const QUESTOES_TIPOS = ['exercicios', 'avaliacao', 'atividade'];
+
+  /* Extrai as questões numeradas dos blocos de exercícios/avaliação/atividade. Nunca inventa habilidade:
+     o código só entra se está escrito na questão, no bloco ou nos objetivos do material (e a origem fica registrada). */
+  function extrairQuestoes(m) {
+    m = normalize(m);
+    const itens = [];
+    const objCodes = codigosEm(m.objectives.join(' ') + ' ' + m.topic);
+    const gabaritos = {};
+    m.blocks.filter((b) => b.type === 'gabarito').forEach((b) => {
+      String(b.content || '').split(/\n(?=\s*\d+[.)]\s)/).forEach((t) => { const k = /^\s*(\d+)[.)]\s+([\s\S]*)$/.exec(t); if (k && !gabaritos[k[1]]) gabaritos[k[1]] = k[2].trim(); });
+    });
+    m.blocks.filter((b) => QUESTOES_TIPOS.includes(b.type)).forEach((b) => {
+      const content = String(b.content || '').replace(/\r\n?/g, '\n');
+      const blockCodes = codigosEm(b.title + ' ' + (b.callout ? b.callout.text : ''));
+      const partes = content.split(/\n(?=\s*\d+[.)]\s)/);
+      let nivel = '';
+      partes.forEach((p) => {
+        const mm = /^\s*(\d+)[.)]\s+([\s\S]*)$/.exec(p);
+        const head = /\*\*([^*]+)\*\*/.exec(p);
+        if (!mm) { if (head) nivel = head[1].replace(/[:\s]+$/, ''); return; }
+        let enun = mm[2].trim();
+        const h2 = /\n\s*\*\*([^*]+)\*\*\s*$/.exec(enun);
+        if (h2) { nivel = h2[1].replace(/[:\s]+$/, ''); enun = enun.slice(0, h2.index).trim(); }
+        const qCodes = codigosEm(enun);
+        const hab = qCodes.length ? qCodes : (blockCodes.length ? blockCodes : objCodes);
+        itens.push({
+          id: (m.title || 'material').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '#' + b.id + '-' + mm[1],
+          material: m.title, disciplina: m.discipline, etapa: m.level, blocoId: b.id, blocoTipo: b.type, blocoTitulo: b.title,
+          numero: Number(mm[1]), nivel, enunciado: enun,
+          habilidades: hab, habilidadesOrigem: !hab.length ? 'nenhuma' : qCodes.length ? 'questao' : blockCodes.length ? 'bloco' : 'objetivos do material',
+          gabarito: b.type === 'exercicios' && gabaritos[mm[1]] ? gabaritos[mm[1]] : '',
+          gabaritoNota: b.type === 'exercicios' && gabaritos[mm[1]] ? 'pareado pelo número da questão; confira' : '',
+        });
+      });
+    });
+    return itens;
+  }
+
+  function bancoDeQuestoes(materiais, o) {
+    o = o || {};
+    const lista = Array.isArray(materiais) ? materiais : [materiais];
+    const itens = [];
+    lista.forEach((m) => extrairQuestoes(m).forEach((q) => itens.push(q)));
+    const porHab = {};
+    itens.forEach((q) => (q.habilidades.length ? q.habilidades : ['(sem habilidade declarada)']).forEach((h) => { porHab[h] = (porHab[h] || 0) + 1; }));
+    return {
+      schema: BANK_SCHEMA, geradoEm: o.agora || new Date().toISOString(), validado: false,
+      aviso: 'Banco gerado automaticamente a partir de materiais em rascunho ou validados individualmente. Nenhuma questão foi revisada como item de banco; quem decide o uso é o professor.',
+      total: itens.length, porHabilidade: porHab, itens,
+    };
+  }
+
+  function listaDeExercicios(banco, o) {
+    o = o || {};
+    let it = (banco && banco.itens) || [];
+    if (o.habilidade) it = it.filter((q) => q.habilidades.includes(String(o.habilidade).toUpperCase()));
+    if (o.limite > 0) it = it.slice(0, o.limite);
+    const titulo = o.titulo || ('Lista de exercícios' + (o.habilidade ? ' · ' + String(o.habilidade).toUpperCase() : ''));
+    const q = it.map((x, k) => '<li value="' + (k + 1) + '"><div>' + renderMarkdown(x.enunciado) + '</div><small>' + esc(x.material) + (x.habilidades.length ? ' · ' + x.habilidades.map(esc).join(', ') : '') + '</small></li>').join('');
+    const g = o.comGabarito ? '<section class="gab"><h2>Gabarito (confira antes de usar)</h2><ol>' + it.map((x, k) => '<li value="' + (k + 1) + '">' + (x.gabarito ? inline(x.gabarito) : '<em>sem gabarito pareado</em>') + '</li>').join('') + '</ol></section>' : '';
+    return '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><title>' + esc(titulo) + '</title>' + getKatexStyleTag() + '<style>' + DOC_CSS + 'ol li{margin:12px 0}small{color:#55607a;display:block}.gab{page-break-before:always}</style></head><body><div class="doc"><h1>' + esc(titulo) + '</h1><div class="meta">' + it.length + ' questão(ões) · Rascunho: aguarda revisão do professor</div><ol>' + q + '</ol>' + g + '</div></body></html>';
+  }
+
+  return { BLUEPRINT_SCHEMA, UNIT_SCHEMA, estadoAcumulado, buildBlueprintRequest, normalizeBlueprint, importBlueprint, hashBlueprint, estadoBlueprint, approveBlueprint, proximaUnidade, buildUnitRequest, applyUnit, problemasParaReparo, buildRepairPrompt, applyRepair, REPAIR_SCHEMA, avisosDeImportacao, VERSION, SCHEMA, hashConteudo, estadoRevisao, DEFAULT_AUTHOR, REGISTROS, DESTINATARIOS, INTERIOR_STYLES, AVATAR_OPTIONS, LOGO_OPTIONS, EDITORIAL_IDENTITY, PROFESSOR_ALE_IDENTITY, PROFESSOR_ALE_DISCIPLINE_LABELS, getProfessorAleContext, BLOCK_PEDAGOGY, CONTENT_PROFILES, SECTION_CATALOG, PROFILE_SECTIONS, STAGE_PROFILES, calibrateStage, emblemFor, epistemicEmblemSvg: emblemFor, EPISTEMIC, BLOCK_TYPES, POSTER_THEMES, COVER_CSS, POSTER_CSS, INFOGRAPHIC_CSS, DOC_CSS, VISUALS, esc, uid, wc, clone, detectType, sanitizeSvg, renderMathExpr, getKatexStyleTag, renderMarkdown, renderCleanCover, renderPoster, renderOpeningInfographic, buildImagePrompt, buildCoverPrompt, coverArtOk, buildRequestText, normalize, fromV2, parseModelJson, importFromText, audit, toMarkdown, toHTML, toApostila, CALLOUTS, scaffold, demo, slidePlan, toSlides, BANK_SCHEMA, extrairQuestoes, bancoDeQuestoes, listaDeExercicios };
 });
