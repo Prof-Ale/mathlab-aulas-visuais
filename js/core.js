@@ -1559,7 +1559,7 @@
   const INFOGRAPHIC_CSS = [
     '.mlopen-info{background:#F8F3E6;border:3px solid #0D2B5B;border-radius:14px;padding:20px 24px;min-height:1050px;display:flex;flex-direction:column;gap:14px;color:#0D2B5B}',
     '.mlopen-head{display:flex;align-items:center;justify-content:space-between;gap:14px;border-bottom:4px solid #F7B500;padding-bottom:10px}',
-    '.mlopen-kicker{font-family:"Fredoka",sans-serif;font-size:12px;text-transform:uppercase;letter-spacing:.9px;color:#F57C00;font-weight:700}',
+    '.mlopen-kicker{font-family:"Fredoka",sans-serif;font-size:12px;text-transform:uppercase;letter-spacing:.9px;color:#9A4600;font-weight:700}',
     '.mlopen-head h2{font-family:"Fredoka",sans-serif;font-size:24px;margin:2px 0;color:#0D2B5B}',
     '.mlopen-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;flex:1}',
     '.mlopen-card{background:#fff;border:2px solid #0D2B5B;border-top:5px solid var(--c,#1E88E5);border-radius:12px;padding:12px 14px;font-size:13.5px;line-height:1.45}',
@@ -1979,5 +1979,85 @@
     return '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><title>' + esc(titulo) + '</title>' + getKatexStyleTag() + '<style>' + DOC_CSS + 'ol li{margin:12px 0}small{color:#55607a;display:block}.gab{page-break-before:always}</style></head><body><div class="doc"><h1>' + esc(titulo) + '</h1><div class="meta">' + it.length + ' questão(ões) · Rascunho: aguarda revisão do professor</div><ol>' + q + '</ol>' + g + '</div></body></html>';
   }
 
-  return { BLUEPRINT_SCHEMA, UNIT_SCHEMA, estadoAcumulado, buildBlueprintRequest, normalizeBlueprint, importBlueprint, hashBlueprint, estadoBlueprint, approveBlueprint, proximaUnidade, buildUnitRequest, applyUnit, problemasParaReparo, buildRepairPrompt, applyRepair, REPAIR_SCHEMA, avisosDeImportacao, VERSION, SCHEMA, hashConteudo, estadoRevisao, DEFAULT_AUTHOR, REGISTROS, DESTINATARIOS, INTERIOR_STYLES, AVATAR_OPTIONS, LOGO_OPTIONS, EDITORIAL_IDENTITY, PROFESSOR_ALE_IDENTITY, PROFESSOR_ALE_DISCIPLINE_LABELS, getProfessorAleContext, BLOCK_PEDAGOGY, CONTENT_PROFILES, SECTION_CATALOG, PROFILE_SECTIONS, STAGE_PROFILES, calibrateStage, emblemFor, epistemicEmblemSvg: emblemFor, EPISTEMIC, BLOCK_TYPES, POSTER_THEMES, COVER_CSS, POSTER_CSS, INFOGRAPHIC_CSS, DOC_CSS, VISUALS, esc, uid, wc, clone, detectType, sanitizeSvg, renderMathExpr, getKatexStyleTag, renderMarkdown, renderCleanCover, renderPoster, renderOpeningInfographic, buildImagePrompt, buildCoverPrompt, coverArtOk, normalizeBridgeImage, renderBlockImageHtml, buildRequestText, normalize, fromV2, parseModelJson, importFromText, audit, toMarkdown, toHTML, toApostila, CALLOUTS, scaffold, demo, slidePlan, toSlides, BANK_SCHEMA, extrairQuestoes, bancoDeQuestoes, listaDeExercicios };
+  /* ---------- exemplo multidisciplinar (História, 8º ano — desfaz a expectativa "só Matemática") ---------- */
+  function demoHistoria() {
+    return normalize({
+      schema: SCHEMA,
+      title: 'Revolução Industrial e o mundo do trabalho',
+      discipline: 'História',
+      level: '8º ano do Ensino Fundamental',
+      topic: 'Revolução Industrial',
+      duration: '2 aulas de 50 minutos',
+      epistemicType: 'historica',
+      objectives: [
+        'Identificar as transformações técnicas e sociais da Primeira Revolução Industrial na Inglaterra',
+        'Comparar a oficina artesanal com a fábrica mecanizada a partir de fontes históricas',
+        'Analisar impactos no cotidiano de trabalhadores, mulheres e crianças no século XVIII e XIX'
+      ],
+      prerequisites: ['Noção de manufatura e comércio marítimo europeu', 'Leitura básica de linhas do tempo e fontes primárias'],
+      blocks: [
+        { type: 'problematizacao', title: 'Do tempo da natureza ao tempo do relógio', callout: { kind: 'sabia', text: 'Antes das fábricas, muitos artesãos organizavam o ritmo de trabalho pela luz do dia e pelas estações.' }, content: 'Como a invenção da máquina a vapor mudou não apenas o jeito de fabricar tecidos, mas o ritmo da vida nas cidades e nas famílias?' },
+        { type: 'contexto', title: 'Inglaterra, século XVIII', content: 'A acumulação de capitais comerciais, os cercamentos de terras (*enclosures*) e a disponibilidade de carvão mineral e ferro criaram condições históricas para a mecanização da produção têxtil.' },
+        { type: 'visual', title: 'Marcos da Primeira Revolução Industrial', content: 'A linha do tempo reúne invenções que aceleraram a produção e os transportes entre 1769 e 1830.', svg: timeline({ events: [{ when: '1769', label: 'Máquina a vapor (Watt)' }, { when: '1785', label: 'Tear mecânico' }, { when: '1825', label: 'Primeira ferrovia' }], title: 'Marcos da Primeira Revolução Industrial' }) },
+        { type: 'conceito', title: 'Oficina artesanal × fábrica mecanizada', content: 'Na **oficina artesanal**, o trabalhador dominava todas as etapas do produto. Na **fábrica**, a divisão de tarefas, a disciplina do relógio e o salário passaram a organizar o trabalho coletivo.' },
+        { type: 'exemplo', title: 'Leitura de fonte histórica', content: 'Relatos parlamentares britânicos da década de 1830 descrevem jornadas de mais de 12 horas em tecelagens, levando às primeiras leis de limitação do trabalho infantil (*Factory Act*, 1833).' },
+        { type: 'atividade', title: 'Debate orientado com fontes', content: 'Em duplas, comparem duas rotinas: a de um tecelão em 1750 e a de um operário em 1830. Quais mudanças foram técnicas e quais foram sociais?' },
+        { type: 'acessibilidade', title: 'Estratégias de acessibilidade (DUA)', content: '- Oferecer a linha do tempo em versão ampliada e leitura em voz alta das fontes.\n- Permitir síntese por esquema visual, áudio ou texto curto.' }
+      ],
+      references: [],
+      limitations: ['Material de demonstração em História: nenhuma fonte externa foi consultada na geração; conferir com o livro didático adotado.'],
+      poster: {
+        title: 'Revolução Industrial',
+        subtitle: 'Máquinas, fábricas e a transformação do tempo de trabalho',
+        sections: [
+          { label: 'Contexto', title: '', text: 'Inglaterra do século XVIII: carvão, cercamentos e capital comercial.' },
+          { label: 'Fatos', title: '', text: 'Máquina a vapor, tear mecânico e ferrovias aceleraram a produção.' },
+          { label: 'Fontes', title: '', text: 'Relatos operários e inquéritos parlamentares mostram jornadas extensas.' },
+          { label: 'Consequências', title: '', text: 'Urbanização acelerada, sindicatos e primeiras leis trabalhistas.' },
+          { label: 'Resumo estratégico', title: '', text: 'Mudou a técnica, mas mudou sobretudo a organização social do trabalho.' }
+        ],
+        goldTip: 'Compare sempre tecnologia (máquinas) com relações sociais (quem controla o tempo e o trabalho).',
+        didYouKnow: 'O relógio de ponto surgiu junto com a disciplina fabril.',
+        attention: 'Não confunda causa única com processo histórico: técnica, economia e sociedade atuaram juntas.',
+        summary: [{ icon: '⚙️', label: 'Mecanização', text: 'vapor e teares' }, { icon: '⏰', label: 'Tempo fabril', text: 'jornadas rígidas' }, { icon: '🏙️', label: 'Cidades', text: 'êxodo rural' }],
+        theme: 'alegre'
+      },
+      meta: { generatedBy: 'manual', demo: true }
+    });
+  }
+
+  /* ---------- Diff de blocos desde a última versão validada (F-09) ---------- */
+  function diffMaterialBlocks(prevMat, curMat) {
+    const oldList = (prevMat && Array.isArray(prevMat.blocks)) ? prevMat.blocks : [];
+    const newList = (curMat && Array.isArray(curMat.blocks)) ? curMat.blocks : [];
+    const oldById = new Map(oldList.map((b, i) => [b.id || ('idx_' + i), b]));
+    const newById = new Map(newList.map((b, i) => [b.id || ('idx_' + i), b]));
+    const changes = [];
+    if (prevMat && curMat && (prevMat.title !== curMat.title || JSON.stringify(prevMat.objectives || []) !== JSON.stringify(curMat.objectives || []))) {
+      changes.push({
+        kind: 'altered',
+        label: 'Identificação / Objetivos',
+        before: (prevMat.title || '') + '\n' + (prevMat.objectives || []).join('\n'),
+        after: (curMat.title || '') + '\n' + (curMat.objectives || []).join('\n')
+      });
+    }
+    newList.forEach((b, i) => {
+      const k = b.id || ('idx_' + i);
+      const prev = oldById.get(k);
+      if (!prev) {
+        changes.push({ kind: 'added', label: b.title || ('Bloco ' + (i + 1)), before: '', after: b.content || '' });
+      } else if (prev.title !== b.title || prev.content !== b.content || prev.type !== b.type || (prev.svg || '') !== (b.svg || '')) {
+        changes.push({ kind: 'altered', label: b.title || prev.title || ('Bloco ' + (i + 1)), before: (prev.title ? prev.title + '\n' : '') + (prev.content || ''), after: (b.title ? b.title + '\n' : '') + (b.content || '') });
+      }
+    });
+    oldList.forEach((b, i) => {
+      const k = b.id || ('idx_' + i);
+      if (!newById.has(k)) {
+        changes.push({ kind: 'removed', label: b.title || ('Bloco ' + (i + 1)), before: b.content || '', after: '' });
+      }
+    });
+    return changes;
+  }
+
+  return { BLUEPRINT_SCHEMA, UNIT_SCHEMA, estadoAcumulado, buildBlueprintRequest, normalizeBlueprint, importBlueprint, hashBlueprint, estadoBlueprint, approveBlueprint, proximaUnidade, buildUnitRequest, applyUnit, problemasParaReparo, buildRepairPrompt, applyRepair, REPAIR_SCHEMA, avisosDeImportacao, VERSION, SCHEMA, hashConteudo, estadoRevisao, DEFAULT_AUTHOR, REGISTROS, DESTINATARIOS, INTERIOR_STYLES, AVATAR_OPTIONS, LOGO_OPTIONS, EDITORIAL_IDENTITY, PROFESSOR_ALE_IDENTITY, PROFESSOR_ALE_DISCIPLINE_LABELS, getProfessorAleContext, BLOCK_PEDAGOGY, CONTENT_PROFILES, SECTION_CATALOG, PROFILE_SECTIONS, STAGE_PROFILES, calibrateStage, emblemFor, epistemicEmblemSvg: emblemFor, EPISTEMIC, BLOCK_TYPES, POSTER_THEMES, COVER_CSS, POSTER_CSS, INFOGRAPHIC_CSS, DOC_CSS, VISUALS, esc, uid, wc, clone, detectType, sanitizeSvg, renderMathExpr, getKatexStyleTag, renderMarkdown, renderCleanCover, renderPoster, renderOpeningInfographic, buildImagePrompt, buildCoverPrompt, coverArtOk, normalizeBridgeImage, renderBlockImageHtml, buildRequestText, normalize, fromV2, parseModelJson, importFromText, audit, toMarkdown, toHTML, toApostila, CALLOUTS, scaffold, demo, demoHistoria, diffMaterialBlocks, slidePlan, toSlides, BANK_SCHEMA, extrairQuestoes, bancoDeQuestoes, listaDeExercicios };
 });

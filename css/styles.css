@@ -1,10 +1,23 @@
+/* Fontes locais OFL (zero requisição externa na versão web) */
+@font-face{font-family:"Nunito";src:url("../assets/fontes/nunito-latin-400-normal.woff2") format("woff2");font-weight:400;font-display:swap}
+@font-face{font-family:"Nunito";src:url("../assets/fontes/nunito-latin-600-normal.woff2") format("woff2");font-weight:600;font-display:swap}
+@font-face{font-family:"Nunito";src:url("../assets/fontes/nunito-latin-700-normal.woff2") format("woff2");font-weight:700;font-display:swap}
+@font-face{font-family:"Nunito";src:url("../assets/fontes/nunito-latin-800-normal.woff2") format("woff2");font-weight:800;font-display:swap}
+@font-face{font-family:"Fredoka";src:url("../assets/fontes/fredoka-latin-600-normal.woff2") format("woff2");font-weight:600;font-display:swap}
+@font-face{font-family:"Fredoka";src:url("../assets/fontes/fredoka-latin-700-normal.woff2") format("woff2");font-weight:700;font-display:swap}
+@font-face{font-family:"Caveat";src:url("../assets/fontes/caveat-latin-600-normal.woff2") format("woff2");font-weight:600;font-display:swap}
+@font-face{font-family:"Caveat";src:url("../assets/fontes/caveat-latin-700-normal.woff2") format("woff2");font-weight:700;font-display:swap}
+@font-face{font-family:"Patrick Hand";src:url("../assets/fontes/patrick-hand-latin-400-normal.woff2") format("woff2");font-weight:400;font-display:swap}
+
+/* Tokens oficiais unificados (App + Exportado + Documentação de Identidade) */
 :root{
-  --navy:#14264f; --navy2:#1d3770; --gold:#f2b705; --gold-soft:#ffe9a8;
+  --navy:#0d2b5b; --navy2:#1a3d7c; --gold:#f7b500; --gold-soft:#ffe9a8;
+  --cream:#f8f3e6; --accent-orange:#f57c00; --orange-text:#9a4600;
   --bg:#edf1f6; --bg2:#e3eaf3; --card:#ffffff; --surface2:#f6f8fc;
-  --line:#d2dceb; --line-strong:#b4c3dc;
-  --ink:#14264f; --ink2:#36486e; --mut:#4d5d7e;
+  --line:#d2dceb; --line-strong:#b4c3dc; --bd:var(--line); --chip-bg:var(--surface2); --blue:var(--navy2);
+  --ink:#0d2b5b; --ink2:#36486e; --mut:#4d5d7e;
   --ok:#147041; --ok-bg:#dcf5e6; --bad:#b3261e; --bad-bg:#fde3e1; --warn:#8f5400; --warn-bg:#fff1d1;
-  --shadow:0 4px 16px rgba(20,38,79,.08);
+  --shadow:0 4px 16px rgba(13,43,91,.08);
   --header-h:62px;
 }
 @media (prefers-color-scheme: dark){
@@ -177,4 +190,32 @@ details{margin:8px 0}summary{cursor:pointer;color:var(--ink2);font-weight:700;mi
 .calib-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px;font-size:.83rem;line-height:1.4}
 .calib-cell{background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:8px 10px}
 .calib-cell b{display:block;font-size:.78rem;text-transform:uppercase;letter-spacing:.35px;color:var(--blue);margin-bottom:2px}
-@media print{.top,.intro,.navzone,.continue-strip,.example-banner,.foot,#toast{display:none!important}}
+.intro-demos{margin-left:auto;display:flex;flex-wrap:wrap;gap:6px}
+.autosave-banner{display:flex;flex-wrap:wrap;align-items:center;gap:10px;background:var(--bad-bg);border:1.5px solid var(--bad);color:var(--bad);border-radius:12px;padding:11px 14px;margin-bottom:14px;font-size:.9rem;font-weight:700}
+.autosave-banner p{margin:0;flex:1 1 260px}
+.rev-strip{display:flex;flex-wrap:wrap;gap:6px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-bottom:14px;font-size:.83rem;box-shadow:var(--shadow)}
+.rev-step{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:999px;background:var(--surface2);border:1px solid var(--line);color:var(--mut);font-weight:700}
+.rev-step.ok{background:var(--ok-bg);border-color:var(--ok);color:var(--ok)}
+.rev-step.warn{background:var(--warn-bg);border-color:var(--warn);color:var(--warn)}
+.dropzone{border:2px dashed var(--line-strong);border-radius:12px;padding:14px;text-align:center;background:var(--surface2);margin:8px 0;transition:border-color .15s,background .15s}
+.dropzone.over{border-color:var(--gold);background:var(--warn-bg)}
+.quota-bar{height:10px;background:var(--bg2);border-radius:99px;overflow:hidden;margin:6px 0}
+.quota-bar i{display:block;height:100%;background:var(--ok)}
+.quota-bar.warn i{background:var(--warn)}
+.quota-bar.bad i{background:var(--bad)}
+.exp-group{border:1px solid var(--line);border-radius:12px;padding:14px;margin:12px 0;background:var(--surface2)}
+.exp-group h3{margin:0 0 6px}
+.exp-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;padding:8px 0;border-top:1px solid var(--line)}
+.exp-row:first-of-type{border-top:0}
+.exp-meta{flex:1 1 240px;min-width:0}
+.exp-badge{display:inline-block;font-size:.72rem;font-weight:800;padding:2px 8px;border-radius:999px;margin-left:6px;background:var(--ok-bg);color:var(--ok)}
+.exp-badge.cli{background:var(--warn-bg);color:var(--warn)}
+.beta-tag{display:inline-block;font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.4px;padding:1px 6px;border-radius:999px;background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn);margin-left:4px}
+.diff-box{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:8px 0;background:var(--surface2)}
+.diff-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:6px}
+.diff-old{background:var(--bad-bg);border-left:4px solid var(--bad);padding:8px 10px;border-radius:6px;font-size:.84rem;white-space:pre-wrap;overflow-wrap:anywhere}
+.diff-new{background:var(--ok-bg);border-left:4px solid var(--ok);padding:8px 10px;border-radius:6px;font-size:.84rem;white-space:pre-wrap;overflow-wrap:anywhere}
+html,body{overflow-x:clip}
+.card,.blk,.list-item,.row>*{min-width:0}
+@media (pointer:coarse){button.b,label.b,button.b.sm,.subtab,.group-btn,.top-btn,summary{min-height:44px}}
+@media print{.top,.intro,.navzone,.continue-strip,.example-banner,.autosave-banner,.rev-strip,.foot,#toast{display:none!important}}

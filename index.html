@@ -14,9 +14,6 @@
 <meta name="twitter:title" content="MathLab Aulas Visuais — Autoria Docente">
 <meta name="twitter:description" content="Crie, edite, audite e exporte aulas e apostilas visuais de qualquer disciplina, 100% local.">
 <link rel="icon" type="image/jpeg" href="assets/logo-mathlab-selo.jpg">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Fredoka:wght@600;700&family=Nunito:wght@400;600;700;800&family=Patrick+Hand&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/vendor/katex/katex.min.css">
 <link rel="stylesheet" href="css/styles.css">
 </head>
@@ -31,16 +28,19 @@
     </div>
   </div>
   <div class="top-tools">
-    <span class="local-chip">Tudo local · sem conta</span>
-    <span class="ver-chip" id="verTop" title="Versão unificada lida do manifest.json">v2.0.0</span>
+    <span class="local-chip">Nenhum conteúdo seu sai do navegador</span>
+    <span class="ver-chip" id="verTop" title="Versão do motor lida do manifest.json">motor v2.0.0</span>
     <button class="top-btn" id="themeBtn" type="button" aria-label="Alternar tema claro e escuro" title="Alternar tema">◐ <span>Tema</span></button>
     <button class="top-btn" id="helpTopBtn" type="button" data-a="tab" data-t="ajuda">❓ <span>Ajuda</span></button>
   </div>
 </header>
 
 <section class="intro wrap" aria-labelledby="pageTitle">
-  <h1 id="pageTitle">Crie apostilas visuais completas a partir de um pedido — quem valida é você.</h1>
-  <button class="b ghost sm" type="button" id="heroExampleBtn" data-a="previewdemo">👁️ Ver exemplo completo</button>
+  <h1 id="pageTitle">Crie apostilas visuais completas para qualquer disciplina — quem valida é você.</h1>
+  <div class="intro-demos">
+    <button class="b ghost sm" type="button" id="heroExampleBtn" data-a="previewdemo">👁️ Exemplo: Matemática</button>
+    <button class="b ghost sm" type="button" id="heroExampleHistBtn" data-a="previewdemohist">🏛️ Exemplo: História</button>
+  </div>
 </section>
 
 <div class="navzone wrap" id="navzone">
@@ -52,7 +52,7 @@
   </div>
 </div>
 
-<main id="main" tabindex="-1">
+<main id="main" role="tabpanel" tabindex="-1">
   <div class="card">
     <h2>Carregando ambiente de autoria…</h2>
     <p class="muted">1. Descreva a aula e gere o pedido · 2. Gere o JSON com seu Gem/Claude · 3. Importe, audite e valide antes de exportar.</p>

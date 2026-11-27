@@ -3,15 +3,47 @@
   'use strict';
   const C = window.MathLabCore, esc = C.esc, D = window.MathLabDominios || null, LV = window.MathLabLivro || null, FT = window.MathLabFontes || null;
   const KEY = 'mathlab.lib.v2';
+  const AUTOSAVE_KEY = 'mathlab.autosave.v1';
   const $ = (s, r) => (r || document).querySelector(s);
 
-  /* ---------- armazenamento ---------- */
+  /* ---------- armazenamento + telemetria de cota e backup (F-06) ---------- */
   function load() { try { const j = JSON.parse(localStorage.getItem(KEY) || 'null'); if (j && Array.isArray(j.projects)) return j; } catch (e) { /* ignora */ } return { projects: [] }; }
   let lib = load();
+  if (!lib.meta || typeof lib.meta !== 'object') lib.meta = {};
   function persist() {
     try { localStorage.setItem(KEY, JSON.stringify(lib)); return true; }
     catch (e) { toast('Não consegui salvar no navegador (espaço cheio ou bloqueado). Baixe um backup na Biblioteca.', true); return false; }
   }
+  function storageUsageInfo() {
+    let bytes = 0;
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        bytes += (k.length + (localStorage.getItem(k) || '').length) * 2;
+      }
+    } catch (e) { /* ignora */ }
+    const quota = 5 * 1024 * 1024;
+    const pct = Math.min(100, Math.round((bytes / quota) * 100));
+    return { bytes, kb: Math.round(bytes / 1024), pct };
+  }
+  function readPendingAutosave() {
+    try {
+      const raw = localStorage.getItem(AUTOSAVE_KEY);
+      if (!raw) return null;
+      const a = JSON.parse(raw);
+      if (!a || !a.draft || !a.at) return null;
+      if (a.pid && a.mid) {
+        const p = lib.projects.find((x) => x.id === a.pid);
+        const rec = p && p.materials.find((x) => x.id === a.mid);
+        if (rec && rec.versions && rec.versions.length) {
+          const last = rec.versions[rec.versions.length - 1];
+          if (new Date(a.at).getTime() <= new Date(last.at).getTime()) return null;
+        }
+      }
+      return a;
+    } catch (e) { return null; }
+  }
+  function clearAutosave() { try { localStorage.removeItem(AUTOSAVE_KEY); } catch (e) { /* ignora */ } }
 
   const S = { tab: lib.projects.length ? 'biblioteca' : 'criar', pid: null, mid: null, draft: null, dirty: false, isPreviewExample: false, flowStep: 1, libQuery: '', showPrev: false, showVers: false, showArch: false,
     diario: (() => { try { return JSON.parse(localStorage.getItem('mathlab.diario.v1') || 'null'); } catch (e) { return null; } })(),
@@ -38,26 +70,40 @@
   }
   function addMaterial(p, data, note) {
     const rec = { id: C.uid('m'), cur: null, versions: [] };
-    pushVersion(rec, data, note || 'Versão inicial'); p.materials.unshift(rec); logp(p, 'Material criado: ' + data.title); persist(); return rec;
+    pushVersion(rec, data, note || 'Versão inicial'); p.materials.unshift(rec); logp(p, 'Material criado: ' + data.title);
+    lib.meta = lib.meta || {}; lib.meta.materiaisDesdeBackup = (lib.meta.materiaisDesdeBackup || 0) + 1;
+    persist(); return rec;
   }
   function openMat(pid, mid) {
     if (S.dirty && !confirm('Há alterações não salvas no material aberto. Descartar e abrir outro?')) return;
-    S.pid = pid; S.mid = mid; S.isPreviewExample = false; S.draft = C.clone(curData(proj(pid).materials.find((m) => m.id === mid))); S.dirty = false; S.tab = 'editor'; render();
+    S.pid = pid; S.mid = mid; S.isPreviewExample = false; S.showDiff = false; S.draft = C.clone(curData(proj(pid).materials.find((m) => m.id === mid))); S.dirty = false; S.tab = 'editor'; render();
   }
   let autoTimer = null;
+  function saveAutosaveNow(storageImpl) {
+    const st = storageImpl || (typeof localStorage !== 'undefined' ? localStorage : null);
+    const rec = mat(); if (!rec || !S.draft || !st) return { ok: false, skipped: true };
+    try {
+      st.setItem(AUTOSAVE_KEY, JSON.stringify({ pid: S.pid, mid: S.mid, at: new Date().toISOString(), draft: S.draft }));
+      const m = $('#dirtymark');
+      if (m) { m.className = 'pill ok'; m.textContent = '✓ rascunho salvo automaticamente'; }
+      return { ok: true };
+    } catch (e) {
+      const m = $('#dirtymark');
+      if (m) { m.className = 'pill bad'; m.innerHTML = '⚠️ falha ao salvar automaticamente — <button class="b danger sm" type="button" data-a="backup">Baixar backup</button>'; }
+      toast('Não foi possível salvar o rascunho automaticamente (espaço cheio ou bloqueado). Baixe um backup na Biblioteca.', true);
+      return { ok: false, error: e && e.message ? e.message : 'erro' };
+    }
+  }
   function scheduleAutosave() {
     clearTimeout(autoTimer);
-    autoTimer = setTimeout(() => {
-      const rec = mat(); if (!rec || !S.draft) return;
-      try { localStorage.setItem('mathlab.autosave.v1', JSON.stringify({ pid: S.pid, mid: S.mid, at: new Date().toISOString(), draft: S.draft })); } catch (e) { /* ignora */ }
-      const m = $('#dirtymark'); if (m) { m.className = 'pill ok'; m.textContent = '✓ rascunho salvo automaticamente'; }
-    }, 1200);
+    autoTimer = setTimeout(() => { saveAutosaveNow(); }, 1200);
   }
   function saveDraft() {
     if (S.isPreviewExample && S.draft) { A.savepreviewdemo(); return; }
     const rec = mat(); if (!rec) return;
     S.draft = C.normalize(S.draft); pushVersion(rec, S.draft, 'Edição ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }));
-    logp(proj(), 'Nova versão salva: ' + S.draft.title); if (persist()) toast('Versão salva. As anteriores continuam disponíveis em "Versões".');
+    logp(proj(), 'Nova versão salva: ' + S.draft.title);
+    if (persist()) { clearAutosave(); toast('Versão salva. As anteriores continuam disponíveis em "Versões".'); }
     S.dirty = false; render();
   }
 
@@ -118,7 +164,7 @@
     organizar: {
       label: 'Organizar',
       desc: '<strong>Organizar</strong> — sua biblioteca de projetos, compilação de livros e diário docente.',
-      tabs: [['biblioteca', '📚 Biblioteca'], ['livro', '📖 Livro'], ['diario', '📒 Diário & Portfólio']]
+      tabs: [['biblioteca', '📚 Biblioteca'], ['livro', '📖 Livro'], ['diario', '📒 Diário & Portfólio <span class="beta-tag">Beta</span>']]
     }
   };
   const NEED = ['editor', 'poster', 'apostila', 'auditoria', 'exportar'];
@@ -127,7 +173,7 @@
     poster: ['A Capa (pôster)', 'monta a capa visual da apostila com caixas numeradas, destaque e prompt de imagem.'],
     apostila: ['A Apostila completa', 'junta capa e miolo paginado em A4 com sumário, blocos didáticos e referências.'],
     auditoria: ['A Auditoria', 'confere o material em 10 categorias e aponta o que verificar — sem nunca aprovar por você.'],
-    exportar: ['Exportar', 'gera HTML, JSON (mathlab.material/2), Markdown e SVGs diretamente no navegador.']
+    exportar: ['Exportar', 'gera apostila para imprimir, slides para projetar e arquivo do material para continuar editando, direto no navegador.']
   };
   function groupOf(tab) {
     if (tab === 'criar' || tab === 'plano') return 'criar';
@@ -158,26 +204,76 @@
     return '';
   }
 
+  function autosaveBannerHtml() {
+    const pending = readPendingAutosave();
+    if (!pending) return '';
+    return '<div class="autosave-banner" role="alert"><p>⚠️ Rascunho não salvo de <b>' + esc(fmt(pending.at)) + '</b> (“' + esc(pending.draft.title || 'Material') + '”).</p>' +
+      '<div class="btns" style="margin:0"><button class="b sm gold" type="button" data-a="restoreautosave">Restaurar rascunho</button><button class="b sm ghost" type="button" data-a="discardautosave">Descartar</button></div></div>';
+  }
+  function revisarProgressHtml() {
+    if (!NEED.includes(S.tab) || !S.draft) return '';
+    const d = S.draft, rec = mat(), rv = C.estadoRevisao(d);
+    const edited = !!(S.dirty || (rec && rec.versions && rec.versions.length > 1));
+    const audAt = d.meta && d.meta.lastAuditedAt ? fmt(d.meta.lastAuditedAt) : '';
+    const expAt = d.meta && d.meta.lastExportedAt ? fmt(d.meta.lastExportedAt) : '';
+    const valTxt = rv.validado ? 'Validado por ' + esc(d.revisao.revisadoPor) + ' em ' + esc(d.revisao.data) : rv.desatualizada ? 'Validação desatualizada após edição' : 'Aguarda validação';
+    return '<nav class="rev-strip" aria-label="Progresso da revisão">' +
+      '<span class="rev-step ok">✓ Importado</span>' +
+      '<span class="rev-step' + (edited ? ' ok' : '') + '">' + (edited ? '✓ ' : '') + 'Editado</span>' +
+      '<span class="rev-step' + (audAt ? ' ok' : '') + '">' + (audAt ? '✓ Auditado (' + esc(audAt) + ')' : 'Auditoria pendente') + '</span>' +
+      '<span class="rev-step ' + (rv.validado ? 'ok' : rv.desatualizada ? 'warn' : '') + '">' + (rv.validado ? '✓ ' : '') + valTxt + '</span>' +
+      '<span class="rev-step' + (expAt ? ' ok' : '') + '">' + (expAt ? '✓ Exportado' : 'Exportar') + '</span></nav>';
+  }
+
   function render() {
+    const main = $('#main');
+    // Preservação sistemática de foco dentro de #main (F-03)
+    const ae = document.activeElement;
+    let focusSnap = null;
+    if (ae && main && main.contains(ae)) {
+      focusSnap = {
+        id: ae.id || '',
+        df: ae.dataset && ae.dataset.f ? ae.dataset.f : '',
+        dform: ae.dataset && ae.dataset.form ? ae.dataset.form : '',
+        start: typeof ae.selectionStart === 'number' ? ae.selectionStart : null,
+        end: typeof ae.selectionEnd === 'number' ? ae.selectionEnd : null
+      };
+    }
+
     const activeGroup = groupOf(S.tab);
     const gEl = $('#groups');
     if (gEl) {
-      gEl.innerHTML = Object.keys(GROUPS).map((g) => '<button class="group-btn" type="button" role="tab" aria-selected="' + (activeGroup === g && S.tab !== 'ajuda' ? 'true' : 'false') + '" data-a="group" data-g="' + g + '">' + GROUPS[g].label + ' <span class="gcount">' + GROUPS[g].tabs.length + '</span></button>').join('');
+      gEl.innerHTML = Object.keys(GROUPS).map((g) => {
+        const sel = activeGroup === g && S.tab !== 'ajuda';
+        return '<button id="grp-' + g + '" class="group-btn" type="button" role="tab" aria-selected="' + (sel ? 'true' : 'false') + '" aria-controls="main" tabindex="' + (sel ? '0' : '-1') + '" data-a="group" data-g="' + g + '">' + GROUPS[g].label + ' <span class="gcount">' + GROUPS[g].tabs.length + '</span></button>';
+      }).join('');
     }
     const gdEl = $('#groupDesc');
-    if (gdEl) gdEl.innerHTML = S.tab === 'ajuda' ? '<strong>Ajuda</strong> — como instalar o Gem/Skill, gerar PDF acessível e usar o contrato mathlab.material/2.' : GROUPS[activeGroup].desc;
+    if (gdEl) gdEl.innerHTML = S.tab === 'ajuda' ? '<strong>Ajuda</strong> — como configurar sua IA externa, gerar PDF e entender as opções do MathLab.' : GROUPS[activeGroup].desc;
 
     $('#tabs').innerHTML = GROUPS[activeGroup].tabs.map((t) => {
       const locked = NEED.includes(t[0]) && !S.draft;
-      return '<button id="tab-' + t[0] + '" class="subtab' + (S.tab === t[0] ? ' on' : '') + (locked ? ' locked' : '') + '" role="tab" aria-selected="' + (S.tab === t[0] ? 'true' : 'false') + '" data-a="tab" data-t="' + t[0] + '"' + (locked ? ' title="Precisa de um material aberto — clique para ver o que faz ou abrir o exemplo"' : '') + '>' + t[1] + (locked ? ' 🔒' : '') + '</button>';
+      const sel = S.tab === t[0];
+      return '<button id="tab-' + t[0] + '" class="subtab' + (sel ? ' on' : '') + (locked ? ' locked' : '') + '" type="button" role="tab" aria-selected="' + (sel ? 'true' : 'false') + '" aria-controls="main" tabindex="' + (sel ? '0' : '-1') + '" data-a="tab" data-t="' + t[0] + '"' + (locked ? ' title="Precisa de um material aberto — clique para ver o que faz ou abrir o exemplo"' : '') + '>' + t[1] + (locked ? ' 🔒' : '') + '</button>';
     }).join('');
 
     const v = { biblioteca: vBib, criar: vCriar, plano: vPlano, livro: vLivro, editor: vEditor, poster: vPoster, apostila: vApostila, auditoria: vAud, exportar: vExp, diario: vDiario, ajuda: vAjuda }[S.tab];
-    const main = $('#main');
     main.setAttribute('role', 'tabpanel');
-    main.setAttribute('aria-labelledby', 'tab-' + S.tab);
+    main.setAttribute('aria-labelledby', S.tab === 'ajuda' ? 'helpTopBtn' : 'tab-' + S.tab);
     const body = NEED.includes(S.tab) && !S.draft ? emptyStateFor(S.tab) : v();
-    main.innerHTML = exampleBannerHtml() + continueStripHtml() + body;
+    main.innerHTML = autosaveBannerHtml() + exampleBannerHtml() + revisarProgressHtml() + continueStripHtml() + body;
+
+    if (focusSnap) {
+      let target = focusSnap.id ? document.getElementById(focusSnap.id) : null;
+      if (!target && focusSnap.df) target = main.querySelector('[data-f="' + focusSnap.df + '"]');
+      if (!target && focusSnap.dform) target = main.querySelector('[data-form="' + focusSnap.dform + '"]');
+      if (target && typeof target.focus === 'function') {
+        target.focus({ preventScroll: true });
+        if (focusSnap.start !== null && typeof target.setSelectionRange === 'function') {
+          try { target.setSelectionRange(focusSnap.start, focusSnap.end); } catch (_) { /* ignora */ }
+        }
+      }
+    }
   }
 
   /* ---------- Plano por unidades ---------- */
@@ -263,7 +359,19 @@
         : (q ? '<p class="muted">Nenhum projeto corresponde a “' + esc(S.libQuery) + '”.</p>' : '<p class="muted">Nenhum projeto ainda. Crie o primeiro abaixo ou explore o exemplo completo.</p>')) +
       '<label><input type="checkbox" data-a="toggleArch" ' + (S.showArch ? 'checked' : '') + ' style="width:auto"> mostrar arquivados</label></div>' +
       '<div class="card"><h3>Novo projeto</h3><div class="row"><div><label for="np-name">Nome</label><input id="np-name" placeholder="Ex.: 7º ano — Matemática"></div><div><label for="np-disc">Disciplina</label><input id="np-disc" placeholder="Ex.: Matemática"></div><div><label for="np-level">Etapa de ensino</label><input id="np-level" placeholder="Ex.: 7º ano do Ensino Fundamental"></div></div><div class="btns"><button class="b gold" data-a="newproj">Criar projeto</button><button class="b ghost" data-a="previewdemo">👁️ Ver exemplo completo</button></div></div>' +
-      '<div class="card"><h3>Backup da Biblioteca</h3><p class="muted">Seus dados ficam só neste navegador. Baixe um backup periodicamente ou restaure um arquivo JSON anterior.</p><div class="btns"><button class="b" data-a="backup">⬇️ Baixar backup da biblioteca</button><label class="b" style="display:inline-flex;align-items:center;margin:0;cursor:pointer">⬆️ Restaurar backup<input type="file" accept=".json,application/json" data-a="restore" style="display:none"></label></div></div>';
+      '<div class="card"><h3>Backup e armazenamento da Biblioteca</h3>' +
+      (() => {
+        const u = storageUsageInfo();
+        const lastBk = lib.meta && lib.meta.ultimoBackupEm ? lib.meta.ultimoBackupEm : '';
+        const daysSince = lastBk ? Math.floor((Date.now() - new Date(lastBk).getTime()) / 86400000) : null;
+        const novos = (lib.meta && lib.meta.materiaisDesdeBackup) || 0;
+        const needReminder = (!lastBk && lib.projects.length > 0) || (daysSince !== null && daysSince >= 7) || novos >= 5;
+        return '<p class="muted">Nenhum conteúdo seu sai do navegador. <b>Último backup:</b> ' + (lastBk ? esc(fmt(lastBk)) + (daysSince !== null ? ' (há ' + daysSince + ' dia(s))' : '') : 'ainda não realizado') + '.</p>' +
+          (needReminder ? '<div class="find warn">⚠️ Lembrete: ' + (!lastBk ? 'você ainda não baixou um backup da sua Biblioteca.' : daysSince >= 7 ? 'já se passaram ' + daysSince + ' dias desde o último backup.' : 'você criou ' + novos + ' materiais desde o último backup.') + '</div>' : '') +
+          '<p class="muted" style="margin:6px 0 2px">Espaço usado neste navegador: <b>' + u.kb + ' KB</b> (~' + u.pct + '% de ~5 MB)</p>' +
+          '<div class="quota-bar' + (u.pct >= 80 ? ' bad' : u.pct >= 55 ? ' warn' : '') + '" role="progressbar" aria-valuenow="' + u.pct + '" aria-valuemin="0" aria-valuemax="100" aria-label="Uso do armazenamento do navegador"><i style="width:' + u.pct + '%"></i></div>';
+      })() +
+      '<div class="btns"><button class="b" data-a="backup">⬇️ Baixar backup da biblioteca</button><label class="b" style="display:inline-flex;align-items:center;margin:0;cursor:pointer">⬆️ Restaurar backup<input type="file" accept=".json,application/json" data-a="restore" style="display:none"></label></div></div>';
   }
 
   /* ---------- Fontes do autor (base obrigatória do pedido) ---------- */
@@ -348,7 +456,9 @@
       '<div class="step' + (S.flowStep === 1 ? ' now' : S.flowStep > 1 ? ' done' : '') + '"><b>1. Gerar e copiar o pedido</b> — monta o texto completo com tema, regras do domínio e fontes marcadas.<div class="btns"><button class="b gold" data-a="copyreq">📋 Copiar pedido</button></div>' +
       (f.lastPedido ? '<details class="pedido-box"' + (S.flowStep === 2 ? ' open' : '') + '><summary>Rascunho do último pedido salvo (' + f.lastPedido.length + ' caracteres)</summary><pre>' + esc(f.lastPedido) + '</pre></details>' : '') + '</div>' +
       '<div class="step' + (S.flowStep === 2 ? ' now' : S.flowStep > 2 ? ' done' : '') + '"><b>2. Executar na IA externa</b> — cole o pedido no seu Gem do Gemini ou no Claude (com a skill <code>mathlab-aulas-visuais</code>) e copie o JSON devolvido.<div class="ext-links"><a class="b ghost sm" href="https://gemini.google.com/" target="_blank" rel="noopener noreferrer">Abrir Gemini ↗</a><a class="b ghost sm" href="https://claude.ai/" target="_blank" rel="noopener noreferrer">Abrir Claude ↗</a><button class="b sm" data-a="gotostep3">Já copiei o JSON, continuar ↓</button></div></div>' +
-      '<div class="step' + (S.flowStep === 3 ? ' now' : S.flowStep > 3 ? ' done' : '') + '"><b>3. Colar o JSON de volta e importar</b><textarea id="cr-pasted" data-form="pasted" rows="6" placeholder="Cole aqui o bloco JSON inteiro devolvido pela IA…">' + esc(f.pasted) + '</textarea><div class="btns"><button class="b" data-a="importjson">Importar material</button></div></div>' +
+      '<div class="step' + (S.flowStep === 3 ? ' now' : S.flowStep > 3 ? ' done' : '') + '"><b>3. Trazer o arquivo ou colar a resposta da IA</b>' +
+      '<div class="dropzone" id="importDropzone"><p class="muted" style="margin:0 0 8px">Arraste um arquivo <code>.json</code> aqui ou selecione do seu dispositivo (mesma validação e avisos da colagem).</p><label class="b ghost sm" style="display:inline-flex;margin:0;cursor:pointer">📂 Escolher arquivo .json<input type="file" accept=".json,application/json" data-a="importfile" style="display:none"></label></div>' +
+      '<textarea id="cr-pasted" data-form="pasted" rows="6" placeholder="Ou cole aqui a resposta completa devolvida pela IA…">' + esc(f.pasted) + '</textarea><div class="btns"><button class="b" data-a="importjson">Importar material</button></div></div>' +
       '<div class="step' + (S.flowStep === 4 ? ' now' : '') + '"><b>4. Revisar e validar</b> — revise no <b>Editor</b>, ajuste a <b>Capa</b> e a <b>Apostila</b>, rode a <b>Auditoria</b> e valide como professor.' + (S.draft ? '<div class="btns"><button class="b sm gold" data-a="tab" data-t="editor">Abrir no Editor →</button></div>' : '') + '</div></div>' +
       '<div class="card"><h3>Outras opções</h3><div class="btns"><button class="b ghost" data-a="scaffold">Criar esqueleto offline (sem IA)</button><button class="b ghost" data-a="previewdemo">👁️ Ver exemplo completo (sem salvar)</button><button class="b ghost" data-a="demo">Salvar exemplo na Biblioteca</button></div><p class="muted">O esqueleto offline só monta a estrutura certa para o tipo de conhecimento, com marcadores [PREENCHER]. Ele não escreve conteúdo e a auditoria o reprova até você preencher.</p></div>';
   }
@@ -372,9 +482,15 @@
       '<div><label for="ed-dest">Destinatário</label><select id="ed-dest" data-f="destinatario">' + Object.keys(C.DESTINATARIOS).map((k) => '<option value="' + k + '"' + ((d.destinatario || 'estudante') === k ? ' selected' : '') + '>' + esc(C.DESTINATARIOS[k]) + '</option>').join('') + '</select></div></div>' +
       area('objectives', 'Objetivos de aprendizagem (um por linha)', 4, true) + area('prerequisites', 'Conhecimentos prévios (um por linha)', 3, true) + '</div>';
     const rv = C.estadoRevisao(d);
+    const valVer = rv.desatualizada && rec && d.revisao && d.revisao.hash
+      ? rec.versions.slice().reverse().find((v) => C.hashConteudo(v.data) === d.revisao.hash)
+      : null;
+    const deltaList = valVer ? C.diffMaterialBlocks(valVer.data, d) : [];
     h += '<div class="card" id="card-revisao"><h3>Validação do professor</h3>' +
-      '<p class="muted">Este campo só você preenche, depois de conferir o material. A IA e a auditoria nunca validam. Se você alterar o conteúdo depois, a validação fica desatualizada.</p>' +
-      '<p><span class="pill ' + (rv.validado ? 'ok' : 'warn') + '" id="revisao-estado">' + esc(rv.texto) + '</span></p>' +
+      '<p class="muted">Este campo só você preenche, depois de conferir o material. A IA e a auditoria nunca validam. Se você alterar o conteúdo depois, o material fica desatualizado após edição.</p>' +
+      '<p><span class="pill ' + (rv.validado ? 'ok' : 'warn') + '" id="revisao-estado">' + esc(rv.texto) + '</span>' + (d.revisao.nota ? ' <span class="muted">(' + esc(d.revisao.nota) + ')</span>' : '') + '</p>' +
+      (rv.desatualizada && deltaList.length ? '<div class="btns"><button class="b ghost sm" type="button" data-a="togglediff">🔎 Ver o que mudou desde a validação (' + deltaList.length + ' alteração(ões))</button><button class="b gold sm" type="button" data-a="revalidatedelta">✓ Revalidar a partir do delta</button></div>' +
+        (S.showDiff ? deltaList.map((ch) => '<div class="diff-box"><b>' + (ch.kind === 'added' ? '➕ Adicionado: ' : ch.kind === 'removed' ? '➖ Removido: ' : '✏️ Alterado: ') + esc(ch.label) + '</b><div class="diff-cols">' + (ch.before ? '<div class="diff-old"><b>Antes (validado)</b>\n' + esc(ch.before.slice(0, 600)) + '</div>' : '') + (ch.after ? '<div class="diff-new"><b>Agora (atual)</b>\n' + esc(ch.after.slice(0, 600)) + '</div>' : '') + '</div></div>').join('') : '') : '') +
       '<div class="row"><div><label for="f_revisao_revisadoPor">Quem revisou</label><input id="f_revisao_revisadoPor" data-f="revisao.revisadoPor" value="' + esc(d.revisao.revisadoPor || '') + '" placeholder="Nome do professor"></div>' +
       '<div><label><input type="checkbox" id="f_revisao_aprovado" data-f="revisao.aprovado"' + (d.revisao.aprovado ? ' checked' : '') + '> Revisei e valido este material</label>' + (d.revisao.data ? '<p class="muted">Data da validação: ' + esc(d.revisao.data) + '</p>' : '') + '</div></div></div>';
     const probs = C.problemasParaReparo(d, S.avisosImport && S.avisosImport.mid === S.mid ? S.avisosImport.list : []);
@@ -467,6 +583,8 @@
 
   function vAud() {
     const d = S.draft, a = C.audit(d), tr = d.meta.teacherReview;
+    d.meta = d.meta || {};
+    if (!d.meta.lastAuditedAt) d.meta.lastAuditedAt = new Date().toISOString();
     let v2Html = '';
     if (d._v2 && window.MathLabAuditV2) {
       const ach = window.MathLabAuditV2.auditar(d._v2, { final: !!(tr && tr.done) });
@@ -500,16 +618,22 @@
       '<div class="card"><iframe id="bookFrame" title="Prévia da apostila completa" style="width:100%;height:78vh;border:0;border-radius:10px;background:#e9edf5" srcdoc="' + esc(C.toApostila(d)) + '"></iframe></div>';
   }
 
-  /* ---------- Exportar ---------- */
+  /* ---------- Exportar (organizado por intenção — F-08) ---------- */
   function vExp() {
     const d = S.draft, svgs = d.blocks.map((b, i) => [b, i]).filter((x) => x[0].svg);
-    return '<div class="card"><h2>Exportar</h2><p class="muted">Exporta o que está no Editor agora (mesmo sem salvar).</p><div class="btns"><button class="b gold" data-a="dlbook">📘 Apostila completa (capa + miolo)</button><button class="b" data-a="printbook">🖨️ Imprimir apostila / salvar PDF</button><button class="b ghost" data-a="dlhtml">📄 Material em HTML simples</button><button class="b ghost" data-a="printall">🖨️ Imprimir material simples</button><button class="b ghost" data-a="dlposter">🖼️ Só o pôster (HTML)</button><button class="b ghost" data-a="dlmd">Markdown</button><button class="b ghost" data-a="dljson">JSON (para reimportar)</button></div>' +
-      '<h3>Apresentação em sala</h3><p class="muted">Slides em um único HTML, sem internet: setas do teclado, índice (O), tela cheia (F), impressão com um slide por página. O gabarito fica de fora por padrão.</p>' +
-      '<div class="btns"><button class="b gold" data-a="openslides">▶️ Abrir apresentação</button><button class="b" data-a="dlslides">🎞️ Baixar slides (sem gabarito)</button><button class="b ghost" data-a="dlslidesgab">🎞️ Baixar slides (com gabarito)</button></div>' +
-      '<h3>Banco de questões</h3><p class="muted">Extrai as questões numeradas dos exercícios, atividades e avaliações. A habilidade BNCC só aparece se estiver escrita no material; nada é inventado.</p>' +
-      '<div class="btns"><button class="b" data-a="dlbanco">🧮 Banco desta aula (JSON)</button><button class="b ghost" data-a="dllista">📝 Lista de exercícios (HTML)</button><button class="b ghost" data-a="dlbancolib">📚 Banco da biblioteca inteira (JSON)</button></div>' +
-      (svgs.length ? '<h3>Figuras SVG</h3><div class="btns">' + svgs.map((x) => '<button class="b ghost sm" data-a="dlsvg" data-i="' + x[1] + '">' + esc(x[0].title) + '.svg</button>').join('') + '</div>' : '') +
-      '<p class="muted">Para PDF: use “Imprimir / salvar PDF” e escolha “Salvar como PDF” no navegador. Word e PowerPoint ainda não estão nesta versão.</p></div>';
+    return '<div class="card"><h2>Exportar material</h2><p class="muted">Escolha pelo objetivo de uso. Exporta o que está aberto no Editor agora.</p>' +
+      '<div class="exp-group"><h3>🖨️ Para imprimir (entregar à turma)</h3>' +
+      '<div class="exp-row"><div class="exp-meta"><b>Apostila completa em A4</b> <span class="exp-badge">Disponível neste navegador</span><br><span class="muted">Capa, folha de rosto, sumário e miolo pronto para imprimir ou salvar em PDF.</span></div><div class="btns" style="margin:0"><button class="b gold sm" data-a="dlbook">📘 Baixar apostila (HTML)</button><button class="b sm" data-a="printbook">🖨️ Imprimir / salvar PDF</button></div></div>' +
+      '<div class="exp-row"><div class="exp-meta"><b>Material simples em página corrida</b> <span class="exp-badge">Disponível neste navegador</span><br><span class="muted">Versão leve para impressão econômica sem capa em pôster.</span></div><div class="btns" style="margin:0"><button class="b ghost sm" data-a="dlhtml">📄 Baixar HTML</button><button class="b ghost sm" data-a="printall">🖨️ Imprimir</button></div></div>' +
+      '<div class="exp-row"><div class="exp-meta"><b>PDF acessível marcado ou livro editorial (LaTeX/EPUB)</b> <span class="exp-badge cli">Requer programa no computador</span><br><span class="muted">PDF acessível: requer Node + Playwright (<code>npm run pdf</code>). Livro editorial via Pandoc/XeLaTeX: <b>atenção — o PDF gerado via LaTeX não é PDF/UA acessível para leitores de tela</b>; use a apostila ou o EPUB3 quando acessibilidade digital for prioridade.</span></div></div></div>' +
+      '<div class="exp-group"><h3>📽️ Para projetar em sala</h3>' +
+      '<div class="exp-row"><div class="exp-meta"><b>Apresentação em sala (slides interativos)</b> <span class="exp-badge">Disponível neste navegador</span><br><span class="muted">HTML único offline com setas, índice (O) e tela cheia (F). Gabarito fora por padrão.</span></div><div class="btns" style="margin:0"><button class="b gold sm" data-a="openslides">▶️ Abrir apresentação</button><button class="b sm" data-a="dlslides">🎞️ Sem gabarito</button><button class="b ghost sm" data-a="dlslidesgab">🎞️ Com gabarito</button></div></div>' +
+      '<div class="exp-row"><div class="exp-meta"><b>Pôster visual de 1 página</b> <span class="exp-badge">Disponível neste navegador</span><br><span class="muted">Mapa visual resumido para projetar ou afixar no mural da sala.</span></div><div class="btns" style="margin:0"><button class="b ghost sm" data-a="dlposter">🖼️ Baixar pôster</button></div></div></div>' +
+      '<div class="exp-group"><h3>✏️ Para continuar editando e reaproveitar</h3>' +
+      '<div class="exp-row"><div class="exp-meta"><b>Arquivo do material (para reimportar)</b> <span class="exp-badge">Disponível neste navegador</span><br><span class="muted">Guarda blocos, objetivos, referências e imagens para reabrir aqui ou no App.</span></div><div class="btns" style="margin:0"><button class="b ghost sm" data-a="dljson">💾 Baixar arquivo do material</button><button class="b ghost sm" data-a="dlmd">📝 Baixar Markdown</button></div></div>' +
+      '<div class="exp-row"><div class="exp-meta"><b>Banco de questões e lista de exercícios</b> <span class="exp-badge">Disponível neste navegador</span><br><span class="muted">Extrai questões numeradas e habilidades BNCC já escritas no material (nunca inventa código).</span></div><div class="btns" style="margin:0"><button class="b ghost sm" data-a="dlbanco">🧮 Banco desta aula</button><button class="b ghost sm" data-a="dllista">📝 Lista de exercícios</button><button class="b ghost sm" data-a="dlbancolib">📚 Banco da biblioteca</button></div></div>' +
+      (svgs.length ? '<div class="exp-row"><div class="exp-meta"><b>Figuras vetoriais individuais</b> <span class="exp-badge">Disponível neste navegador</span></div><div class="btns" style="margin:0">' + svgs.map((x) => '<button class="b ghost sm" data-a="dlsvg" data-i="' + x[1] + '">' + esc(x[0].title) + '.svg</button>').join('') + '</div></div>' : '') +
+      '</div><details><summary>Detalhes técnicos</summary><p class="muted">Formato de intercâmbio: <code>' + C.SCHEMA + '</code>. Banco de questões: <code>' + C.BANK_SCHEMA + '</code>. Word (.docx) e PowerPoint (.pptx) ficam no App Node complementar.</p></details></div>';
   }
 
   /* ---------- Diário & Portfólio Docente ---------- */
@@ -531,15 +655,16 @@
   }
   function vDiario() {
     const P = window.MathLabPortfolio;
+    const betaNotice = '<div class="find warn" style="margin:0 0 12px">⚠️ <b>Beta (em evolução):</b> faça backup antes de usar como registro oficial.</div>';
     if (!S.diario) {
-      return '<div class="card empty"><h2>Diário de Aula & Portfólio Docente</h2><p>Registre suas aulas e avaliações e gere um portfólio em A4 com cobertura curricular por habilidade, evolução e privacidade garantida.</p>' +
+      return '<div class="card empty">' + betaNotice + '<h2>Diário de Aula & Portfólio Docente <span class="beta-tag">Beta</span></h2><p>Registre suas aulas e avaliações e gere um portfólio em A4 com cobertura curricular por habilidade, evolução e privacidade garantida.</p>' +
         '<div class="btns" style="justify-content:center"><button class="b gold" data-a="demodiario">Carregar exemplo de diário</button>' +
-        '<label class="b ghost" style="display:inline-block;margin:0;cursor:pointer">Importar diario.json<input type="file" accept=".json,application/json" data-a="importdiario" style="display:none"></label></div></div>';
+        '<label class="b ghost" style="display:inline-block;margin:0;cursor:pointer">Importar arquivo do diário<input type="file" accept=".json,application/json" data-a="importdiario" style="display:none"></label></div></div>';
     }
     const d = S.diario, cfg = P.CFG_PADRAO(d), ach = P.verificar(d, cfg);
     const nb = ach.filter((x) => x.nivel === 'bloqueante').length;
     const htmlPort = nb ? '' : P.montarHtml(d, cfg);
-    return '<div class="card"><div class="btns" style="justify-content:space-between"><h2 style="margin:0">Diário & Portfólio — ' + esc(d.professor || C.DEFAULT_AUTHOR) + '</h2>' +
+    return '<div class="card">' + betaNotice + '<div class="btns" style="justify-content:space-between"><h2 style="margin:0">Diário & Portfólio <span class="beta-tag">Beta</span> — ' + esc(d.professor || C.DEFAULT_AUTHOR) + '</h2>' +
       '<div class="btns"><button class="b ghost sm" data-a="dldiario">Baixar diario.json</button><label class="b ghost sm" style="display:inline-block;margin:0;cursor:pointer">Importar JSON<input type="file" accept=".json,application/json" data-a="importdiario" style="display:none"></label></div></div>' +
       '<p class="muted">' + d.turmas.length + ' turma(s) · ' + d.entradas.length + ' registro(s) · ' + (d.avaliacoes || []).length + ' avaliação(ões)</p>' +
       (ach.length ? '<div style="margin:8px 0">' + ach.map((x) => '<div class="find ' + (x.nivel === 'bloqueante' ? 'hard' : 'warn') + '">' + (x.nivel === 'bloqueante' ? '⛔' : '⚠️') + ' <b>' + esc(x.regra) + '</b>: ' + esc(x.msg) + '</div>').join('') + '</div>' : '') +
@@ -555,26 +680,112 @@
       (htmlPort ? '<div class="card"><h3>Prévia do Portfólio Docente (A4)</h3><iframe title="Prévia do portfólio" style="width:100%;height:72vh;border:0;border-radius:10px;background:#eef1f6" srcdoc="' + esc(htmlPort) + '"></iframe></div>' : '');
   }
 
-  /* ---------- Ajuda ---------- */
+  /* ---------- Ajuda (linguagem pedagógica + detalhes técnicos em <details> — F-07) ---------- */
   function vAjuda() {
-    return '<div class="card steps"><h2>Como usar</h2>' +
-      '<div class="step"><b>Gemini Pro (Gem):</b> em gemini.google.com, abra “Gems” → “Novo Gem”, cole o texto do arquivo <code>gemini/GEM_INSTRUCOES.md</code> nas instruções e salve com o nome “MathLab”.</div>' +
-      '<div class="step"><b>Claude:</b> instale a skill <code>mathlab-aulas-visuais</code> (arquivo <code>skill/SKILL.md</code>).</div>' +
-      '<div class="step">Aqui em <b>Criar</b>: preencha o pedido, copie, cole no Gem, copie o JSON que ele devolver e importe.</div>' +
-      '<div class="step">Em <b>Apostila visual</b>: copie o prompt e gere a imagem ilustrada no Nano Banana (Gemini). O pôster em HTML já fica pronto para imprimir.</div>' +
-      '<div class="step"><b>Publicar no GitHub Pages:</b> suba esta pasta num repositório, em Settings → Pages escolha “GitHub Actions”. O arquivo <code>.github/workflows/pages.yml</code> já está pronto.</div>' +
-      '<div class="btns"><a class="b ghost" href="dist/mathlab-standalone.html" download="mathlab-standalone.html" style="text-decoration:none">⬇️ Baixar versão offline (arquivo único)</a></div></div>' +
-      '<div class="card"><h3>Limites desta versão</h3><ul><li>Não escreve conteúdo sozinho: a IA vem da skill/Gem.</li><li>Exporta HTML, PDF (pelo navegador), Markdown, JSON e SVG. Word e PowerPoint ficam para a próxima etapa.</li><li>Dados ficam só neste navegador: faça backup na Biblioteca.</li></ul></div>';
+    return '<div class="card steps"><h2>Como usar o MathLab</h2>' +
+      '<div class="step"><b>1. Configure sua IA favorita (uma única vez):</b> use as instruções oficiais do MathLab no Gemini (Gem), no Claude (Skill) ou no ChatGPT (Custom GPT).</div>' +
+      '<div class="step"><b>2. Monte o pedido em Criar:</b> escolha disciplina, etapa, tema e seções; copie o pedido e cole na IA.</div>' +
+      '<div class="step"><b>3. Traga o material de volta:</b> importe o arquivo <code>.json</code> (por clique ou arrastar-e-soltar) ou cole a resposta no passo 3.</div>' +
+      '<div class="step"><b>4. Revise, valide e exporte:</b> edite blocos, rode a Auditoria, valide como professor e escolha o formato certo para imprimir ou projetar.</div>' +
+      '<div class="btns"><a class="b ghost" href="dist/mathlab-standalone.html" download="mathlab-standalone.html" style="text-decoration:none">⬇️ Baixar versão offline (arquivo único)</a></div>' +
+      '<details><summary>Detalhes técnicos (arquivos de instrução, contrato e publicação)</summary><ul><li>Instruções para Gemini: <code>gemini/GEM_INSTRUCOES.md</code></li><li>Instruções para Claude: <code>skill/SKILL.md</code> (skill <code>mathlab-aulas-visuais</code>)</li><li>Instruções para ChatGPT: <code>chatgpt/CHATGPT_GPT_INSTRUCOES.md</code></li><li>Contrato de intercâmbio: <code>' + C.SCHEMA + '</code> (versão menor 2.1)</li><li>Publicação no GitHub Pages: workflow <code>.github/workflows/pages.yml</code></li></ul></details></div>' +
+      '<div class="card"><h3>Privacidade e limites</h3><ul><li>Nenhum conteúdo seu sai do navegador: não há servidor nem conta.</li><li>A revisão automática por regras não substitui a validação do professor.</li><li>Seus projetos ficam guardados neste navegador: faça backup periódico na Biblioteca.</li></ul></div>';
+  }
+
+  /* ---------- helpers de importação por arquivo e exportação ---------- */
+  function importJsonFile(f) {
+    if (!f) return;
+    if (!/\.json$/i.test(f.name || '') && f.type && !/json|text/.test(f.type)) {
+      toast('Envie um arquivo .json gerado pela IA ou exportado pelo MathLab.', true);
+      return;
+    }
+    const rd = new FileReader();
+    rd.onload = () => {
+      S.form.pasted = String(rd.result || '');
+      A.importjson();
+    };
+    rd.onerror = () => toast('Não foi possível ler o arquivo selecionado.', true);
+    rd.readAsText(f);
+  }
+  function markExported() {
+    if (!S.draft) return;
+    S.draft.meta = S.draft.meta || {};
+    S.draft.meta.lastExportedAt = new Date().toISOString();
+  }
+  function resizeCoverIfLarge(dataUrl, rawSize, cb) {
+    const pct = Math.round((rawSize / (5 * 1024 * 1024)) * 100);
+    if (pct <= 10 || typeof Image !== 'function' || typeof document === 'undefined') {
+      cb(dataUrl, pct, false);
+      return;
+    }
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const maxW = 1200;
+        const scale = img.width > maxW ? maxW / img.width : 1;
+        const cv = document.createElement('canvas');
+        cv.width = Math.max(1, Math.round(img.width * scale));
+        cv.height = Math.max(1, Math.round(img.height * scale));
+        const ctx = cv.getContext('2d');
+        ctx.drawImage(img, 0, 0, cv.width, cv.height);
+        const out = cv.toDataURL('image/jpeg', 0.82);
+        cb(out.length < dataUrl.length ? out : dataUrl, pct, out.length < dataUrl.length);
+      } catch (e) { cb(dataUrl, pct, false); }
+    };
+    img.onerror = () => cb(dataUrl, pct, false);
+    img.src = dataUrl;
   }
 
   /* ---------- ações ---------- */
   const A = {
     group: (el) => { const g = GROUPS[el.dataset.g]; if (!g) return; if (!g.tabs.some((t) => t[0] === S.tab)) S.tab = g.tabs[0][0]; render(); },
     tab: (el) => { S.tab = el.dataset.t; render(); },
+    restoreautosave: () => {
+      const pending = readPendingAutosave();
+      if (!pending || !pending.draft) { clearAutosave(); render(); return; }
+      S.pid = pending.pid || null;
+      S.mid = pending.mid || null;
+      S.isPreviewExample = false;
+      S.draft = C.normalize(pending.draft);
+      S.dirty = true;
+      S.tab = 'editor';
+      clearAutosave();
+      render();
+      toast('Rascunho recuperado. Clique em "Salvar nova versão" para fixar na Biblioteca.');
+    },
+    discardautosave: () => {
+      clearAutosave();
+      render();
+      toast('Rascunho descartado.');
+    },
     previewdemo: () => {
       if (S.dirty && !S.isPreviewExample && !confirm('Há alterações não salvas no material aberto. Abrir o exemplo assim mesmo?')) return;
       S.pid = null; S.mid = null; S.isPreviewExample = true; S.draft = C.clone(C.demo()); S.dirty = false; S.tab = 'editor'; render();
-      toast('Exemplo completo aberto em modo prévia (sua Biblioteca não foi alterada).');
+      toast('Exemplo completo de Matemática aberto em modo prévia (sua Biblioteca não foi alterada).');
+    },
+    previewdemohist: () => {
+      if (S.dirty && !S.isPreviewExample && !confirm('Há alterações não salvas no material aberto. Abrir o exemplo assim mesmo?')) return;
+      S.pid = null; S.mid = null; S.isPreviewExample = true; S.draft = C.clone(C.demoHistoria()); S.dirty = false; S.tab = 'editor'; render();
+      toast('Exemplo completo de História aberto em modo prévia (sua Biblioteca não foi alterada).');
+    },
+    importfile: (el) => { const f = el.files && el.files[0]; if (f) importJsonFile(f); el.value = ''; },
+    togglediff: () => { S.showDiff = !S.showDiff; render(); },
+    revalidatedelta: () => {
+      if (!S.draft) return;
+      const quem = (S.draft.revisao && S.draft.revisao.revisadoPor || '').trim();
+      if (!quem) { toast('Informe o nome em "Quem revisou" antes de revalidar.', true); const el = $('#f_revisao_revisadoPor'); if (el) el.focus(); return; }
+      const today = new Date().toISOString().slice(0, 10);
+      S.draft.revisao = Object.assign({}, S.draft.revisao, {
+        aprovado: true,
+        revisadoPor: quem,
+        data: today,
+        hash: C.hashConteudo(S.draft),
+        nota: 'revisão do delta de ' + today
+      });
+      S.showDiff = false;
+      S.dirty = true;
+      saveDraft();
+      toast('Material revalidado a partir do delta (' + today + ').');
     },
     savepreviewdemo: () => {
       if (!S.draft) return;
@@ -605,7 +816,15 @@
     openmat: (el) => openMat(el.dataset.p, el.dataset.m),
     dupmat: (el) => { const p = proj(), r = p.materials.find((x) => x.id === el.dataset.m), c = C.clone(r); c.id = C.uid('m'); const d = curData(c); d.title += ' (cópia)'; p.materials.unshift(c); logp(p, 'Material duplicado'); persist(); render(); },
     delmat: (el) => { const p = proj(), r = p.materials.find((x) => x.id === el.dataset.m); if (!confirm('Excluir "' + curData(r).title + '" com todas as versões? Isso não pode ser desfeito.')) return; p.materials = p.materials.filter((x) => x !== r); if (S.mid === r.id) { S.draft = null; S.mid = null; S.dirty = false; } logp(p, 'Material excluído'); persist(); render(); },
-    backup: () => dl('mathlab-backup-' + new Date().toISOString().slice(0, 10) + '.json', 'application/json', JSON.stringify({ app: 'mathlab', version: 2, projects: lib.projects, plans: lib.plans || [], domains: lib.domains || [], sources: lib.sources || [] }, null, 2)),
+    backup: () => {
+      dl('mathlab-backup-' + new Date().toISOString().slice(0, 10) + '.json', 'application/json', JSON.stringify({ app: 'mathlab', version: 2, projects: lib.projects, plans: lib.plans || [], domains: lib.domains || [], sources: lib.sources || [] }, null, 2));
+      lib.meta = lib.meta || {};
+      lib.meta.ultimoBackupEm = new Date().toISOString();
+      lib.meta.materiaisDesdeBackup = 0;
+      persist();
+      render();
+      toast('Backup baixado e data registrada na Biblioteca.');
+    },
     restore: (el) => {
       const f = el.files[0]; if (!f) return;
       const rd = new FileReader(); rd.onload = () => {
@@ -719,30 +938,40 @@
       if (!/^image\/(png|jpeg|webp)$/.test(f.type)) { toast('Use PNG, JPEG ou WebP.'); el.value = ''; return; }
       if (f.size > 3 * 1024 * 1024) { toast('A imagem passa de 3 MB. Exporte de novo em JPEG ou reduza a largura.'); el.value = ''; return; }
       const fr = new FileReader();
-      fr.onload = () => { if (!C.coverArtOk(fr.result)) { toast('Não consegui ler essa imagem.'); return; } S.draft.poster.coverArt = fr.result; if (!S.draft.poster.coverArtAlt) S.draft.poster.coverArtAlt = 'Ilustração da capa sobre ' + (S.draft.topic || S.draft.title); S.dirty = true; scheduleAutosave(); render(); toast('Arte anexada. Confira o texto alternativo.'); };
+      fr.onload = () => {
+        if (!C.coverArtOk(fr.result)) { toast('Não consegui ler essa imagem.'); return; }
+        resizeCoverIfLarge(fr.result, f.size, (finalUrl, pct, resized) => {
+          S.draft.poster.coverArt = finalUrl;
+          if (!S.draft.poster.coverArtAlt) S.draft.poster.coverArtAlt = 'Ilustração da capa sobre ' + (S.draft.topic || S.draft.title);
+          S.dirty = true; scheduleAutosave(); render();
+          if (resized) toast('Imagem grande (~' + pct + '% da cota de 5 MB) otimizada automaticamente para caber no navegador. Confira o texto alternativo.');
+          else if (pct > 10) toast('Arte anexada (~' + pct + '% da cota de 5 MB do navegador). Faça backup periódico.', false);
+          else toast('Arte anexada. Confira o texto alternativo.');
+        });
+      };
       fr.readAsDataURL(f);
     },
     rmcoverart: () => { S.draft.poster.coverArt = ''; S.draft.poster.coverArtAlt = ''; S.dirty = true; scheduleAutosave(); render(); },
     copyimg: async () => { toast((await copy(C.buildImagePrompt(S.draft))) ? 'Prompt copiado. Cole no Gemini (Nano Banana).' : 'Não consegui copiar automaticamente.'); },
     setstyle: (el) => { if (!S.draft.poster) A.mkposter(); S.draft.poster.interiorStyle = el.dataset.v; S.dirty = true; scheduleAutosave(); render(); },
-    dlbook: async () => dl(slug(S.draft.title) + '-apostila-completa.html', 'text/html', await inlineAssets(C.toApostila(S.draft))),
-    printbook: async () => printHTML(await inlineAssets(C.toApostila(S.draft))),
-    dlposter: async () => dl(slug(S.draft.title) + '-apostila-visual.html', 'text/html', await inlineAssets(C.toHTML(S.draft, { material: false }))),
-    printposter: async () => printHTML(await inlineAssets(C.toHTML(S.draft, { material: false }))),
-    dlhtml: async () => dl(slug(S.draft.title) + '.html', 'text/html', await inlineAssets(C.toHTML(S.draft))),
-    printall: async () => printHTML(await inlineAssets(C.toHTML(S.draft))),
-    openslides: () => { const u = URL.createObjectURL(new Blob([C.toSlides(S.draft)], { type: 'text/html;charset=utf-8' })); window.open(u, '_blank', 'noopener'); setTimeout(() => URL.revokeObjectURL(u), 60000); },
-    dlslides: async () => dl(slug(S.draft.title) + '-slides.html', 'text/html', await inlineAssets(C.toSlides(S.draft))),
-    dlslidesgab: async () => dl(slug(S.draft.title) + '-slides-com-gabarito.html', 'text/html', await inlineAssets(C.toSlides(S.draft, { gabarito: true }))),
-    dlbanco: () => { const b = C.bancoDeQuestoes(S.draft); dl(slug(S.draft.title) + '-banco-questoes.json', 'application/json', JSON.stringify(b, null, 2)); toast(b.total + ' questão(ões) extraída(s).'); },
-    dllista: () => dl(slug(S.draft.title) + '-lista-exercicios.html', 'text/html', C.listaDeExercicios(C.bancoDeQuestoes(S.draft), { titulo: 'Lista de exercícios · ' + S.draft.title })),
+    dlbook: async () => { markExported(); dl(slug(S.draft.title) + '-apostila-completa.html', 'text/html', await inlineAssets(C.toApostila(S.draft))); },
+    printbook: async () => { markExported(); printHTML(await inlineAssets(C.toApostila(S.draft))); },
+    dlposter: async () => { markExported(); dl(slug(S.draft.title) + '-apostila-visual.html', 'text/html', await inlineAssets(C.toHTML(S.draft, { material: false }))); },
+    printposter: async () => { markExported(); printHTML(await inlineAssets(C.toHTML(S.draft, { material: false }))); },
+    dlhtml: async () => { markExported(); dl(slug(S.draft.title) + '.html', 'text/html', await inlineAssets(C.toHTML(S.draft))); },
+    printall: async () => { markExported(); printHTML(await inlineAssets(C.toHTML(S.draft))); },
+    openslides: () => { markExported(); const u = URL.createObjectURL(new Blob([C.toSlides(S.draft)], { type: 'text/html;charset=utf-8' })); window.open(u, '_blank', 'noopener'); setTimeout(() => URL.revokeObjectURL(u), 60000); },
+    dlslides: async () => { markExported(); dl(slug(S.draft.title) + '-slides.html', 'text/html', await inlineAssets(C.toSlides(S.draft))); },
+    dlslidesgab: async () => { markExported(); dl(slug(S.draft.title) + '-slides-com-gabarito.html', 'text/html', await inlineAssets(C.toSlides(S.draft, { gabarito: true }))); },
+    dlbanco: () => { markExported(); const b = C.bancoDeQuestoes(S.draft); dl(slug(S.draft.title) + '-banco-questoes.json', 'application/json', JSON.stringify(b, null, 2)); toast(b.total + ' questão(ões) extraída(s).'); },
+    dllista: () => { markExported(); dl(slug(S.draft.title) + '-lista-exercicios.html', 'text/html', C.listaDeExercicios(C.bancoDeQuestoes(S.draft), { titulo: 'Lista de exercícios · ' + S.draft.title })); },
     dlbancolib: () => {
       const mats = []; lib.projects.filter((p) => !p.archived).forEach((p) => p.materials.forEach((r) => { const d = curData(r); if (d) mats.push(d); }));
       const b = C.bancoDeQuestoes(mats); dl('banco-questoes-biblioteca.json', 'application/json', JSON.stringify(b, null, 2)); toast(b.total + ' questão(ões) de ' + mats.length + ' material(is).');
     },
     ortografia: () => ortografiaAcao(),
-    dlmd: () => dl(slug(S.draft.title) + '.md', 'text/markdown', C.toMarkdown(S.draft)),
-    dljson: () => dl(slug(S.draft.title) + '.json', 'application/json', JSON.stringify(C.normalize(S.draft), null, 2)),
+    dlmd: () => { markExported(); dl(slug(S.draft.title) + '.md', 'text/markdown', C.toMarkdown(S.draft)); },
+    dljson: () => { markExported(); dl(slug(S.draft.title) + '.json', 'application/json', JSON.stringify(C.normalize(S.draft), null, 2)); },
     dlsvg: (el) => { const b = S.draft.blocks[+el.dataset.i]; dl(slug(b.title) + '.svg', 'image/svg+xml', C.sanitizeSvg(b.svg)); },
     review: (el) => { S.draft.meta.teacherReview = el.checked ? { done: true, at: new Date().toISOString() } : { done: false }; S.dirty = true; render(); },
     demodiario: () => { S.diario = demoDiario(); saveDiario(); render(); toast('Exemplo de diário carregado.'); },
@@ -819,6 +1048,51 @@
       if (S.tab === 'poster' && S.draft.poster) { const pv = $('#posterPreview'); if (pv) pv.innerHTML = (S.draft.poster.coverClean !== false ? '<div style="margin-bottom:16px">' + C.renderCleanCover(S.draft) + '</div>' : '') + C.renderPoster(S.draft.poster, S.draft.author, S.draft.epistemicType); }
     }
   });
+  /* ---------- navegação por teclado WAI-ARIA em tablists (#groups e #tabs) ---------- */
+  document.addEventListener('keydown', (e) => {
+    const tab = e.target && e.target.closest && e.target.closest('[role="tab"]');
+    if (!tab) return;
+    const list = tab.closest('[role="tablist"]');
+    if (!list) return;
+    const keys = ['ArrowRight', 'ArrowLeft', 'Home', 'End'];
+    if (!keys.includes(e.key)) return;
+    const items = Array.from(list.querySelectorAll('[role="tab"]'));
+    if (!items.length) return;
+    const cur = items.indexOf(tab);
+    let next = cur;
+    if (e.key === 'ArrowRight') next = (cur + 1) % items.length;
+    else if (e.key === 'ArrowLeft') next = (cur - 1 + items.length) % items.length;
+    else if (e.key === 'Home') next = 0;
+    else if (e.key === 'End') next = items.length - 1;
+    e.preventDefault();
+    const target = items[next];
+    if (!target) return;
+    if (target.dataset.a && A[target.dataset.a]) A[target.dataset.a](target, e);
+    const sel = target.dataset.g ? '[data-g="' + target.dataset.g + '"]' : (target.dataset.t ? '[data-t="' + target.dataset.t + '"]' : null);
+    const fresh = sel ? list.querySelector(sel) : null;
+    if (fresh) fresh.focus();
+  });
+
+  /* ---------- drag-and-drop de .json na dropzone de Criar ---------- */
+  document.addEventListener('dragover', (e) => {
+    const dz = e.target && e.target.closest && e.target.closest('#importDropzone');
+    if (!dz) return;
+    e.preventDefault();
+    dz.classList.add('dragover');
+  });
+  document.addEventListener('dragleave', (e) => {
+    const dz = e.target && e.target.closest && e.target.closest('#importDropzone');
+    if (dz) dz.classList.remove('dragover');
+  });
+  document.addEventListener('drop', (e) => {
+    const dz = e.target && e.target.closest && e.target.closest('#importDropzone');
+    if (!dz) return;
+    e.preventDefault();
+    dz.classList.remove('dragover');
+    const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f) importJsonFile(f);
+  });
+
   window.addEventListener('beforeunload', (e) => { if (S.dirty) { e.preventDefault(); e.returnValue = ''; } });
 
   /* ---------- tema claro/escuro (respeita prefers-color-scheme; toggle na sessão) ---------- */
@@ -850,17 +1124,17 @@
     if (vt) vt.textContent = verTopText;
     if (vf) vf.textContent = verFootText;
   }
-  setVersionText('v' + C.VERSION, 'v' + C.VERSION);
+  setVersionText('motor v' + C.VERSION, 'motor v' + C.VERSION);
   if (typeof fetch === 'function') {
     fetch('manifest.json').then((r) => (r.ok ? r.json() : null)).then((m) => {
       if (!m || !m.motor) return;
-      const top = 'v' + m.motor;
-      const foot = 'v' + m.motor + (m.pacote ? ' · pacote ' + m.pacote : '') + (m.contrato && m.contrato.schema ? ' · ' + m.contrato.schema : '');
+      const top = 'motor v' + m.motor;
+      const foot = 'motor v' + m.motor + (m.pacote ? ' · pacote ' + m.pacote : '') + (m.contrato && m.contrato.schema ? ' · ' + m.contrato.schema : '');
       setVersionText(top, foot);
     }).catch(() => { /* offline / standalone usa C.VERSION */ });
   }
 
   const st = document.createElement('style'); st.textContent = C.COVER_CSS + '\n' + C.POSTER_CSS; document.head.appendChild(st);
   render();
-  window.__mathlab = { S, lib: () => lib, A, render };
+  window.__mathlab = { S, lib: () => lib, A, render, saveAutosaveNow, readPendingAutosave, clearAutosave, storageUsageInfo };
 })();
