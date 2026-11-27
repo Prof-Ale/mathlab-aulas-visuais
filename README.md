@@ -5,7 +5,7 @@
 **Versão do pacote:** `1.6.0` · **Motor (`js/core.js`):** `2.0.0` · **Contrato:** `mathlab.material/2` (versão menor `2.1`)  
 *Fonte única de versão:* [`manifest.json`](manifest.json) (verificada automaticamente por `tests/manifesto.test.js`).
 
-Ambiente de **autoria docente multidisciplinar** para criar, estruturar, editar, auditar, validar e exportar aulas, apostilas visuais e cadernos didáticos para **qualquer disciplina** — não apenas Matemática.
+Ambiente de **autoria docente multidisciplinar** para criar, estruturar, editar, auditar, validar e exportar aulas, apostilas visuais e cadernos didáticos para **qualquer disciplina**: não apenas Matemática.
 
 ---
 
@@ -13,7 +13,7 @@ Ambiente de **autoria docente multidisciplinar** para criar, estruturar, editar,
 
 O **MathLab Aulas Visuais** apoia professores da Educação Básica (Anos Iniciais, Anos Finais, Ensino Médio, EJA), Educação Profissional, Ensino Superior, Pós-Graduação e Atendimento Educacional Especializado (AEE) na produção de materiais didáticos rigorosos, acessíveis e prontos para leitura digital ou impressão em A4.
 
-- **Mediação pedagógica:** fundamentada na Psicologia Histórico-Cultural (mediação semiótica, passagem dos conceitos cotidianos aos científicos, Zona de Desenvolvimento Proximal e Desenho Universal para a Aprendizagem — DUA).
+- **Mediação pedagógica:** fundamentada na Psicologia Histórico-Cultural (mediação semiótica, passagem dos conceitos cotidianos aos científicos, Zona de Desenvolvimento Proximal e Desenho Universal para a Aprendizagem, DUA).
 - **Respeito epistemológico:** a mediação pedagógica **não substitui** a epistemologia própria de cada disciplina; o formulário detecta e calibra o pedido conforme o tipo de conhecimento e a etapa de ensino.
 - **Autoria humana no centro:** o site organiza e audita por regras, mas **somente o professor valida** o material antes do uso.
 
@@ -66,11 +66,11 @@ O repositório reúne duas peças complementares que operam **sem servidor e sem
 
 - **Contrato principal:** `mathlab.material/2`, versão menor `2.1` ([`docs/CONTRATO_MATERIAL_2.md`](docs/CONTRATO_MATERIAL_2.md), [`schema/mathlab.material.2.schema.json`](schema/mathlab.material.2.schema.json), exemplo em [`schema/exemplos/exemplo-material2-1.json`](schema/exemplos/exemplo-material2-1.json)). Campos opcionais introduzidos na `2.1`: `claims`, `calculations`, `provenance` e `contractVersion`.
 - **Formatos auxiliares:**
-  - `mathlab.blueprint/1` — plano de curso/apostila por unidades.
-  - `mathlab.unit/1` — unidade individual gerada a partir de um plano aprovado.
-  - `mathlab.repair/1` — correção localizada apenas em blocos existentes.
-  - `mathlab.domain/1` — pacote de regras de um domínio/assunto novo.
-- **Interoperabilidade com o App Node (`mathlab-aulas-visuais-app`):** arquivos exportados pelo App em `mathlab.material/2` (como `tests/fixtures/app-export.mathlab.json`) são importados diretamente pelo site, preservando objetivos, referências, afirmações e proveniência — sempre chegando **sem validação humana**.
+  - `mathlab.blueprint/1`: plano de curso/apostila por unidades.
+  - `mathlab.unit/1`: unidade individual gerada a partir de um plano aprovado.
+  - `mathlab.repair/1`: correção localizada apenas em blocos existentes.
+  - `mathlab.domain/1`: pacote de regras de um domínio/assunto novo.
+- **Interoperabilidade com o App Node (`mathlab-aulas-visuais-app`):** arquivos exportados pelo App em `mathlab.material/2` (como `tests/fixtures/app-export.mathlab.json`) são importados diretamente pelo site, preservando objetivos, referências, afirmações e proveniência, sempre chegando **sem validação humana**.
 
 ---
 
@@ -172,7 +172,7 @@ O projeto oferece dois caminhos para PDF:
 | Renderização matemática **KaTeX 100% offline** (`$...$`, `$$...$$`, `\(...\)`, `\[...\]`, protegendo `R$`) | **Implementado** | `assets/vendor/katex/` (MIT, zero dependência npm) + `js/core.js` + `js/livro.js` + `dist/mathlab-standalone.html` |
 | **Capa Clean sem foto do autor**, **arte de capa opcional** (prompt só da ilustração, sem texto e sem pessoas, para o Gemini/Nano Banana; o arquivo PNG, JPEG ou WebP até 3 MB volta pelo site, com texto alternativo) e proteção de `R$` e de `$$...$$` na renderização | **Implementado** | `js/core.js` (`renderCleanCover`, `buildCoverPrompt`, `coverArtOk`), `js/app.js` (aba Apostila visual), `tests/capa-formulas.test.js`. O site não gera a imagem: o professor leva o prompt à ferramenta de imagem e traz o arquivo |
 | **Infográfico de Abertura** (sequência editorial 4 camadas) e **Seletor contextual do Professor Alê** (13 áreas) | **Implementado** | `js/core.js` (`renderOpeningInfographic`, `getProfessorAleContext`) + `js/app.js` |
-| Exportação **DOCX** e **PPTX** (com OMML nativo) e exportação Direção AB | **Outro projeto** | Implementados nos repositórios irmãos [`mathlab-aulas-visuais-app`](https://github.com/Prof-Ale/mathlab-aulas-visuais-app) e [`MathLab-Editorial-System`](https://github.com/Prof-Ale/MathLab-Editorial-System) — **não** estão neste repositório estático |
+| Exportação **DOCX** e **PPTX** (com OMML nativo) e exportação Direção AB | **Outro projeto** | Implementados nos repositórios irmãos [`mathlab-aulas-visuais-app`](https://github.com/Prof-Ale/mathlab-aulas-visuais-app) e [`MathLab-Editorial-System`](https://github.com/Prof-Ale/MathLab-Editorial-System): **não** estão neste repositório estático |
 | Auditoria ABNT / revisão editorial assistida e consulta CrossRef/OpenAlex | **Outro projeto** | Implementados no repositório irmão [`ScriptaLab`](https://github.com/Prof-Ale/ScriptaLab) e no App Node |
 | Integração direta com APIs de IA a partir do site | **Planejado / Fora do escopo do site estático** | O site permanece intencionalmente sem backend e sem chave de API |
 
@@ -185,13 +185,13 @@ As diretrizes visuais oficiais e a **Ficha Oficial do Personagem Professor Alê 
 - **Paleta oficial:** azul marinho (`#0D2B5B`), amarelo ouro (`#F7B500`), laranja (`#F57C00`) e fundo claro (`#F8F3E6` / branco), além das cores auxiliares de apoio (`#1E88E5`, `#2E7D32`, `#6A1B9A`, `#C62828`).
 - **Identidade MathLab:** preservação integral dos logotipos oficiais (Selo Circular Marinho/Dourado e Logo Fundo Claro) sem alteração de formas ou cores principais.
 - **Organização editorial definitiva de cadernos:**
-  1. **Capa** — identidade MathLab, hierarquia tipográfica clara, título, subtítulo, autoria e identificação do estudante.
-  2. **Folha de rosto** — título completo, autor, disciplina, ano escolar/etapa e identificação editorial limpa.
-  3. **Infográfico de abertura** — síntese visual conceitual separada da folha de rosto, com linguagem e notação matemática corretas.
-  4. **Miolo didático A4** — conceitos, exemplos resolvidos, representações visuais, situações-problema e exercícios graduados, com boa legibilidade e economia de tinta na impressão e leitura digital.
+  1. **Capa**: identidade MathLab, hierarquia tipográfica clara, título, subtítulo, autoria e identificação do estudante.
+  2. **Folha de rosto**: título completo, autor, disciplina, ano escolar/etapa e identificação editorial limpa.
+  3. **Infográfico de abertura**: síntese visual conceitual separada da folha de rosto, com linguagem e notação matemática corretas.
+  4. **Miolo didático A4**: conceitos, exemplos resolvidos, representações visuais, situações-problema e exercícios graduados, com boa legibilidade e economia de tinta na impressão e leitura digital.
 - **Capa:** a Capa Clean não leva foto nem avatar do autor. Mostra o emblema da área ou a arte de capa anexada pelo professor. O personagem aparece na caixa "Sobre o Autor", no Infográfico de Abertura e nos prompts de imagem, quando o professor escolhe a variação contextual.
 - **Arquivos oficiais em resolução total:** `assets/identidade/originais/` guarda as quatro imagens como foram enviadas (ficha do personagem, grade multidisciplinar, selo circular e logotipo de fundo claro). Os arquivos de `assets/identidade/` e de `assets/` são cópias reduzidas para uso no site. Os logotipos não são recriados nem redesenhados.
-- **Personagem oficial — Professor Alê (Prof. Alê Barbosa):** usado como elemento de identidade sem repetição excessiva nas páginas internas. Mantém consistência facial, óculos, cabelo curto, marca MathLab e estilo cartoon editorial, variando figurino, expressão, pose, objetos e cenário conforme a disciplina (Matemática, Física, Química, Biologia, Neuroanatomia, Psicologia, Psicanálise, Educação e AEE, Terapia Ocupacional, Filosofia, História, Tecnologia e Robótica, Educação Financeira).
+- **Personagem oficial, Professor Alê (Prof. Alê Barbosa):** usado como elemento de identidade sem repetição excessiva nas páginas internas. Mantém consistência facial, óculos, cabelo curto, marca MathLab e estilo cartoon editorial, variando figurino, expressão, pose, objetos e cenário conforme a disciplina (Matemática, Física, Química, Biologia, Neuroanatomia, Psicologia, Psicanálise, Educação e AEE, Terapia Ocupacional, Filosofia, História, Tecnologia e Robótica, Educação Financeira).
 
 ---
 
@@ -211,7 +211,7 @@ As diretrizes visuais oficiais e a **Ficha Oficial do Personagem Professor Alê 
 
 ### Comandos
 ```bash
-npm test                                  # executa todas as 18 suítes em tests/
+npm test                                  # executa todas as 19 suítes em tests/
 npm run build                             # gera dist/mathlab-standalone.html
 npm run pdf -- --demo apostila-demo.pdf   # gera PDF acessível e reproduzível (requer Playwright)
 ```
@@ -227,7 +227,7 @@ Veja o passo a passo completo para configurar **Claude (Skill)**, **Gemini (Gem)
 
 ## Testes e limitações conhecidas
 
-- **Suíte automatizada:** `npm test` executa 18 arquivos de teste (`core`, `instrucoes`, `validacao`, `contrato`, `avisos`, `reparo`, `plano`, `app-bridge`, `pdf`, `dominios`, `livro`, `fontes`, `manifesto`, `capa-formulas`, `slides`, `banco`, `ortografia`, `ui-ux-roadmap`). Os 2 testes end-to-end de geração de PDF em `tests/pdf.test.js` são ignorados automaticamente quando o `playwright` não está instalado.
+- **Suíte automatizada:** `npm test` executa 19 arquivos de teste (`core`, `instrucoes`, `validacao`, `contrato`, `avisos`, `reparo`, `plano`, `app-bridge`, `pdf`, `dominios`, `livro`, `fontes`, `manifesto`, `capa-formulas`, `slides`, `banco`, `ortografia`, `revisor-portugues`, `ui-ux-roadmap`). Os 2 testes end-to-end de geração de PDF em `tests/pdf.test.js` são ignorados automaticamente quando o `playwright` não está instalado.
 - **Limitações conhecidas:**
   - Não exporta `.docx` nem `.pptx` neste repositório (disponíveis no App Node `mathlab-aulas-visuais-app`).
   - Persistência em `localStorage` depende do navegador/perfil local (use o backup JSON da Biblioteca).
@@ -241,7 +241,7 @@ Veja o passo a passo completo para configurar **Claude (Skill)**, **Gemini (Gem)
 | Versão | Destaques |
 | --- | --- |
 | **1.6.0** *(motor 2.0.0, contrato 2.1)* | Redesign UI/UX v2 (3 grupos de navegação, modo escuro, busca na biblioteca, stepper de 4 passos), formulário pedagógico com calibração por etapa e seções modulares, emblemas editoriais geométricos por área (`emblemFor`), PDF reproduzível e acessível (tagged `pt-BR`), manifesto único de versões (`manifest.json`), incorporação da identidade editorial e da Ficha Oficial do Professor Alê v1.0. |
-| **Em validação** *(26/11/2026, sem nova versão publicada)* | KaTeX offline, Infográfico de Abertura, seletor contextual do Professor Alê, Capa Clean sem foto, arte de capa opcional e correções de fórmula em bloco e de `R$`, **slides HTML interativos** (Exportar → Apresentação em sala; gabarito fora por padrão), **banco de questões por habilidade BNCC** (`mathlab.bank/1`, só habilidades escritas no material, nunca inventadas) e **conferência de ortografia pt-BR offline** (Auditoria; só em páginas servidas por http, não no arquivo único) e **livro de alta qualidade** (Livro → Markdown; `tools/livro.mjs` gera PDF editorial e EPUB3 com Pandoc, localmente). Aguardam a validação do professor em uso real antes de subir a versão no `manifest.json`. |
+| **Em validação** *(26/11/2026, sem nova versão publicada)* | KaTeX offline, Infográfico de Abertura, seletor contextual do Professor Alê, Capa Clean sem foto, arte de capa opcional e correções de fórmula em bloco e de `R$`, **slides HTML interativos** (Exportar → Apresentação em sala; gabarito fora por padrão), **banco de questões por habilidade BNCC** (`mathlab.bank/1`, só habilidades escritas no material, nunca inventadas) e **conferência de ortografia pt-BR offline** (Auditoria; só em páginas servidas por http, não no arquivo único), mais **revisão de português por regras** (crase, concordância, vícios de linguagem, períodos longos, gerúndios; registros didático e divulgação; motor copiado do ScriptaLab v0.4.0 em `js/ptbr` com hash, atualizado por `node tools/sincronizar-ptbr.mjs <pasta-do-ScriptaLab>`; só sinaliza) e **livro de alta qualidade** (Livro → Markdown; `tools/livro.mjs` gera PDF editorial e EPUB3 com Pandoc, localmente). Aguardam a validação do professor em uso real antes de subir a versão no `manifest.json`. |
 | **1.5.x** | Plano por unidades (`mathlab.blueprint/1` e `mathlab.unit/1`), memória acumulada, conferência e reparo (`mathlab.repair/1`), pacotes de domínio (`mathlab.domain/1`), fontes do autor (`[F1]`…), compilação de Livro/Caderno e interoperabilidade com o App Node (`mathlab.material/2` v2.1). |
 | **1.3 – 1.4** | Capa Clean, Folha de Rosto, Miolo Editorial Clean com pílula de página, etiquetas Histórico-Culturais e caixa *Minha Síntese*. |
 | **1.2** | Remoção do teto de 6 páginas, perfis modulares (`completo`, `expositivo`, `expositivo_visual`, `pratica`) e auditoria coerente com o perfil. |

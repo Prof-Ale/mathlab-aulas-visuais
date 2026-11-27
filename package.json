@@ -4,7 +4,7 @@
   "private": true,
   "description": "Autoria docente para qualquer disciplina: skill (Claude/Gemini) + site estático.",
   "scripts": {
-    "test": "node --test tests/core.test.js tests/instrucoes.test.js tests/validacao.test.js tests/contrato.test.js tests/avisos.test.js tests/reparo.test.js tests/plano.test.js tests/app-bridge.test.js tests/pdf.test.js tests/dominios.test.js tests/livro.test.js tests/fontes.test.js tests/manifesto.test.js tests/capa-formulas.test.js tests/slides.test.js tests/banco.test.js tests/ortografia.test.js tests/ui-ux-roadmap.test.js",
+    "test": "node --test tests/core.test.js tests/instrucoes.test.js tests/validacao.test.js tests/contrato.test.js tests/avisos.test.js tests/reparo.test.js tests/plano.test.js tests/app-bridge.test.js tests/pdf.test.js tests/dominios.test.js tests/livro.test.js tests/fontes.test.js tests/manifesto.test.js tests/capa-formulas.test.js tests/slides.test.js tests/banco.test.js tests/ortografia.test.js tests/revisor-portugues.test.js tests/ui-ux-roadmap.test.js",
     "build": "node tools/build-standalone.js",
     "pdf": "node tools/gerar-pdf.mjs"
   },
