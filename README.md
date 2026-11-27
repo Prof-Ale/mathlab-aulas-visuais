@@ -1,5 +1,7 @@
 # MathLab Aulas Visuais
 
+> **▶ [Usar agora no navegador (GitHub Pages)](https://prof-ale.github.io/mathlab-aulas-visuais/)** · **📥 [Baixar versão offline única (`dist/mathlab-standalone.html`)](https://github.com/Prof-Ale/mathlab-aulas-visuais/releases/latest)** · **Licença:** [MIT](LICENSE)
+
 **Versão do pacote:** `1.6.0` · **Motor (`js/core.js`):** `2.0.0` · **Contrato:** `mathlab.material/2` (versão menor `2.1`)  
 *Fonte única de versão:* [`manifest.json`](manifest.json) (verificada automaticamente por `tests/manifesto.test.js`).
 
@@ -196,7 +198,7 @@ As diretrizes visuais oficiais e a **Ficha Oficial do Personagem Professor Alê 
 ## Funcionamento offline e privacidade
 
 - **Zero backend e zero telemetria:** nenhum conteúdo autoral sai do navegador. Todos os projetos, versões, fontes, planos e pacotes de domínio ficam salvos apenas no `localStorage` do navegador (faça backup periódico pela aba **Biblioteca**).
-- **Uso offline:** abra [`dist/mathlab-standalone.html`](dist/mathlab-standalone.html) diretamente no navegador (arquivo único autocontido). No `index.html` servido pela web, as fontes do Google são carregadas se houver conexão; no `npm run pdf`, todas as fontes são embutidas localmente de `assets/fontes/` com bloqueio total de rede.
+- **Uso offline:** abra [`dist/mathlab-standalone.html`](dist/mathlab-standalone.html) diretamente no navegador (arquivo único autocontido). Tanto o site publicado (`index.html`) quanto o `npm run pdf` usam fontes OFL locais de `assets/fontes/` sem requisições externas ao Google Fonts.
 
 ---
 
@@ -209,7 +211,7 @@ As diretrizes visuais oficiais e a **Ficha Oficial do Personagem Professor Alê 
 
 ### Comandos
 ```bash
-npm test                                  # executa todas as 17 suítes em tests/
+npm test                                  # executa todas as 18 suítes em tests/
 npm run build                             # gera dist/mathlab-standalone.html
 npm run pdf -- --demo apostila-demo.pdf   # gera PDF acessível e reproduzível (requer Playwright)
 ```
@@ -225,7 +227,7 @@ Veja o passo a passo completo para configurar **Claude (Skill)**, **Gemini (Gem)
 
 ## Testes e limitações conhecidas
 
-- **Suíte automatizada:** `npm test` executa 17 arquivos de teste (`core`, `instrucoes`, `validacao`, `contrato`, `avisos`, `reparo`, `plano`, `app-bridge`, `pdf`, `dominios`, `livro`, `fontes`, `manifesto`, `capa-formulas`, `slides`, `banco`, `ortografia`). Os 2 testes end-to-end de geração de PDF em `tests/pdf.test.js` são ignorados automaticamente quando o `playwright` não está instalado.
+- **Suíte automatizada:** `npm test` executa 18 arquivos de teste (`core`, `instrucoes`, `validacao`, `contrato`, `avisos`, `reparo`, `plano`, `app-bridge`, `pdf`, `dominios`, `livro`, `fontes`, `manifesto`, `capa-formulas`, `slides`, `banco`, `ortografia`, `ui-ux-roadmap`). Os 2 testes end-to-end de geração de PDF em `tests/pdf.test.js` são ignorados automaticamente quando o `playwright` não está instalado.
 - **Limitações conhecidas:**
   - Não exporta `.docx` nem `.pptx` neste repositório (disponíveis no App Node `mathlab-aulas-visuais-app`).
   - Persistência em `localStorage` depende do navegador/perfil local (use o backup JSON da Biblioteca).
