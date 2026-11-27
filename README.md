@@ -125,11 +125,12 @@ Além do HTML, o mesmo livro pode virar **Markdown** (dialeto do Pandoc) e, a pa
 
 ```bash
 node tools/livro.mjs cap1.mathlab.json cap2.mathlab.json --titulo "Caderno de Matemática" --subtitulo "7º e 8º anos" --saida livro/
-# opções: --formato pdf,epub,md   --papel a4|a5   --sem-gabarito   --sem-glossario   --sem-referencias
+# opções: --formato pdf,epub,md   --papel a4|a5   --modelo didatico|narrativo   --sem-gabarito   --sem-glossario   --sem-referencias
 node tools/livro.mjs --demo --saida /tmp/livro      # material de demonstração
 ```
 
 - **Requisitos (só para PDF/EPUB):** Pandoc 3, TeX Live com XeLaTeX e `texlive-lang-portuguese` (hifenização), fontes TeX Gyre (Pagella, Heros) e, de preferência, Fira Sans; `rsvg-convert` (librsvg) para figuras SVG no PDF e capa do EPUB. Em Debian/Ubuntu: `apt install pandoc texlive-xetex texlive-latex-extra texlive-fonts-extra texlive-lang-portuguese librsvg2-bin`.
+- **Modelos:** `didatico` (padrão: capa azul, número de capítulo grande, caixas coloridas por tipo de bloco, A4) e `narrativo` (livro de leitura: serifada clássica, capa clara, blocos discretos com filete lateral, páginas espelhadas com margens de livro, A5 por padrão; `--papel a4` continua valendo).
 - **O que sai:** capa, sumário com páginas, ficha de revisão, capítulos com número grande, caixas coloridas por tipo de bloco (conceito, exemplo, atividade, exercícios…), fórmulas em LaTeX, tabelas, figuras com legenda, glossário, caderno de respostas e referências. No EPUB, fórmulas em MathML e as mesmas caixas via CSS.
 - **Limitações declaradas:** o PDF do LaTeX **não é marcado para acessibilidade** (use o EPUB3 ou o HTML como formatos acessíveis); sem PDF/A, índice remissivo, ISBN/ficha catalográfica nem modo de sangria para gráfica; o PDF/EPUB só são gerados localmente (o app no navegador gera apenas o Markdown).
 - **Crédito:** a ideia de "Markdown + Pandoc + XeLaTeX" vem de [romankurnovskii/markdown-to-pdf-book-converter](https://github.com/romankurnovskii/markdown-to-pdf-book-converter) (MIT); os arquivos de `tools/livro/` são originais deste projeto.

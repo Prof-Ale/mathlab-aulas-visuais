@@ -130,3 +130,12 @@ test('Markdown: sem materiais devolve erro claro', () => {
   const r = L.compileBookMarkdown([]);
   assert.equal(r.ok, false);
 });
+
+test('CLI: --modelo aceita didatico/narrativo; narrativo usa A5 por padrão e respeita --papel', async () => {
+  const { lerArgs } = await import('../tools/livro.mjs');
+  assert.equal(lerArgs(['a.json']).modelo, 'didatico');
+  assert.equal(lerArgs(['a.json']).papel, 'a4');
+  assert.equal(lerArgs(['a.json', '--modelo', 'narrativo']).papel, 'a5');
+  assert.equal(lerArgs(['a.json', '--modelo', 'narrativo', '--papel', 'a4']).papel, 'a4');
+  assert.throws(() => lerArgs(['a.json', '--modelo', 'comic']), /didatico ou narrativo/);
+});

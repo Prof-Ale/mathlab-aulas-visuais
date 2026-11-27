@@ -4,7 +4,7 @@
  *
  * Uso:
  *   node tools/livro.mjs material1.json [material2.json ...] [--saida pasta] [--titulo "..."] [--subtitulo "..."]
- *        [--autor "..."] [--formato pdf,epub,md] [--papel a4|a5] [--sem-gabarito] [--sem-glossario] [--sem-referencias]
+ *        [--autor "..."] [--formato pdf,epub,md] [--papel a4|a5] [--modelo didatico|narrativo] [--sem-gabarito] [--sem-glossario] [--sem-referencias]
  *   node tools/livro.mjs --demo
  *
  * Requer Pandoc 3 e XeLaTeX (TeX Live) instalados na sua máquina. Para PDF com hifenização correta em português,
@@ -27,7 +27,7 @@ const DIR = path.join(ROOT, 'tools/livro');
 const slug = (s) => String(s || 'livro').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'livro';
 
 export function lerArgs(argv) {
-  const a = { arquivos: [], saida: 'livro-saida', formato: ['pdf', 'epub', 'md'], papel: 'a4', demo: false, opts: {} };
+  const a = { arquivos: [], saida: 'livro-saida', formato: ['pdf', 'epub', 'md'], papel: 'a4', papelDado: false, modelo: 'didatico', demo: false, opts: {} };
   for (let i = 0; i < argv.length; i++) {
     const k = argv[i];
     const v = () => { if (i + 1 >= argv.length) throw new Error('Falta o valor depois de ' + k); return argv[++i]; };
@@ -36,7 +36,8 @@ export function lerArgs(argv) {
     else if (k === '--subtitulo') a.opts.subtitle = v();
     else if (k === '--autor') a.opts.author = v();
     else if (k === '--formato') a.formato = v().split(',').map((x) => x.trim().toLowerCase()).filter(Boolean);
-    else if (k === '--papel') a.papel = v().toLowerCase();
+    else if (k === '--papel') { a.papel = v().toLowerCase(); a.papelDado = true; }
+    else if (k === '--modelo') a.modelo = v().toLowerCase();
     else if (k === '--sem-gabarito') a.opts.answers = false;
     else if (k === '--sem-glossario') a.opts.glossary = false;
     else if (k === '--sem-referencias') a.opts.references = false;
@@ -44,6 +45,8 @@ export function lerArgs(argv) {
     else if (k.startsWith('--')) throw new Error('Opção desconhecida: ' + k);
     else a.arquivos.push(k);
   }
+  if (!['didatico', 'narrativo'].includes(a.modelo)) throw new Error('--modelo aceita didatico ou narrativo.');
+  if (a.modelo === 'narrativo' && !a.papelDado) a.papel = 'a5';
   if (!['a4', 'a5'].includes(a.papel)) throw new Error('--papel aceita a4 ou a5.');
   const ruim = a.formato.filter((f) => !['pdf', 'epub', 'md'].includes(f));
   if (ruim.length) throw new Error('Formato desconhecido: ' + ruim.join(', ') + '. Use pdf, epub ou md.');
@@ -103,9 +106,12 @@ export function gerar(args) {
   if (args.formato.includes('pdf')) {
     const a5 = args.papel === 'a5';
     const pdf = path.join(saida, base + '.pdf');
-    const res = pandoc([path.basename(feitos[0]), '-o', pdf, ...comuns, '--pdf-engine=xelatex', '-H', path.join(DIR, 'header.tex'),
-      '-V', 'documentclass=book', '-V', 'classoption=oneside', '-V', 'classoption=' + (a5 ? '10pt' : '11pt'), '-V', 'papersize=' + args.papel,
-      '-V', 'geometry:margin=' + (a5 ? '1.8cm' : '2.5cm'), '-V', 'secnumdepth=0', '-V', 'indent=true', '-V', 'linestretch=1.12', '-V', 'colorlinks=true', '-V', 'linkcolor=ml-navy', '-V', 'urlcolor=ml-azul', '-V', 'toccolor=ml-navy'], saida);
+    const nar = args.modelo === 'narrativo';
+    const cabecalhos = ['-H', path.join(DIR, 'header.tex')].concat(nar ? ['-H', path.join(DIR, 'header-narrativo.tex')] : []);
+    const geom = nar ? ['-V', 'geometry:inner=2.2cm,outer=1.7cm,top=2cm,bottom=2.2cm'] : ['-V', 'geometry:margin=' + (a5 ? '1.8cm' : '2.5cm')];
+    const res = pandoc([path.basename(feitos[0]), '-o', pdf, ...comuns, '--pdf-engine=xelatex', ...cabecalhos,
+      '-V', 'documentclass=book', '-V', 'classoption=' + (nar ? 'twoside' : 'oneside'), ...(nar ? ['-V', 'classoption=openany'] : []), '-V', 'classoption=' + (a5 ? '10pt' : '11pt'), '-V', 'papersize=' + args.papel,
+      ...geom, '-V', 'secnumdepth=0', '-V', 'indent=true', '-V', 'linestretch=' + (nar ? '1.2' : '1.12'), '-V', 'colorlinks=true', '-V', 'linkcolor=ml-navy', '-V', 'urlcolor=ml-azul', '-V', 'toccolor=ml-navy'], saida);
     if (res.status !== 0) throw new Error('O Pandoc/XeLaTeX falhou ao gerar o PDF:\n' + String(res.stderr).split('\n').slice(0, 25).join('\n'));
     if (/Missing character|Hyphenation patterns .* not found|No hyphenation patterns/i.test(res.stderr)) avisos.push('O LaTeX avisou sobre caracteres ou hifenização. Instale o pacote de idioma do TeX Live para português.');
     feitos.push(pdf);
