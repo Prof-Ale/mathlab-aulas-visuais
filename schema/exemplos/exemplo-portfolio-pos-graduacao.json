@@ -1,0 +1,43 @@
+{
+  "schema_versao": "portfolio.1",
+  "periodos_ids": [
+    "b1",
+    "b2"
+  ],
+  "privacidade": {
+    "exigir_rostos_borrados": true
+  },
+  "perfil": "pos_graduacao",
+  "titulo": "Portfólio docente 2026: Matemática (pós-graduação)",
+  "subtitulo": "Dados fictícios para demonstração",
+  "destinatario": "programa_pos",
+  "apresentacao": "Memorial de prática do 6º e 7º anos, organizado para discutir como o erro típico orienta a retomada.",
+  "perfil_profissional": {
+    "formacao": [
+      "Licenciatura em Matemática (exemplo fictício)"
+    ],
+    "atuacao": [
+      "Rede estadual, desde 2020 (exemplo fictício)"
+    ]
+  },
+  "fundamentacao": {
+    "questao": "Como o registro sistemático de erros típicos muda a retomada de frações no 6º ano?",
+    "texto": "A prática parte da ideia de que o erro informa o planejamento. Os registros abaixo servem de material empírico para essa discussão.",
+    "referencias": [
+      "(Inclua aqui as referências que você realmente usou, no formato ABNT.)"
+    ]
+  },
+  "secoes": [
+    "fundamentacao",
+    "trajetoria",
+    "destaques",
+    "avaliacoes",
+    "evolucao",
+    "reflexao"
+  ],
+  "reflexao_geral": "Os registros indicam efeito da retomada, mas sem grupo de comparação. A conclusão é de tendência, não de causa.",
+  "proximos_passos": [
+    "Registrar reflexão em todas as práticas em destaque.",
+    "Definir o instrumento de coleta antes do próximo bimestre."
+  ]
+}

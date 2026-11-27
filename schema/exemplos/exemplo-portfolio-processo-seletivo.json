@@ -1,0 +1,66 @@
+{
+  "schema_versao": "portfolio.1",
+  "periodos_ids": [
+    "b1",
+    "b2"
+  ],
+  "privacidade": {
+    "exigir_rostos_borrados": true
+  },
+  "perfil": "processo_seletivo",
+  "titulo": "Portfólio docente 2026: Matemática (processo seletivo)",
+  "subtitulo": "Dados fictícios para demonstração",
+  "destinatario": "banca",
+  "apresentacao": "Professor de Matemática do Ensino Fundamental II. Trabalho com representação visual antes da regra e uso o erro típico dos alunos para decidir a próxima aula.",
+  "perfil_profissional": {
+    "formacao": [
+      "Licenciatura em Matemática (exemplo fictício)",
+      "Especialização em Ensino de Ciências e Matemática (exemplo fictício)"
+    ],
+    "atuacao": [
+      "Rede estadual, 6º e 7º anos, desde 2020 (exemplo fictício)"
+    ],
+    "cursos": [
+      "Formação continuada em avaliação diagnóstica (exemplo fictício)"
+    ],
+    "producao": [
+      "Apostilas visuais de frações e equações (exemplo fictício)"
+    ]
+  },
+  "competencias": [
+    {
+      "nome": "Planejar a partir de habilidades do currículo",
+      "descricao": "Cada unidade parte das habilidades previstas e registra o que foi de fato trabalhado.",
+      "entradas_ids": [
+        "e01",
+        "e03"
+      ]
+    },
+    {
+      "nome": "Usar avaliação para retomar o que não foi aprendido",
+      "descricao": "O erro mais frequente de cada item guia a retomada.",
+      "entradas_ids": [
+        "e04",
+        "e05"
+      ]
+    },
+    {
+      "nome": "Avaliar e acompanhar a evolução por habilidade",
+      "entradas_ids": [
+        "e08"
+      ]
+    }
+  ],
+  "secoes": [
+    "trajetoria",
+    "competencias",
+    "destaques",
+    "evolucao",
+    "reflexao"
+  ],
+  "reflexao_geral": "Desenhar a situação antes de calcular reduziu os erros de operação com frações. Em 2027 quero registrar cada retomada logo após a aula.",
+  "proximos_passos": [
+    "Começar cada unidade com a representação visual.",
+    "Conferir os códigos de habilidade no documento oficial."
+  ]
+}

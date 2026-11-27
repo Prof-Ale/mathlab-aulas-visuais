@@ -1,26 +1,72 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:mathlab:portfolio:v1",
-  "title": "MathLab — Configuração do portfólio v1",
-  "description": "Escolhas editoriais sobre o diário: período, seções, privacidade e a voz do professor. O conteúdo factual vem do diário; aqui só entra o que o professor escreve.",
+  "title": "MathLab: Configuração do portfólio v1",
+  "description": "Escolhas editoriais sobre o diário: perfil, período, seções, privacidade e a voz do professor. O conteúdo factual vem do diário; aqui só entra o que o professor escreve. Campos novos são opcionais, então arquivos antigos continuam válidos.",
   "type": "object",
-  "required": ["schema_versao", "titulo", "destinatario", "periodos_ids", "privacidade"],
+  "required": [
+    "schema_versao",
+    "titulo",
+    "destinatario",
+    "periodos_ids",
+    "privacidade"
+  ],
   "additionalProperties": false,
   "properties": {
-    "schema_versao": { "const": "portfolio.1" },
-    "titulo": { "type": "string", "minLength": 3 },
-    "subtitulo": { "type": "string" },
-    "destinatario": { "enum": ["direcao", "coordenacao", "autoavaliacao"] },
-    "periodos_ids": { "type": "array", "minItems": 1, "items": { "type": "string" } },
-    "turmas_ids": { "type": "array", "items": { "type": "string" } },
+    "schema_versao": {
+      "const": "portfolio.1"
+    },
+    "titulo": {
+      "type": "string",
+      "minLength": 3
+    },
+    "subtitulo": {
+      "type": "string"
+    },
+    "destinatario": {
+      "enum": [
+        "direcao",
+        "coordenacao",
+        "autoavaliacao",
+        "banca",
+        "programa_pos"
+      ]
+    },
+    "periodos_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      }
+    },
+    "turmas_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "secoes": {
       "type": "array",
-      "items": { "enum": ["matriz_cobertura", "linha_do_periodo", "destaques", "avaliacoes", "evolucao", "reflexao"] },
-      "default": ["matriz_cobertura", "linha_do_periodo", "destaques", "avaliacoes", "evolucao", "reflexao"]
+      "items": {
+        "enum": [
+          "matriz_cobertura",
+          "linha_do_periodo",
+          "destaques",
+          "avaliacoes",
+          "evolucao",
+          "reflexao",
+          "trajetoria",
+          "competencias",
+          "fundamentacao"
+        ]
+      },
+      "description": "Se faltar, vale o padrão do perfil."
     },
     "privacidade": {
       "type": "object",
-      "required": ["exigir_rostos_borrados"],
+      "required": [
+        "exigir_rostos_borrados"
+      ],
       "additionalProperties": false,
       "properties": {
         "exigir_rostos_borrados": {
@@ -29,8 +75,112 @@
         }
       }
     },
-    "apresentacao": { "type": "string", "maxLength": 1200 },
-    "reflexao_geral": { "type": "string", "maxLength": 2000 },
-    "proximos_passos": { "type": "array", "items": { "type": "string" } }
+    "apresentacao": {
+      "type": "string",
+      "maxLength": 1200
+    },
+    "reflexao_geral": {
+      "type": "string",
+      "maxLength": 2000
+    },
+    "proximos_passos": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "perfil": {
+      "enum": [
+        "escolar",
+        "processo_seletivo",
+        "pos_graduacao"
+      ],
+      "default": "escolar",
+      "description": "escolar: para direção e coordenação, com cobertura curricular completa. processo_seletivo: curto, até 3 práticas por turma, com trajetória e competências. pos_graduacao: com fundamentação, questão de pesquisa e reflexão em cada prática. Perfis fora da escola sempre exigem rostos borrados."
+    },
+    "perfil_profissional": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Trajetória escrita por você. O MathLab não preenche nem confere.",
+      "properties": {
+        "formacao": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "atuacao": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "cursos": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "producao": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "competencias": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "nome",
+          "entradas_ids"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "nome": {
+            "type": "string",
+            "minLength": 3
+          },
+          "descricao": {
+            "type": "string",
+            "maxLength": 600
+          },
+          "entradas_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Ids de registros do diário que servem de evidência."
+          }
+        }
+      }
+    },
+    "fundamentacao": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "questao": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "texto": {
+          "type": "string",
+          "maxLength": 2500
+        },
+        "referencias": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
   }
 }

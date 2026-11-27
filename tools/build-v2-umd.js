@@ -28,6 +28,6 @@ let port = rd('tools/portfolio.mjs')
   .replace(/^#!.*\r?\n/, '')
   .replace(/import\s*\{[^}]+\}\s*from\s*["']node:fs["'];\r?\n/, '')
   .replace(/export\s+(function|const)\s+/g, '$1 ');
-wr('js/portfolio.js', wrapUmd('MathLabPortfolio', '', '', port, 'CFG_PADRAO, verificar, montarHtml'));
+wr('js/portfolio.js', wrapUmd('MathLabPortfolio', '', '', port, 'CFG_PADRAO, PERFIS, verificar, montarCorpo, montarHtml, montarFlipbook, matriz'));
 
 console.log('UMD gerados: js/racional.js, js/auditar-v2.js, js/portfolio.js');

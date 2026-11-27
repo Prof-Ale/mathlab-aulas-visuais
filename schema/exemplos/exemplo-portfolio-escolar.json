@@ -1,11 +1,24 @@
 {
   "schema_versao": "portfolio.1",
+  "perfil": "escolar",
   "titulo": "Portfólio docente 2026 — Matemática",
   "subtitulo": "1º e 2º bimestres (exemplo com dados fictícios)",
   "destinatario": "direcao",
-  "periodos_ids": ["b1", "b2"],
-  "secoes": ["matriz_cobertura", "linha_do_periodo", "destaques", "avaliacoes", "evolucao", "reflexao"],
-  "privacidade": { "exigir_rostos_borrados": true },
+  "periodos_ids": [
+    "b1",
+    "b2"
+  ],
+  "secoes": [
+    "matriz_cobertura",
+    "linha_do_periodo",
+    "destaques",
+    "avaliacoes",
+    "evolucao",
+    "reflexao"
+  ],
+  "privacidade": {
+    "exigir_rostos_borrados": true
+  },
   "apresentacao": "Este portfólio reúne o que foi planejado, o que foi registrado em aula e o que as avaliações mostraram, com foco nas habilidades trabalhadas em cada turma.",
   "reflexao_geral": "Os registros mostram que desenhar a situação antes de calcular reduziu os erros de operação com frações. O próximo período pede mais tempo para sequências.",
   "proximos_passos": [

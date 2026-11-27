@@ -14,7 +14,39 @@ diário de aula (o ano todo)  ──►  portfólio (escolhas editoriais)  ─�
 - O **portfólio** (`schema/portfolio.v1.schema.json`) só escolhe o que mostrar e acrescenta a sua voz (apresentação, reflexão, próximos passos).
 - O **gerador** (`tools/portfolio.mjs`) monta o livro em A4 e **recusa gerar** se houver risco de privacidade ou inconsistência.
 
-Exemplo completo, com dados fictícios: `schema/exemplos/exemplo-diario.json` e `exemplo-portfolio-config.json`. O resultado está em `exemplos-gerados/portfolio-exemplo.html` (6 páginas A4).
+Exemplo completo, com dados fictícios: `schema/exemplos/exemplo-diario.json` e `exemplo-portfolio-escolar.json`. Há um exemplo de configuração por perfil: `exemplo-portfolio-escolar.json`, `exemplo-portfolio-processo-seletivo.json` e `exemplo-portfolio-pos-graduacao.json`.
+
+## 1.1 Perfis do portfólio
+
+O mesmo diário alimenta três portfólios. O campo `perfil` do `portfolio.json` (ou `--perfil` na linha de comando) muda as seções padrão, os títulos e o que é mostrado.
+
+| Perfil | Para quem | Seções padrão | O que muda |
+|---|---|---|---|
+| `escolar` (padrão) | direção e coordenação | cobertura curricular, linha do período, destaques, avaliações, evolução, reflexão | é o comportamento de sempre; arquivos antigos continuam válidos |
+| `processo_seletivo` | banca, remoção, concurso, seleção | trajetória, competências com evidências, destaques, evolução, reflexão | até 3 práticas por turma; cada competência aponta registros do diário; sem tabelas longas de planejamento |
+| `pos_graduacao` | programa de pós, mestrado, memorial | fundamentação, trajetória, destaques, avaliações, evolução, reflexão | questão de investigação, referências informadas por você e reflexão pedida em cada prática |
+
+Campos novos e opcionais do `portfolio.json`:
+
+- `perfil_profissional`: listas `formacao`, `atuacao`, `cursos` e `producao`, escritas por você.
+- `competencias`: lista de `{ nome, descricao, entradas_ids }`. Cada `entradas_ids` aponta registros reais do diário.
+- `fundamentacao`: `{ questao, texto, referencias }`. As referências são suas; o MathLab não cria nem confere citações. Revise na ABNT.
+
+Os perfis para fora da escola **sempre exigem rostos borrados**, mesmo que a configuração diga `false` (a regra P14 avisa).
+
+## 1.2 Saídas
+
+```bash
+node tools/portfolio.mjs diario.json portfolio.json --pacote saida/            # HTML, flipbook e PDF
+node tools/portfolio.mjs diario.json --perfil processo_seletivo --saida p.html
+node tools/portfolio.mjs diario.json portfolio.json --flipbook folhear.html    # só o flipbook
+node tools/portfolio.mjs diario.json portfolio.json --pdf p.pdf                # só o PDF acessível
+```
+
+- **HTML em A4** (`portfolio.html`): o documento completo, com cabeçalhos de tabela marcados (`scope="col"`) e idioma `pt-BR`.
+- **Flipbook** (`portfolio-flipbook.html`): arquivo único, funciona offline, com a biblioteca StPageFlip (MIT, em `assets/vendor/page-flip`) embutida. Folheia com mouse, toque, botões, setas, PageUp/PageDown, Home e End. A mesma página traz a **versão em página corrida**, que aparece quando o JavaScript está desligado, quando a biblioteca falha ou quando a pessoa aperta "Ler em página corrida". Com "reduzir movimento" ligado no sistema, a animação some. O flipbook é apresentação: o documento de referência é o PDF e o HTML corrido.
+- **PDF acessível** (`portfolio.pdf`): gerado pelo Chromium com marcação, árvore de estrutura, idioma e marcadores; o comando confere e avisa se faltar algum. Precisa do pacote `playwright`. Os pedidos de rede são bloqueados.
+- No site (aba Diário e Portfólio): seletor de perfil, importação do `portfolio.json`, HTML e flipbook. O PDF acessível sai pelo comando, não pelo navegador.
 
 ## 2. O que o livro contém
 
@@ -65,6 +97,10 @@ Soma acertos e participantes dos itens de cada habilidade em cada avaliação e 
 | P08 | Data da entrada fora do período | aviso |
 | P09 | Nome da lista de vigilância encontrado | bloqueante |
 | P10 | Entrada em destaque sem evidência | aviso |
+| P11 | Competência com registro inexistente (bloqueante), fora do período ou das turmas escolhidos, ou sem nenhum registro (avisos) | bloqueante / aviso |
+| P12 | Pós-graduação: prática em destaque sem reflexão | aviso |
+| P13 | Perfil externo sem apresentação, ou com seção de trajetória, competências ou fundamentação sem conteúdo | aviso |
+| P14 | Perfil externo com `exigir_rostos_borrados: false` (o valor é ignorado) | aviso |
 
 Todas foram exercitadas com um diário quebrado de propósito, e o gerador não produziu arquivo. O texto do livro também é escapado: HTML colocado num tema ou descrição aparece como texto, não executa.
 
@@ -85,6 +121,7 @@ Princípios: funcionar offline, salvar a cada campo, nunca perder o que foi digi
 
 - Os **códigos de habilidade do exemplo são ilustrativos** e não foram conferidos. O catálogo real deve ser montado a partir do documento oficial, com `verificado: true` só depois de conferido.
 - As **fotos** do exemplo são marcadores de lugar. A inserção da imagem real (campo `dataurl`) depende do aplicativo ler o IndexedDB.
-- O gerador é um **protótipo**: gera HTML A4 e o PDF sai pelo "imprimir como PDF" do navegador (foi o que usei para conferir o layout).
+- O gerador gera HTML A4, flipbook e PDF acessível (este com Playwright). Imprimir pelo navegador continua possível, mas não garante a marcação para leitor de tela.
+- O flipbook divide o conteúdo em páginas do tamanho da janela, então a divisão muda quando a janela muda. Tabelas longas continuam na página seguinte com o cabeçalho repetido; blocos que não cabem numa página inteira rolam dentro dela.
 - O número de páginas e as quebras foram conferidos só no exemplo pequeno. Com um ano inteiro de entradas, será preciso testar a paginação (ver A-01 em `docs/01`).
 - Sem modelo da escola, este formato é uma proposta; ajuste as seções em `portfolio.secoes`.
