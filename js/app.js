@@ -433,6 +433,36 @@
   }
 
   /* ---------- Auditoria ---------- */
+  /* ---------- Ortografia pt-BR offline (motor compartilhado com o ScriptaLab) ---------- */
+  const ORTO_KEY = 'mathlab.ortografia.ignorar';
+  function ortoIgnorar() { try { return String(localStorage.getItem(ORTO_KEY) || ''); } catch (e) { return ''; } }
+  function ortografiaCard() {
+    const file = location.protocol === 'file:';
+    return '<div class="card"><h3>Ortografia (offline)</h3>' +
+      (file ? '<p class="muted">Este arquivo único offline não embute o dicionário (5,4 MB). A conferência de ortografia funciona na versão publicada (GitHub Pages) ou servindo a pasta com um servidor local.</p>'
+        : '<p class="muted">Confere a grafia do texto com o dicionário pt-BR (VERO 3.2), sem enviar nada para fora. Só sinaliza: fórmulas, código e links ficam de fora. Pode apontar termos técnicos e nomes próprios como suspeitos; use a lista abaixo para ignorá-los.</p>' +
+          '<label class="muted" for="ortoIgn">Palavras a ignorar (uma por linha ou separadas por vírgula)</label><textarea id="ortoIgn" rows="2" style="width:100%" placeholder="ex.: BNCC, mediação, Vigotski">' + esc(ortoIgnorar()) + '</textarea>' +
+          '<div class="btns"><button class="b" data-a="ortografia">🔤 Conferir ortografia</button></div><div id="ortoOut" aria-live="polite"></div>') + '</div>';
+  }
+  let ortoMod = null, ortoChecker = null;
+  async function ortografiaAcao() {
+    const out = $('#ortoOut'); if (!out) return;
+    const ign = ($('#ortoIgn') || {}).value || '';
+    try { localStorage.setItem(ORTO_KEY, ign); } catch (e) { /* ignora */ }
+    out.innerHTML = '<p class="muted">Carregando o dicionário (5,4 MB, só na primeira vez)…</p>';
+    try {
+      if (!ortoMod) ortoMod = await import('./ortografia.mjs');
+      if (!ortoChecker) { const r = await fetch('assets/ortografia/pt-br.bloom'); if (!r.ok) throw new Error('HTTP ' + r.status); ortoChecker = ortoMod.createSpellChecker(new Uint8Array(await r.arrayBuffer())); }
+      const lista = ign.split(/[\n,;]+/).map((x) => x.trim()).filter(Boolean);
+      const ach = ortoMod.conferirOrtografiaMaterial(S.draft, ortoChecker, { ignorar: lista });
+      out.innerHTML = ach.length
+        ? '<p><b>' + ach.length + '</b> palavra(s) suspeita(s). Pode ser erro de grafia ou termo técnico/nome próprio.</p>' + ach.map((x) => '<div class="find warn">🔤 <b>' + esc(x.palavra) + '</b> · ' + esc(x.rotulo) + (x.sugestoes.length ? ' · talvez: ' + x.sugestoes.map(esc).join(', ') : '') + '<br><span class="muted">…' + esc(x.contexto) + '…</span></div>').join('')
+        : '<p>Nenhuma palavra suspeita. Isso não garante ausência de erros: o dicionário não pega erro de uso (por exemplo, “mas” × “mais”).</p>';
+    } catch (e) {
+      out.innerHTML = '<p class="muted">Não foi possível carregar a conferência de ortografia (' + esc(e.message) + '). Ela precisa de http(s); no arquivo aberto direto do disco (file://) o navegador bloqueia.</p>';
+    }
+  }
+
   function vAud() {
     const d = S.draft, a = C.audit(d), tr = d.meta.teacherReview;
     let v2Html = '';
@@ -450,7 +480,8 @@
       dominioAud(d) +
       fonteAud(d) +
       '<div class="card"><h3>10 categorias</h3>' + a.categories.map((c) => '<div class="cat"><span>' + esc(c.name) + '</span><div class="bar"><i style="width:' + c.score * 10 + '%;background:' + (c.score >= 8 ? 'var(--ok)' : c.score >= 5 ? 'var(--warn)' : 'var(--bad)') + '"></i></div><b>' + c.score + '</b></div>' + c.findings.map((f) => '<div class="find ' + f.sev + '">' + (f.sev === 'hard' ? '⛔' : f.sev === 'warn' ? '⚠️' : 'ℹ️') + ' ' + esc(f.msg) + '</div>').join('')).join('') + '</div>' +
-      '<div class="card"><h3>Revisão do professor</h3><p class="muted">A auditoria automática não confirma se o conteúdo está certo. Só você faz isso.</p><label><input type="checkbox" style="width:auto" data-a="review" ' + (tr && tr.done ? 'checked' : '') + '> Revisei o conteúdo e assumo a validação final' + (tr && tr.at ? ' (em ' + fmt(tr.at) + ')' : '') + '</label><p class="muted">Salve uma nova versão para registrar a revisão.</p></div>';
+      '<div class="card"><h3>Revisão do professor</h3><p class="muted">A auditoria automática não confirma se o conteúdo está certo. Só você faz isso.</p><label><input type="checkbox" style="width:auto" data-a="review" ' + (tr && tr.done ? 'checked' : '') + '> Revisei o conteúdo e assumo a validação final' + (tr && tr.at ? ' (em ' + fmt(tr.at) + ')' : '') + '</label><p class="muted">Salve uma nova versão para registrar a revisão.</p></div>' +
+      ortografiaCard();
   }
 
   /* ---------- Apostila completa ---------- */
@@ -471,6 +502,10 @@
   function vExp() {
     const d = S.draft, svgs = d.blocks.map((b, i) => [b, i]).filter((x) => x[0].svg);
     return '<div class="card"><h2>Exportar</h2><p class="muted">Exporta o que está no Editor agora (mesmo sem salvar).</p><div class="btns"><button class="b gold" data-a="dlbook">📘 Apostila completa (capa + miolo)</button><button class="b" data-a="printbook">🖨️ Imprimir apostila / salvar PDF</button><button class="b ghost" data-a="dlhtml">📄 Material em HTML simples</button><button class="b ghost" data-a="printall">🖨️ Imprimir material simples</button><button class="b ghost" data-a="dlposter">🖼️ Só o pôster (HTML)</button><button class="b ghost" data-a="dlmd">Markdown</button><button class="b ghost" data-a="dljson">JSON (para reimportar)</button></div>' +
+      '<h3>Apresentação em sala</h3><p class="muted">Slides em um único HTML, sem internet: setas do teclado, índice (O), tela cheia (F), impressão com um slide por página. O gabarito fica de fora por padrão.</p>' +
+      '<div class="btns"><button class="b gold" data-a="openslides">▶️ Abrir apresentação</button><button class="b" data-a="dlslides">🎞️ Baixar slides (sem gabarito)</button><button class="b ghost" data-a="dlslidesgab">🎞️ Baixar slides (com gabarito)</button></div>' +
+      '<h3>Banco de questões</h3><p class="muted">Extrai as questões numeradas dos exercícios, atividades e avaliações. A habilidade BNCC só aparece se estiver escrita no material; nada é inventado.</p>' +
+      '<div class="btns"><button class="b" data-a="dlbanco">🧮 Banco desta aula (JSON)</button><button class="b ghost" data-a="dllista">📝 Lista de exercícios (HTML)</button><button class="b ghost" data-a="dlbancolib">📚 Banco da biblioteca inteira (JSON)</button></div>' +
       (svgs.length ? '<h3>Figuras SVG</h3><div class="btns">' + svgs.map((x) => '<button class="b ghost sm" data-a="dlsvg" data-i="' + x[1] + '">' + esc(x[0].title) + '.svg</button>').join('') + '</div>' : '') +
       '<p class="muted">Para PDF: use “Imprimir / salvar PDF” e escolha “Salvar como PDF” no navegador. Word e PowerPoint ainda não estão nesta versão.</p></div>';
   }
@@ -693,6 +728,16 @@
     printposter: async () => printHTML(await inlineAssets(C.toHTML(S.draft, { material: false }))),
     dlhtml: async () => dl(slug(S.draft.title) + '.html', 'text/html', await inlineAssets(C.toHTML(S.draft))),
     printall: async () => printHTML(await inlineAssets(C.toHTML(S.draft))),
+    openslides: () => { const u = URL.createObjectURL(new Blob([C.toSlides(S.draft)], { type: 'text/html;charset=utf-8' })); window.open(u, '_blank', 'noopener'); setTimeout(() => URL.revokeObjectURL(u), 60000); },
+    dlslides: async () => dl(slug(S.draft.title) + '-slides.html', 'text/html', await inlineAssets(C.toSlides(S.draft))),
+    dlslidesgab: async () => dl(slug(S.draft.title) + '-slides-com-gabarito.html', 'text/html', await inlineAssets(C.toSlides(S.draft, { gabarito: true }))),
+    dlbanco: () => { const b = C.bancoDeQuestoes(S.draft); dl(slug(S.draft.title) + '-banco-questoes.json', 'application/json', JSON.stringify(b, null, 2)); toast(b.total + ' questão(ões) extraída(s).'); },
+    dllista: () => dl(slug(S.draft.title) + '-lista-exercicios.html', 'text/html', C.listaDeExercicios(C.bancoDeQuestoes(S.draft), { titulo: 'Lista de exercícios · ' + S.draft.title })),
+    dlbancolib: () => {
+      const mats = []; lib.projects.filter((p) => !p.archived).forEach((p) => p.materials.forEach((r) => { const d = curData(r); if (d) mats.push(d); }));
+      const b = C.bancoDeQuestoes(mats); dl('banco-questoes-biblioteca.json', 'application/json', JSON.stringify(b, null, 2)); toast(b.total + ' questão(ões) de ' + mats.length + ' material(is).');
+    },
+    ortografia: () => ortografiaAcao(),
     dlmd: () => dl(slug(S.draft.title) + '.md', 'text/markdown', C.toMarkdown(S.draft)),
     dljson: () => dl(slug(S.draft.title) + '.json', 'application/json', JSON.stringify(C.normalize(S.draft), null, 2)),
     dlsvg: (el) => { const b = S.draft.blocks[+el.dataset.i]; dl(slug(b.title) + '.svg', 'image/svg+xml', C.sanitizeSvg(b.svg)); },
