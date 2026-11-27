@@ -10,7 +10,8 @@
   const esc = C.esc;
   const strip = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
   const plano = (md) => String(md || '').replace(/```[\s\S]*?```/g, ' ').replace(/[#>*_`|]/g, ' ').replace(/!\[[^\]]*\]\([^)]*\)/g, ' ').replace(/\[([^\]]+)\]\([^)]*\)/g, '$1').replace(/\s+/g, ' ').trim();
-  const primeiraFrase = (t, n) => { const m = plano(t).match(/^.{12,}?[.!?](\s|$)/); const f = (m ? m[0] : plano(t)).trim(); return f.length > (n || 220) ? f.slice(0, (n || 220) - 1).trimEnd() + '…' : f; };
+  const semTitulosNegrito = (md) => String(md || '').split('\n').filter((l) => !/^\s*(#{1,6}\s+.*|\*\*[^*]+\*\*\s*:?\s*)$/.test(l)).join('\n');
+  const primeiraFrase = (t, n) => { t = semTitulosNegrito(t); const m = plano(t).match(/^.{12,}?[.!?](\s|$)/); const f = (m ? m[0] : plano(t)).trim(); return f.length > (n || 220) ? f.slice(0, (n || 220) - 1).trimEnd() + '…' : f; };
 
   /* Glossário: título de cada bloco "conceito" mais termos em negrito dentro de frases que definem. */
   function glossario(caps) {
@@ -115,5 +116,108 @@
     return { ok: true, html, title: titulo, chapters: caps.length, validated: validados, toc, glossary: gloss, answers: respostas, references: refs, warnings };
   }
 
-  return { compileBook, glossario, referencias };
+  /* ---------- Markdown para o Pandoc: livro de alta qualidade (PDF por LaTeX, EPUB) ----------
+     Mesma obra do compilador HTML, mas em Markdown puro com caixas ("::: {.caixa ...}"), fórmulas em $...$ e figuras
+     em arquivos. O texto nunca é reescrito: só ganha o formato que o Pandoc entende. */
+  const ROTULO_CAIXA = { problematizacao: 'Problematização', contexto: 'Contexto', conceito: 'Conceito', exemplo: 'Exemplo', visual: 'Para visualizar', atividade: 'Atividade', exercicios: 'Exercícios', gabarito: 'Gabarito', avaliacao: 'Avaliação', acessibilidade: 'Acessibilidade', nota: 'Nota', objetivos: '', previos: '', destaque: '' };
+  const MD_MATH_BLOCO = /\$\$([\s\S]+?)\$\$|\\\[([\s\S]+?)\\\]/g;
+  const MD_MATH_PAREN = /\\\(([^\n]+?)\\\)/g;
+  const MD_MATH_LINHA = /(^|[^\w$])\$(?=\S)([^$\n]*?\S)\$(?!\w)/g;
+  const mdAttr = (s) => String(s == null ? '' : s).replace(/\s+/g, ' ').trim().replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+  const mdTitulo = (s) => String(s == null ? '' : s).replace(/\s+/g, ' ').trim().replace(/([\\`*_\[\]<>#$|~{}])/g, '\\$1');
+
+  /* Prepara o texto de um bloco para o Pandoc: protege código e fórmulas, escapa "R$", rebaixa títulos internos. */
+  function paraPandoc(md) {
+    const guarda = [];
+    const g = (t) => '\u0000' + (guarda.push(t) - 1) + '\u0000';
+    let s = String(md == null ? '' : md).replace(/\r/g, '');
+    s = s.replace(/```[\s\S]*?```/g, (c) => g(c));
+    s = s.replace(/`[^`\n]+`/g, (c) => g(c));
+    s = s.replace(MD_MATH_BLOCO, (_, a, b) => g('\n\n$$' + String(a || b).trim() + '$$\n\n'));
+    s = s.replace(MD_MATH_PAREN, (_, c) => g('$' + String(c).trim() + '$'));
+    s = s.replace(/\$(-?)R\$\s?(\d[\d.,]*)\$/g, (_, sg, v) => g(sg + 'R\\$ ' + v));
+    s = s.replace(MD_MATH_LINHA, (_, pre, c) => pre + g('$' + c + '$'));
+    s = s.replace(/\$/g, '\\$');
+    s = s.replace(/^#{1,6}\s+(.*)$/gm, (_, t) => '**' + t.trim() + '**');
+    return s.replace(/\u0000(\d+)\u0000/g, (_, i) => guarda[+i]).replace(/\n{3,}/g, '\n\n').trim();
+  }
+
+  /* opts: { title, subtitle, author, glossary, answers, references, inlineFigures (figuras dentro do .md como data URI), agora } */
+  function compileBookMarkdown(materiais, opts) {
+    opts = opts || {};
+    const base = compileBook(materiais, Object.assign({}, opts));
+    if (!base.ok) return base;
+    const caps = (Array.isArray(materiais) ? materiais : []).filter((m) => m && typeof m === 'object').map((m) => C.normalize(m));
+    const usaRespostas = opts.answers !== false;
+    const estados = caps.map((m) => C.estadoRevisao(m));
+    const validados = estados.filter((e) => e.validado).length;
+    const autor = String(opts.author || '').trim() || caps[0].author || C.DEFAULT_AUTHOR;
+    const subt = String(opts.subtitle || '').trim() || [...new Set(caps.map((m) => m.discipline).filter(Boolean))].join(' · ');
+    const files = [];
+    let nfig = 0;
+    const figura = (b, ci, bi) => {
+      const svg = C.sanitizeSvg(b.svg);
+      if (!svg) return '';
+      nfig++;
+      const legenda = mdTitulo(b.title) + '.';
+      if (opts.inlineFigures) return '![' + legenda + '](data:image/svg+xml;base64,' + Buffer.from(svg, 'utf8').toString('base64') + '){width=85%}';
+      const caminho = 'figs/cap' + (ci + 1) + '-fig' + (bi + 1) + '.svg';
+      files.push({ path: caminho, content: svg });
+      return '![' + legenda + '](' + caminho + '){width=85%}';
+    };
+    const caixa = (tipo, titulo, corpo, extra) => ['::: {.caixa tipo="' + tipo + '" rotulo="' + mdAttr(tipo in ROTULO_CAIXA ? ROTULO_CAIXA[tipo] : tipo) + '" titulo="' + mdAttr(titulo) + '"' + (extra || '') + '}', '', corpo, '', ':::', ''].join('\n');
+
+    const o = ['---',
+      'title: "' + mdAttr(base.title) + '"',
+      'subtitle: "' + mdAttr(subt) + '"',
+      'author: "' + mdAttr(autor) + '"',
+      'lang: pt-BR',
+      'toc-title: "Sumário"',
+      'date: "' + mdAttr((opts.agora || new Date().toISOString()).slice(0, 10)) + '"',
+      'revisao: "' + validados + ' de ' + caps.length + (caps.length === 1 ? ' capítulo tem' : ' capítulos têm') + ' validação do professor"',
+      '---', ''];
+
+    o.push('# Ficha de revisão {-}', '', 'Estado real de cada capítulo. A compilação não valida nada: só o professor valida, no Editor de cada material.', '',
+      '| Capítulo | Estado |', '|:---------|:-------|', ...caps.map((m, i) => '| ' + (i + 1) + '. ' + mdTitulo(m.title) + ' | ' + mdTitulo(estados[i].texto) + ' |'), '',
+      validados === caps.length ? 'Todos os capítulos têm validação do professor atualizada.' : '**Atenção:** ' + validados + ' de ' + caps.length + (caps.length === 1 ? ' capítulo tem' : ' capítulos têm') + ' validação do professor. Este livro ainda não é uma obra validada.', '');
+
+    caps.forEach((m, ci) => {
+      o.push('# ' + mdTitulo(m.title) + ' {#cap-' + (ci + 1) + '}', '',
+        '*' + [m.discipline, m.level, m.duration].filter(Boolean).map(mdTitulo).join(' · ') + '*', '');
+      if (m.objectives.length) o.push(caixa('objetivos', 'Objetivos de aprendizagem', m.objectives.map((x) => '- ' + paraPandoc(x)).join('\n')));
+      if (m.prerequisites.length) o.push(caixa('previos', 'Conhecimentos prévios', m.prerequisites.map((x) => '- ' + paraPandoc(x)).join('\n')));
+      m.blocks.forEach((b, bi) => {
+        if (usaRespostas && b.type === 'gabarito') return;
+        const partes = [paraPandoc(b.content)];
+        if (b.svg) { const f = figura(b, ci, bi); if (f) partes.push(f); }
+        o.push(caixa(b.type, b.title, partes.filter(Boolean).join('\n\n')));
+        if (b.callout && b.callout.text) o.push(caixa('destaque', (C.CALLOUTS[b.callout.kind] || ['Destaque'])[0].replace(/^[^\wÀ-ÿ]+/u, ''), paraPandoc(b.callout.text), ' kind="' + mdAttr(b.callout.kind) + '"'));
+      });
+      if (m.limitations.length) o.push(caixa('nota', 'Limitações declaradas', m.limitations.map((x) => '- ' + paraPandoc(x)).join('\n')));
+    });
+
+    if (base.glossary.length) {
+      o.push('# Glossário {-}', '', 'Termos reunidos dos blocos de conceito. Conferir as definições faz parte da revisão.', '');
+      base.glossary.forEach((g) => o.push(mdTitulo(g.termo), ': ' + paraPandoc(g.def) + ' (cap. ' + g.cap + ')', ''));
+    }
+    if (base.answers.length) {
+      o.push('# Caderno de respostas {-}', '');
+      base.answers.forEach((r) => {
+        o.push('## Capítulo ' + r.cap + '. ' + mdTitulo(r.titulo) + ' {-}', '');
+        r.blocos.forEach((b) => {
+          const partes = [paraPandoc(b.content)];
+          if (b.svg) { const f = figura(b, r.cap - 1, 900); if (f) partes.push(f); }
+          o.push(caixa('gabarito', b.title, partes.filter(Boolean).join('\n\n')));
+        });
+      });
+    }
+    if (base.references.length) {
+      o.push('# Referências {-}', '');
+      base.references.forEach((r) => o.push('- ' + mdTitulo([r.authors, r.title, r.year, r.venue].filter(Boolean).join('. ')) + (r.doi ? ' DOI ' + mdTitulo(r.doi) + '.' : '') + (r.url ? ' <' + String(r.url).replace(/[<>\s]/g, '') + '>' : '') + ' (' + (r.verified ? 'conferida' : 'não conferida') + ')'));
+      o.push('');
+    }
+    return { ok: true, markdown: o.join('\n').replace(/\n{3,}/g, '\n\n') + '\n', files, title: base.title, author: autor, subtitle: subt, chapters: caps.length, validated: validados, figures: nfig, warnings: base.warnings };
+  }
+
+  return { compileBook, compileBookMarkdown, paraPandoc, glossario, referencias };
 });

@@ -227,10 +227,12 @@
     h += '<div class="card"><h3>Ordem dos capítulos</h3><ol>' + sel.map((x, i) => '<li>' + esc(x.data.title) + ' <span class="btns" style="display:inline-flex"><button class="b ghost sm" data-a="bookup" data-i="' + i + '" aria-label="Subir">↑</button><button class="b ghost sm" data-a="bookdown" data-i="' + i + '" aria-label="Descer">↓</button></span></li>').join('') + '</ol>' +
       '<div class="row"><div><label for="bk-t">Título do livro</label><input id="bk-t" data-book="title" value="' + esc(b.title) + '" placeholder="Ex.: Caderno do 8º ano"></div><div><label for="bk-s">Subtítulo</label><input id="bk-s" data-book="subtitle" value="' + esc(b.subtitle) + '"></div><div><label for="bk-a">Autor</label><input id="bk-a" data-book="author" value="' + esc(b.author) + '" placeholder="' + esc(C.DEFAULT_AUTHOR) + '"></div></div>' +
       '<label><input type="checkbox" style="width:auto" data-a="bookopt" data-o="glossary"' + (b.glossary ? ' checked' : '') + '> Glossário</label> <label><input type="checkbox" style="width:auto" data-a="bookopt" data-o="answers"' + (b.answers ? ' checked' : '') + '> Caderno de respostas</label> <label><input type="checkbox" style="width:auto" data-a="bookopt" data-o="references"' + (b.references ? ' checked' : '') + '> Referências</label>' +
-      '<div class="btns"><button class="b gold" data-a="bookprev">👁️ Compilar e ver</button><button class="b" data-a="dlbook2">⬇️ Baixar HTML</button><button class="b ghost" data-a="printbook2">🖨️ Imprimir / salvar PDF</button></div></div>';
+      '<div class="btns"><button class="b gold" data-a="bookprev">👁️ Compilar e ver</button><button class="b" data-a="dlbook2">⬇️ Baixar HTML</button><button class="b ghost" data-a="printbook2">🖨️ Imprimir / salvar PDF</button><button class="b ghost" data-a="dlbookmd" title="Texto em Markdown para gerar PDF editorial e EPUB com o Pandoc">📚 Baixar Markdown (livro de alta qualidade)</button></div>' +
+      '<p class="muted" style="margin-top:8px">Livro de alta qualidade: baixe o Markdown e rode <code>node tools/livro.mjs</code> no seu computador (Pandoc + XeLaTeX) para obter PDF editorial e EPUB. Veja o README.</p></div>';
     if (b.show) { const r = compilar(); h += r.ok ? '<div class="card"><h3>Prévia</h3>' + (r.warnings.length ? '<div class="find warn">' + r.warnings.map((w) => '⚠️ ' + esc(w)).join('<br>') + '</div>' : '') + '<p class="muted">' + r.chapters + ' capítulo(s) · ' + r.glossary.length + ' termo(s) no glossário · ' + r.validated + ' de ' + r.chapters + ' com validação do professor</p><iframe title="Prévia do livro" style="width:100%;height:70vh;border:0;border-radius:10px;background:#e9edf5" srcdoc="' + esc(r.html) + '"></iframe></div>' : '<div class="card"><p>' + esc(r.error) + '</p></div>'; }
     return h;
   }
+  function compilarMd() { const b = S.book; return LV.compileBookMarkdown(bookMats().map((x) => x.data), { title: b.title, subtitle: b.subtitle, author: b.author, glossary: b.glossary, answers: b.answers, references: b.references, inlineFigures: true }); }
   function compilar() { const b = S.book; return LV.compileBook(bookMats().map((x) => x.data), { title: b.title, subtitle: b.subtitle, author: b.author, glossary: b.glossary, answers: b.answers, references: b.references }); }
 
   function estadoAcumHtml(bp, prox) {
@@ -623,6 +625,7 @@
     bookup: (el) => { const i = +el.dataset.i, a = S.book.sel; if (i > 0) { [a[i - 1], a[i]] = [a[i], a[i - 1]]; S.book.show = false; render(); } },
     bookdown: (el) => { const i = +el.dataset.i, a = S.book.sel; if (i < a.length - 1) { [a[i + 1], a[i]] = [a[i], a[i + 1]]; S.book.show = false; render(); } },
     bookprev: () => { S.book.show = true; render(); },
+    dlbookmd: () => { const r = compilarMd(); if (!r.ok) { toast(r.error, true); return; } dl(slug(r.title) + '-livro.md', 'text/markdown', r.markdown); },
     dlbook2: () => { const r = compilar(); if (!r.ok) { toast(r.error, true); return; } dl(slug(r.title) + '-livro.html', 'text/html', r.html); },
     printbook2: () => { const r = compilar(); if (!r.ok) { toast(r.error, true); return; } printHTML(r.html); },
     sectoggle: (el) => {

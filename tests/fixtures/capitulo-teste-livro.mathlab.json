@@ -1,0 +1,101 @@
+{
+  "schema": "mathlab.material/2",
+  "title": "Equações do 1º grau e frações",
+  "author": "Prof. Alê Barbosa",
+  "discipline": "Matemática",
+  "level": "8º ano do Ensino Fundamental",
+  "topic": "",
+  "duration": "3 aulas de 50 minutos",
+  "epistemicType": "formal",
+  "contentProfile": "completo",
+  "registro": "escolar",
+  "destinatario": "estudante",
+  "objectives": [
+    "Resolver equações do 1º grau com uma incógnita",
+    "Operar com frações algébricas simples usando $\\frac{a}{b}$",
+    "Traduzir problemas com dinheiro (R$ 120,50) para equações"
+  ],
+  "prerequisites": [
+    "Operações com números inteiros",
+    "Frações equivalentes"
+  ],
+  "limitations": [
+    "Material de teste do livro: conteúdo conferido apenas pelo autor."
+  ],
+  "blocks": [
+    {
+      "id": "b_wbx4kc185h",
+      "type": "problematizacao",
+      "title": "Quanto sobra no fim do mês?",
+      "content": "Ana ganha **R$ 1.200,00** por mês e gasta $\\frac{3}{4}$ com moradia e alimentação. Quanto sobra?\n\nPara responder bem, precisamos de equações e de frações.",
+      "svg": "",
+      "callout": null
+    },
+    {
+      "id": "b_rr842nj85h",
+      "type": "conceito",
+      "title": "Equação do 1º grau",
+      "content": "Uma **equação do 1º grau** com uma incógnita pode ser escrita como $ax + b = 0$, com $a \\neq 0$. A solução é\n\n$$x = -\\frac{b}{a}$$\n\n### Somando frações\nPara somar frações com denominadores diferentes:\n\n$$\\frac{a}{b} + \\frac{c}{d} = \\frac{ad + bc}{bd}$$\n\n| Passo | O que fazer |\n|---|---|\n| 1 | Igualar os denominadores |\n| 2 | Somar os numeradores |\n| 3 | Simplificar o resultado |",
+      "svg": "",
+      "callout": {
+        "kind": "atencao",
+        "text": "Nunca divida por zero: em $ax+b=0$, o valor de $a$ não pode ser \\(0\\)."
+      }
+    },
+    {
+      "id": "b_u49jw6t85h",
+      "type": "exemplo",
+      "title": "Resolvendo passo a passo",
+      "content": "**Exemplo 1.** Resolva $3x + 5 = 20$.\n\n1. Subtraia 5 dos dois lados: $3x = 15$.\n2. Divida por 3: $x = 5$.\n\n**Exemplo 2.** Um lanche custa R$ 12,50 e 4 lanches mais um suco de R$ 7,00 custam R$ 57,00? Confira: $4 \\cdot 12{,}5 + 7 = 57$.",
+      "svg": "",
+      "callout": null
+    },
+    {
+      "id": "b_zo8bs8285h",
+      "type": "visual",
+      "title": "Reta numérica de apoio",
+      "content": "A mesma reta numérica ajuda a enxergar a solução.",
+      "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 720 190\" role=\"img\" aria-labelledby=\"s_5sakzug85gt s_5sakzug85gd\" font-family=\"Arial, Helvetica, sans-serif\"><title id=\"s_5sakzug85gt\">Soma (−2) + (+5) = +3 na reta numérica</title><desc id=\"s_5sakzug85gd\">Reta numérica de −6 a 6, com salto de −2 para 3.</desc><line x1=\"26\" y1=\"130\" x2=\"694\" y2=\"130\" stroke=\"#14264f\" stroke-width=\"3\"/><polygon points=\"702,130 688,124 688,136\" fill=\"#14264f\"/><polygon points=\"18,130 32,124 32,136\" fill=\"#14264f\"/><line x1=\"40\" y1=\"122\" x2=\"40\" y2=\"138\" stroke=\"#14264f\" stroke-width=\"2\"/><text x=\"40\" y=\"158\" text-anchor=\"middle\" font-size=\"15\" fill=\"#14264f\" font-weight=\"400\">−6</text><line x1=\"93.33333333333333\" y1=\"122\" x2=\"93.33333333333333\" y2=\"138\" stroke=\"#14264f\" stroke-width=\"2\"/><text x=\"93.33333333333333\" y=\"158\" text-anchor=\"middle\" font-size=\"15\" fill=\"#14264f\" font-weight=\"400\">−5</text><line x1=\"146.66666666666666\" y1=\"122\" x2=\"146.66666666666666\" y2=\"138\" stroke=\"#14264f\" stroke-width=\"2\"/><text x=\"146.66666666666666\" y=\"158\" text-anchor=\"middle\" font-size=\"15\" fill=\"#14264f\" font-weight=\"400\">−4</text><line x1=\"200\" y1=\"122\" x2=\"200\" y2=\"138\" stroke=\"#14264f\" stroke-width=\"2\"/><text x=\"200\" y=\"158\" text-anchor=\"middle\" font-size=\"15\" fill=\"#14264f\" font-weight=\"400\">−3</text><line x1=\"253.33333333333331\" y1=\"122\" x2=\"253.33333333333331\" y2=\"138\" stroke=\"#14264f\" stroke-width=\"2\"/><text x=\"253.33333333333331\" y=\"158\" text-anchor=\"middle\" font-size=\"15\" fill=\"#14264f\" font-weight=\"400\">−2</text><line x1=\"306.6666666666667\" y1=\"122\" x2=\"306.6666666666667\" y2=\"138\" stroke=\"#14264f\" stroke-width=\"2\"/><text x=\"306.6666666666667\" y=\"158\" text-anchor=\"middle\" font-size=\"15\" fill=\"#14264f\" font-weight=\"400\">−1</text><line x1=\"360\" y1=\"122\" x2=\"360\" y2=\"138\" stroke=\"#14264f\" stroke-width=\"2\"/><text x=\"360\" y=\"158\" text-anchor=\"middle\" font-size=\"15\" fill=\"#14264f\" font-weight=\"700\">0</text><line x1=\"413.33333333333337\" y1=\"122\" x2=\"413.33333333333337\" y2=\"138\" stroke=\"#14264f\" stroke-width=\"2\"/><text x=\"413.33333333333337\" y=\"158\" text-anchor=\"middle\" font-size=\"15\" fill=\"#14264f\" font-weight=\"400\">1</text><line x1=\"466.66666666666663\" y1=\"122\" x2=\"466.66666666666663\" y2=\"138\" stroke=\"#14264f\" stroke-width=\"2\"/><text x=\"466.66666666666663\" y=\"158\" text-anchor=\"middle\" font-size=\"15\" fill=\"#14264f\" font-weight=\"400\">2</text><line x1=\"520\" y1=\"122\" x2=\"520\" y2=\"138\" stroke=\"#14264f\" stroke-width=\"2\"/><text x=\"520\" y=\"158\" text-anchor=\"middle\" font-size=\"15\" fill=\"#14264f\" font-weight=\"400\">3</text><line x1=\"573.3333333333334\" y1=\"122\" x2=\"573.3333333333334\" y2=\"138\" stroke=\"#14264f\" stroke-width=\"2\"/><text x=\"573.3333333333334\" y=\"158\" text-anchor=\"middle\" font-size=\"15\" fill=\"#14264f\" font-weight=\"400\">4</text><line x1=\"626.6666666666666\" y1=\"122\" x2=\"626.6666666666666\" y2=\"138\" stroke=\"#14264f\" stroke-width=\"2\"/><text x=\"626.6666666666666\" y=\"158\" text-anchor=\"middle\" font-size=\"15\" fill=\"#14264f\" font-weight=\"400\">5</text><line x1=\"680\" y1=\"122\" x2=\"680\" y2=\"138\" stroke=\"#14264f\" stroke-width=\"2\"/><text x=\"680\" y=\"158\" text-anchor=\"middle\" font-size=\"15\" fill=\"#14264f\" font-weight=\"400\">6</text><path d=\"M 253.33333333333331 120 Q 386.66666666666663 44 517 118\" fill=\"none\" stroke=\"#22a559\" stroke-width=\"4\"/><polygon points=\"520,122 506,106 516,104\" fill=\"#22a559\"/><text x=\"386.66666666666663\" y=\"66\" text-anchor=\"middle\" font-size=\"20\" font-weight=\"700\" fill=\"#22a559\">+5</text><circle cx=\"253.33333333333331\" cy=\"130\" r=\"8\" fill=\"#f2b705\" stroke=\"#14264f\" stroke-width=\"2\"/><circle cx=\"520\" cy=\"130\" r=\"8\" fill=\"#1e6fd9\" stroke=\"#14264f\" stroke-width=\"2\"/></svg>",
+      "callout": null
+    },
+    {
+      "id": "b_1i3q3z885h",
+      "type": "exercicios",
+      "title": "Pratique",
+      "content": "1. Resolva $2x + 7 = 19$.\n2. Resolva $\\frac{x}{3} = 4$.\n3. Some $\\frac{1}{2} + \\frac{1}{3}$.\n4. Um produto custa R$ 45,00 e tem desconto de $\\frac{1}{5}$. Qual o preço final?",
+      "svg": "",
+      "callout": null
+    },
+    {
+      "id": "b_gw0cnne85h",
+      "type": "gabarito",
+      "title": "Respostas",
+      "content": "1. $x = 6$\n2. $x = 12$\n3. $\\frac{5}{6}$\n4. R$ 36,00",
+      "svg": "",
+      "callout": null
+    }
+  ],
+  "references": [
+    {
+      "authors": "Lima, E. L.",
+      "title": "Números e funções reais",
+      "year": "2013",
+      "venue": "SBM",
+      "doi": "",
+      "url": "",
+      "accessLevel": "nao-verificado",
+      "verified": false
+    }
+  ],
+  "poster": null,
+  "revisao": {
+    "aprovado": false,
+    "revisadoPor": "",
+    "data": "",
+    "hash": ""
+  },
+  "meta": {
+    "generatedBy": "manual",
+    "createdAt": "2026-11-27T00:58:34.949Z"
+  }
+}
