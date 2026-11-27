@@ -164,3 +164,18 @@ test('CLI: --pdfa liga a conversão e o padrão continua desligado', async () =>
   assert.equal(lerArgs(['a.json', '--pdfa']).pdfa, true);
   assert.equal(lerArgs(['a.json']).pdfa, false);
 });
+
+test('Índice remissivo (opt-in): lista os capítulos em que cada termo do glossário aparece', () => {
+  const a = mat('Cap A'), b = mat('Cap B', { blocks: [{ type: 'texto', title: 'Revisão', content: 'Todo sistema linear pode ser resolvido por substituição.' }] });
+  assert.ok(!L.compileBookMarkdown([a, b]).markdown.includes('# Índice remissivo'));
+  const r = L.compileBookMarkdown([a, b], { index: true });
+  assert.ok(r.markdown.includes('# Índice remissivo {-}'));
+  assert.ok(/Sistema linear --- cap\. 1, 2/.test(r.markdown));
+  const um = L.compileBookMarkdown([a], { index: true });
+  assert.ok(!um.markdown.includes('# Índice remissivo') && um.warnings.some((w) => /Índice remissivo/.test(w)));
+});
+test('CLI: --indice liga o índice remissivo', async () => {
+  const { lerArgs } = await import('../tools/livro.mjs');
+  assert.equal(lerArgs(['a.json', '--indice']).opts.index, true);
+  assert.equal(lerArgs(['a.json']).opts.index, undefined);
+});

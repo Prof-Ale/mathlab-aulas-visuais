@@ -5,7 +5,7 @@
  * Uso:
  *   node tools/livro.mjs material1.json [material2.json ...] [--saida pasta] [--titulo "..."] [--subtitulo "..."]
  *        [--autor "..."] [--formato pdf,epub,md] [--papel a4|a5] [--modelo didatico|narrativo] [--sangria 3] [--pdfa]
- *        [--editora ".."] [--isbn 978..] [--edicao "1ª"] [--ano 2026] [--licenca ".."] [--contato ".."] [--sem-gabarito] [--sem-glossario] [--sem-referencias]
+ *        [--editora ".."] [--isbn 978..] [--edicao "1ª"] [--ano 2026] [--licenca ".."] [--contato ".."] [--sem-gabarito] [--indice] [--sem-glossario] [--sem-referencias]
  *   node tools/livro.mjs --demo
  *
  * Requer Pandoc 3 e XeLaTeX (TeX Live) instalados na sua máquina. Para PDF com hifenização correta em português,
@@ -44,6 +44,7 @@ export function lerArgs(argv) {
     else if (['--editora', '--isbn', '--edicao', '--ano', '--licenca', '--contato'].includes(k)) (a.opts.credits ||= {})[k.slice(2)] = v();
     else if (k === '--sem-gabarito') a.opts.answers = false;
     else if (k === '--sem-glossario') a.opts.glossary = false;
+    else if (k === '--indice') a.opts.index = true;
     else if (k === '--sem-referencias') a.opts.references = false;
     else if (k === '--demo') a.demo = true;
     else if (k.startsWith('--')) throw new Error('Opção desconhecida: ' + k);

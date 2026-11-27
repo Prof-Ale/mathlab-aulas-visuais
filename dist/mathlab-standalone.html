@@ -3011,6 +3011,13 @@ function montarHtml(d, cfg) {
     return [...mapa.values()].sort((a, b) => a.termo.localeCompare(b.termo, 'pt-BR'));
   }
 
+  /* Índice remissivo: cada termo do glossário com todos os capítulos em que ele aparece no texto (sem acento, palavra inteira). */
+  function indiceRemissivo(caps, gloss) {
+    const textos = caps.map((m) => strip(plano(JSON.stringify(m.blocks.map((b) => [b.title, b.content, b.callout && b.callout.text])).replace(/\\n/g, ' '))));
+    const re = (t) => new RegExp('(^|[^a-z0-9])' + strip(t).replace(/[.*+?^${}()|[\]\\]/g, '\\<script src="js/livro.js"></script>') + '([^a-z0-9]|$)');
+    return (gloss || []).map((g) => { const r = re(g.termo); const pags = textos.map((x, i) => (r.test(x) ? i + 1 : 0)).filter(Boolean); return { termo: g.termo, caps: pags.length ? pags : [g.cap] }; });
+  }
+
   function referencias(caps) {
     const mapa = new Map();
     caps.forEach((m) => m.references.forEach((r) => {
@@ -4166,6 +4173,15 @@ function montarHtml(d, cfg) {
       o.push('# Glossário {-}', '', 'Termos reunidos dos blocos de conceito. Conferir as definições faz parte da revisão.', '');
       base.glossary.forEach((g) => o.push(mdTitulo(g.termo), ': ' + paraPandoc(g.def) + ' (cap. ' + g.cap + ')', ''));
     }
+    if (opts.index) {
+      const termos = base.glossary.length && base.chapters > 1 ? indiceRemissivo(caps, base.glossary) : [];
+      if (!termos.length) base.warnings.push('Índice remissivo não gerado: precisa de glossário e de pelo menos dois capítulos.');
+      else {
+        o.push('# Índice remissivo {-}', '');
+        let letra = '';
+        termos.forEach((t) => { const l = strip(t.termo).charAt(0).toUpperCase(); if (l !== letra) { letra = l; o.push('**' + l + '**', ''); } o.push(paraPandoc(t.termo) + ' --- cap. ' + t.caps.join(', ') + '\\', ''); });
+      }
+    }
     if (base.answers.length) {
       o.push('# Caderno de respostas {-}', '');
       base.answers.forEach((r) => {
@@ -4185,7 +4201,7 @@ function montarHtml(d, cfg) {
     return { ok: true, markdown: o.join('\n').replace(/\n{3,}/g, '\n\n') + '\n', files, title: base.title, author: autor, subtitle: subt, chapters: caps.length, validated: validados, figures: nfig, warnings: base.warnings };
   }
 
-  return { compileBook, compileBookMarkdown, paraPandoc, isbnValido, glossario, referencias };
+  return { compileBook, compileBookMarkdown, paraPandoc, isbnValido, glossario, referencias, indiceRemissivo };
 });
 
 </script>
