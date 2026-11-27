@@ -4,7 +4,7 @@
  *
  * Uso:
  *   node tools/livro.mjs material1.json [material2.json ...] [--saida pasta] [--titulo "..."] [--subtitulo "..."]
- *        [--autor "..."] [--formato pdf,epub,md] [--papel a4|a5] [--modelo didatico|narrativo] [--sangria 3]
+ *        [--autor "..."] [--formato pdf,epub,md] [--papel a4|a5] [--modelo didatico|narrativo] [--sangria 3] [--pdfa]
  *        [--editora ".."] [--isbn 978..] [--edicao "1ª"] [--ano 2026] [--licenca ".."] [--contato ".."] [--sem-gabarito] [--sem-glossario] [--sem-referencias]
  *   node tools/livro.mjs --demo
  *
@@ -28,7 +28,7 @@ const DIR = path.join(ROOT, 'tools/livro');
 const slug = (s) => String(s || 'livro').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'livro';
 
 export function lerArgs(argv) {
-  const a = { arquivos: [], saida: 'livro-saida', formato: ['pdf', 'epub', 'md'], papel: 'a4', papelDado: false, sangria: 0, modelo: 'didatico', demo: false, opts: {} };
+  const a = { arquivos: [], saida: 'livro-saida', formato: ['pdf', 'epub', 'md'], papel: 'a4', papelDado: false, sangria: 0, pdfa: false, modelo: 'didatico', demo: false, opts: {} };
   for (let i = 0; i < argv.length; i++) {
     const k = argv[i];
     const v = () => { if (i + 1 >= argv.length) throw new Error('Falta o valor depois de ' + k); return argv[++i]; };
@@ -39,6 +39,7 @@ export function lerArgs(argv) {
     else if (k === '--formato') a.formato = v().split(',').map((x) => x.trim().toLowerCase()).filter(Boolean);
     else if (k === '--papel') { a.papel = v().toLowerCase(); a.papelDado = true; }
     else if (k === '--modelo') a.modelo = v().toLowerCase();
+    else if (k === '--pdfa') a.pdfa = true;
     else if (k === '--sangria') a.sangria = Number(v().replace(',', '.'));
     else if (['--editora', '--isbn', '--edicao', '--ano', '--licenca', '--contato'].includes(k)) (a.opts.credits ||= {})[k.slice(2)] = v();
     else if (k === '--sem-gabarito') a.opts.answers = false;
@@ -93,6 +94,31 @@ function capaSvg(titulo, autor) {
     '<text x="90" y="1560" font-size="46" font-weight="700" fill="#fff">' + e(autor) + '</text><text x="90" y="1620" font-size="30" fill="#f2b705" letter-spacing="3">MATHLAB AULAS VISUAIS</text></svg>';
 }
 
+// Converte o PDF para PDF/A-2b com Ghostscript (arquivamento de longo prazo: fontes embutidas, cores em sRGB).
+// Não torna o PDF acessível (sem tags) e não é validado aqui com veraPDF: valide antes de enviar a um repositório.
+export function converterPdfA(pdf, titulo, autor) {
+  const v = spawnSync('gs', ['--version'], { encoding: 'utf8' });
+  if (v.error || v.status !== 0) throw new Error('Ghostscript não encontrado. Instale (brew install ghostscript / apt install ghostscript) para usar --pdfa.');
+  const raiz = ['/usr/share/ghostscript', '/usr/local/share/ghostscript', '/opt/homebrew/share/ghostscript', '/usr/share/color/icc/ghostscript'];
+  let icc = '';
+  for (const r of raiz) {
+    if (!fs.existsSync(r)) continue;
+    const achado = [path.join(r, 'default_rgb.icc'), ...fs.readdirSync(r).flatMap((d) => [path.join(r, d, 'iccprofiles', 'default_rgb.icc')])].find((f) => fs.existsSync(f));
+    if (achado) { icc = achado; break; }
+  }
+  if (!icc) throw new Error('Não achei o perfil de cor sRGB do Ghostscript (default_rgb.icc). Reinstale o Ghostscript completo.');
+  const ps = (t) => '(' + String(t).replace(/[\\()]/g, (c) => '\\' + c) + ')';
+  const def = path.join(path.dirname(pdf), '.pdfa_def.ps'), tmp = pdf + '.pdfa.tmp';
+  fs.writeFileSync(def, '%!\n[ /Title ' + ps(titulo) + ' /Author ' + ps(autor) + ' /DOCINFO pdfmark\n' +
+    '[/_objdef {icc_PDFA} /type /stream /OBJ pdfmark\n[{icc_PDFA} <</N 3>> /PUT pdfmark\n[{icc_PDFA} ' + ps(icc) + ' (r) file /PUT pdfmark\n' +
+    '[/_objdef {OutputIntent_PDFA} /type /dict /OBJ pdfmark\n[{OutputIntent_PDFA} <</Type /OutputIntent /S /GTS_PDFA1 /DestOutputProfile {icc_PDFA} /OutputConditionIdentifier (sRGB) /Info (sRGB)>> /PUT pdfmark\n' +
+    '[{Catalog} <</OutputIntents [ {OutputIntent_PDFA} ]>> /PUT pdfmark\n');
+  const r = spawnSync('gs', ['-dPDFA=2', '-dBATCH', '-dNOPAUSE', '-dQUIET', '-dNOSAFER', '-dPDFACompatibilityPolicy=1', '-sColorConversionStrategy=RGB', '-sDEVICE=pdfwrite', '-sOutputFile=' + tmp, def, pdf], { encoding: 'utf8' });
+  fs.rmSync(def, { force: true });
+  if (r.status !== 0 || !fs.existsSync(tmp)) { fs.rmSync(tmp, { force: true }); throw new Error('O Ghostscript falhou ao converter para PDF/A:\n' + String(r.stderr || r.stdout).split('\n').slice(0, 15).join('\n')); }
+  fs.renameSync(tmp, pdf);
+}
+
 export function gerar(args) {
   const materiais = args.demo ? [C.demo()] : lerMateriais(args.arquivos);
   if (!materiais.length) throw new Error('Passe ao menos um arquivo de material (.json) ou use --demo.');
@@ -123,6 +149,7 @@ export function gerar(args) {
     if (res.status !== 0) throw new Error('O Pandoc/XeLaTeX falhou ao gerar o PDF:\n' + String(res.stderr).split('\n').slice(0, 25).join('\n'));
     if (/Missing character|Hyphenation patterns .* not found|No hyphenation patterns/i.test(res.stderr)) avisos.push('O LaTeX avisou sobre caracteres ou hifenização. Instale o pacote de idioma do TeX Live para português.');
     if (b > 0) avisos.push('PDF com sangria de ' + b + ' mm: o tamanho da página é o formato final + ' + (2 * b) + ' mm em cada eixo, sem marcas de corte. Informe à gráfica o formato final (' + TRIM[0] + ' x ' + TRIM[1] + ' mm) e a sangria.');
+    if (args.pdfa) { converterPdfA(pdf, r.title, r.author); avisos.push('PDF/A-2b gerado com Ghostscript (fontes embutidas, cores sRGB). Não foi validado com veraPDF e não é um PDF acessível (sem tags).'); }
     feitos.push(pdf);
   }
   if (args.formato.includes('epub')) {
