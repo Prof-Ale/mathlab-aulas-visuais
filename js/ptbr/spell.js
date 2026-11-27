@@ -1,4 +1,3 @@
-// Motor de ortografia compartilhado com o ScriptaLab (src/core/spell.js, v0.4.0). Mantenha as duas cópias iguais.
 /**
  * Conferência de ortografia PT-BR local — ScriptaLab.
  *

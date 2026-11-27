@@ -211,7 +211,7 @@ As diretrizes visuais oficiais e a **Ficha Oficial do Personagem Professor Alê 
 
 ### Comandos
 ```bash
-npm test                                  # executa todas as 18 suítes em tests/
+npm test                                  # executa todas as 19 suítes em tests/
 npm run build                             # gera dist/mathlab-standalone.html
 npm run pdf -- --demo apostila-demo.pdf   # gera PDF acessível e reproduzível (requer Playwright)
 ```
@@ -227,7 +227,7 @@ Veja o passo a passo completo para configurar **Claude (Skill)**, **Gemini (Gem)
 
 ## Testes e limitações conhecidas
 
-- **Suíte automatizada:** `npm test` executa 18 arquivos de teste (`core`, `instrucoes`, `validacao`, `contrato`, `avisos`, `reparo`, `plano`, `app-bridge`, `pdf`, `dominios`, `livro`, `fontes`, `manifesto`, `capa-formulas`, `slides`, `banco`, `ortografia`, `ui-ux-roadmap`). Os 2 testes end-to-end de geração de PDF em `tests/pdf.test.js` são ignorados automaticamente quando o `playwright` não está instalado.
+- **Suíte automatizada:** `npm test` executa 19 arquivos de teste (`core`, `instrucoes`, `validacao`, `contrato`, `avisos`, `reparo`, `plano`, `app-bridge`, `pdf`, `dominios`, `livro`, `fontes`, `manifesto`, `capa-formulas`, `slides`, `banco`, `ortografia`, `revisor-portugues`, `ui-ux-roadmap`). Os 2 testes end-to-end de geração de PDF em `tests/pdf.test.js` são ignorados automaticamente quando o `playwright` não está instalado.
 - **Limitações conhecidas:**
   - Não exporta `.docx` nem `.pptx` neste repositório (disponíveis no App Node `mathlab-aulas-visuais-app`).
   - Persistência em `localStorage` depende do navegador/perfil local (use o backup JSON da Biblioteca).
@@ -241,7 +241,7 @@ Veja o passo a passo completo para configurar **Claude (Skill)**, **Gemini (Gem)
 | Versão | Destaques |
 | --- | --- |
 | **1.6.0** *(motor 2.0.0, contrato 2.1)* | Redesign UI/UX v2 (3 grupos de navegação, modo escuro, busca na biblioteca, stepper de 4 passos), formulário pedagógico com calibração por etapa e seções modulares, emblemas editoriais geométricos por área (`emblemFor`), PDF reproduzível e acessível (tagged `pt-BR`), manifesto único de versões (`manifest.json`), incorporação da identidade editorial e da Ficha Oficial do Professor Alê v1.0. |
-| **Em validação** *(26/11/2026, sem nova versão publicada)* | KaTeX offline, Infográfico de Abertura, seletor contextual do Professor Alê, Capa Clean sem foto, arte de capa opcional e correções de fórmula em bloco e de `R$`, **slides HTML interativos** (Exportar → Apresentação em sala; gabarito fora por padrão), **banco de questões por habilidade BNCC** (`mathlab.bank/1`, só habilidades escritas no material, nunca inventadas) e **conferência de ortografia pt-BR offline** (Auditoria; só em páginas servidas por http, não no arquivo único) e **livro de alta qualidade** (Livro → Markdown; `tools/livro.mjs` gera PDF editorial e EPUB3 com Pandoc, localmente). Aguardam a validação do professor em uso real antes de subir a versão no `manifest.json`. |
+| **Em validação** *(26/11/2026, sem nova versão publicada)* | KaTeX offline, Infográfico de Abertura, seletor contextual do Professor Alê, Capa Clean sem foto, arte de capa opcional e correções de fórmula em bloco e de `R$`, **slides HTML interativos** (Exportar → Apresentação em sala; gabarito fora por padrão), **banco de questões por habilidade BNCC** (`mathlab.bank/1`, só habilidades escritas no material, nunca inventadas) e **conferência de ortografia pt-BR offline** (Auditoria; só em páginas servidas por http, não no arquivo único), mais **revisão de português por regras** (crase, concordância, vícios de linguagem, períodos longos, gerúndios; registros didático e divulgação; motor copiado do ScriptaLab v0.4.0 em `js/ptbr` com hash, atualizado por `node tools/sincronizar-ptbr.mjs <pasta-do-ScriptaLab>`; só sinaliza) e **livro de alta qualidade** (Livro → Markdown; `tools/livro.mjs` gera PDF editorial e EPUB3 com Pandoc, localmente). Aguardam a validação do professor em uso real antes de subir a versão no `manifest.json`. |
 | **1.5.x** | Plano por unidades (`mathlab.blueprint/1` e `mathlab.unit/1`), memória acumulada, conferência e reparo (`mathlab.repair/1`), pacotes de domínio (`mathlab.domain/1`), fontes do autor (`[F1]`…), compilação de Livro/Caderno e interoperabilidade com o App Node (`mathlab.material/2` v2.1). |
 | **1.3 – 1.4** | Capa Clean, Folha de Rosto, Miolo Editorial Clean com pílula de página, etiquetas Histórico-Culturais e caixa *Minha Síntese*. |
 | **1.2** | Remoção do teto de 6 páginas, perfis modulares (`completo`, `expositivo`, `expositivo_visual`, `pratica`) e auditoria coerente com o perfil. |

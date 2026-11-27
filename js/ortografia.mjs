@@ -1,7 +1,8 @@
 // Conferência de ortografia pt-BR do MathLab (offline, no navegador ou no Node).
-// Reaproveita o motor do ScriptaLab (ortografia-motor.mjs) e o dicionário VERO 3.2 em assets/ortografia/.
+// Reaproveita o motor do ScriptaLab (js/ptbr/spell.js) e o dicionário VERO 3.2 em assets/ortografia/.
 // Só SINALIZA. Não altera o material. Fórmulas, código, URLs e marcadores [F#] não são conferidos.
-import { createSpellChecker, findMisspellings } from './ortografia-motor.mjs';
+import { createSpellChecker, findMisspellings } from './ptbr/spell.js';
+import { analisarPortugues, PT_REGISTROS } from './ptbr/ptRevisor.js';
 
 export { createSpellChecker };
 
@@ -44,4 +45,30 @@ export function conferirOrtografiaMaterial(m, verificador, opts = {}) {
     }
   }
   return achados;
+}
+
+/** Registros que fazem sentido no MathLab. O acadêmico existe no motor, mas é do ScriptaLab. */
+export const REGISTROS_MATHLAB = ['didatico', 'divulgacao'].map((id) => ({ id, label: PT_REGISTROS[id].label }));
+
+/**
+ * Revisão de português por regras e medidores (o mesmo motor do ScriptaLab). Só SINALIZA.
+ * Devolve { registro, achados:[{onde, rotulo, regra, categoria, severidade, trecho, msg, fix, contexto}], resumo }.
+ */
+export function revisarPortuguesMaterial(m, opts = {}) {
+  const registro = opts.registro === 'divulgacao' ? 'divulgacao' : 'didatico';
+  const achados = [];
+  const resumo = { total: 0, erro: 0, aviso: 0, estilo: 0 };
+  for (const it of textosDoMaterial(m)) {
+    const r = analisarPortugues(it.texto, { registro, ortografia: false, protegerCitacoes: true, termos: opts.termos || [] });
+    for (const a of r.achados) {
+      resumo.total++; resumo[a.severidade] = (resumo[a.severidade] || 0) + 1;
+      if (achados.length < (opts.max || 200)) {
+        achados.push({ onde: it.onde, rotulo: it.rotulo, regra: a.regra, categoria: a.categoria, severidade: a.severidade, trecho: a.trecho, msg: a.msg, fix: a.fix ?? null,
+          contexto: it.texto.slice(Math.max(0, a.start - 30), a.end + 30).replace(/\s+/g, ' ') });
+      }
+    }
+  }
+  const ordem = { erro: 0, aviso: 1, estilo: 2 };
+  achados.sort((x, y) => (ordem[x.severidade] ?? 3) - (ordem[y.severidade] ?? 3));
+  return { registro, achados, resumo };
 }
