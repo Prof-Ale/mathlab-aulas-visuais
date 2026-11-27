@@ -158,3 +158,9 @@ test('CLI: sangria em mm (0 a 10) e campos da ficha técnica', async () => {
   assert.throws(() => lerArgs(['a.json', '--sangria', '30']), /milímetros/);
   assert.throws(() => lerArgs(['a.json', '--sangria', 'abc']), /milímetros/);
 });
+
+test('CLI: --pdfa liga a conversão e o padrão continua desligado', async () => {
+  const { lerArgs } = await import('../tools/livro.mjs');
+  assert.equal(lerArgs(['a.json', '--pdfa']).pdfa, true);
+  assert.equal(lerArgs(['a.json']).pdfa, false);
+});
