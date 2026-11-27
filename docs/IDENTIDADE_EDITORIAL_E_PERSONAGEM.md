@@ -1,4 +1,4 @@
-# Identidade Editorial e Personagem Oficial — MathLab Aulas Visuais
+# Identidade Editorial e Personagem Oficial: MathLab Aulas Visuais
 
 Este documento registra a **identidade editorial**, a **arquitetura visual de cadernos/apostilas** e a **Ficha Oficial do Personagem Professor Alê (Versão 1.0)** do ecossistema **MathLab Aulas Visuais**, incorporados também como metadados estruturados em `js/core.js` (`EDITORIAL_IDENTITY` e `PROFESSOR_ALE_IDENTITY`).
 
@@ -44,7 +44,7 @@ A Capa Clean não leva foto nem avatar do autor. O personagem entra na caixa "So
 
 ### Logotipos oficiais
 - **Selo Circular MathLab Educação** (`assets/identidade/logo-mathlab-selo-oficial.jpg` · uso editorial em `assets/logo-mathlab-selo.jpg`): azul marinho e dourado, ideal para capas escuras, selos institucionais e favicon.
-- **Logo MathLab — Fundo Claro** (`assets/identidade/logo-mathlab-clean-oficial.jpg` · uso editorial em `assets/logo-mathlab-clean.jpg`): azul marinho e amarelo ouro sobre fundo claro, ideal para folhas de rosto, cabeçalhos A4 e impressão com economia de tinta.
+- **Logo MathLab, Fundo Claro** (`assets/identidade/logo-mathlab-clean-oficial.jpg` · uso editorial em `assets/logo-mathlab-clean.jpg`): azul marinho e amarelo ouro sobre fundo claro, ideal para folhas de rosto, cabeçalhos A4 e impressão com economia de tinta.
 
 ### Paleta de Cores Oficial (Ficha v1.0)
 
@@ -61,11 +61,11 @@ A Capa Clean não leva foto nem avatar do autor. O personagem entra na caixa "So
 
 ---
 
-## 3. Ficha Oficial do Personagem — Professor Alê (Versão 1.0)
+## 3. Ficha Oficial do Personagem: Professor Alê (Versão 1.0)
 
-**Conceito:** *Professor Alê (Prof. Alê Barbosa)* — personagem institucional multidisciplinar do MathLab Aulas Visuais (professor, pesquisador e mediador do conhecimento).
+**Conceito:** *Professor Alê (Prof. Alê Barbosa)*: personagem institucional multidisciplinar do MathLab Aulas Visuais (professor, pesquisador e mediador do conhecimento).
 
-**Regra principal — consistência:** o personagem muda de roupa complementar, pose, expressão, objetos e cenário conforme a disciplina, mas continua imediatamente reconhecível como a mesma pessoa.
+**Regra principal, consistência:** o personagem muda de roupa complementar, pose, expressão, objetos e cenário conforme a disciplina, mas continua imediatamente reconhecível como a mesma pessoa.
 
 - Referência visual completa: `assets/identidade/ficha-oficial-personagem-prof-ale-v1.0.jpg`
 - Grade multidisciplinar por área: `assets/identidade/prof-ale-disciplinas-multidisciplinar.jpg`
