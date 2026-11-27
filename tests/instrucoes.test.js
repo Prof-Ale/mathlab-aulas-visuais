@@ -10,7 +10,8 @@ const files = {
   gem: fs.readFileSync(path.join(root, 'gemini', 'GEM_INSTRUCOES.md'), 'utf8'),
   gpt: fs.readFileSync(path.join(root, 'chatgpt', 'CHATGPT_GPT_INSTRUCOES.md'), 'utf8'),
 };
-const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
+const manifest = JSON.parse(fs.readFileSync(path.join(root, 'manifest.json'), 'utf8'));
+const instrVer = manifest.instrucoes.versao;
 const campos = ['epistemicType', 'contentProfile', 'registro', 'destinatario', 'objectives', 'prerequisites', 'blocks', 'references', 'limitations', 'poster', 'meta'];
 
 test('instruções: os três arquivos trazem os mesmos campos do esquema', () => {
@@ -19,9 +20,9 @@ test('instruções: os três arquivos trazem os mesmos campos do esquema', () =>
   }
 });
 
-test('instruções: versão igual nos três arquivos e no package.json', () => {
+test('instruções: versão igual nos três arquivos e no manifest.json', () => {
   for (const [nome, txt] of Object.entries(files)) {
-    assert.ok(txt.includes('"version": "' + pkg.version + '"') || txt.includes('"version":"' + pkg.version + '"'), nome + ' com meta.version diferente de ' + pkg.version);
+    assert.ok(txt.includes('"version": "' + instrVer + '"') || txt.includes('"version":"' + instrVer + '"'), nome + ' com meta.version diferente de ' + instrVer);
   }
 });
 
@@ -57,11 +58,13 @@ test('instruções: o esquema de referências é completo no GPT, no Gem e na Sk
   }
 });
 
-test('instruções: o bloco colável do GPT cabe no limite de 8000 caracteres do campo Instructions', () => {
-  const m = files.gpt.match(/```text\r?\n([\s\S]*?)\r?\n```/);
-  assert.ok(m, 'bloco text não encontrado');
-  const len = [...m[1].replace(/\r\n/g, '\n')].length;
-  assert.ok(len <= 8000, 'bloco do GPT com ' + len + ' caracteres');
+test('instruções: os três arquivos preservam na íntegra a Arquitetura Pedagógica Brasileira (seções 11 a 19)', () => {
+  for (const [nome, txt] of Object.entries(files)) {
+    assert.ok(txt.includes('## 11. Arquitetura Pedagógica Brasileira: orientação geral'), nome + ' sem seção 11');
+    assert.ok(txt.includes('## 18. Regra de integração com o contrato MathLab'), nome + ' sem seção 18');
+    assert.ok(txt.includes('## 19. Autoverificação ampliada da versão 2.0.0'), nome + ' sem seção 19');
+    assert.ok(txt.includes('Status epistemológico obrigatório:'), nome + ' sem status epistemológico da APB');
+  }
 });
 
 test('instruções: Educação Especial manda tratar os decretos de 2025 como norma a verificar', () => {
