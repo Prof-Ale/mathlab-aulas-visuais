@@ -3910,6 +3910,35 @@ function montarHtml(d, cfg) {
     }
   }
 
+  /* ---------- Revisão de português por regras (motor compartilhado com o ScriptaLab) ---------- */
+  const PT_KEY = 'mathlab.revisaopt.registro';
+  function revisaoPtCard() {
+    const file = location.protocol === 'file:';
+    let reg = 'didatico'; try { reg = localStorage.getItem(PT_KEY) === 'divulgacao' ? 'divulgacao' : 'didatico'; } catch (e) { /* ignora */ }
+    return '<div class="card"><h3>Revisão de português (regras locais)</h3>' +
+      (file ? '<p class="muted">Esta revisão funciona na versão publicada (GitHub Pages) ou servindo a pasta com um servidor local. No arquivo aberto direto do disco (file://) o navegador bloqueia os módulos.</p>'
+        : '<p class="muted">Aponta crase, concordância, vícios de linguagem, coloquialismos, períodos longos, gerúndios em série e repetição próxima. Tudo no seu navegador, sem enviar nada. Só sinaliza: nada é trocado sozinho, e fórmulas, links e marcadores [F#] ficam de fora.</p>' +
+          '<label class="muted" for="ptReg">Registro</label> <select id="ptReg"><option value="didatico"' + (reg === 'didatico' ? ' selected' : '') + '>Didático (apostila, aula)</option><option value="divulgacao"' + (reg === 'divulgacao' ? ' selected' : '') + '>Divulgação (público geral)</option></select> ' +
+          '<div class="btns"><button class="b" data-a="revisarpt">📝 Revisar português</button></div><div id="ptOut" aria-live="polite"></div>') + '</div>';
+  }
+  let ortoModPt = null;
+  async function revisarPtAcao() {
+    const out = $('#ptOut'); if (!out) return;
+    const reg = ($('#ptReg') || {}).value || 'didatico';
+    try { localStorage.setItem(PT_KEY, reg); } catch (e) { /* ignora */ }
+    try {
+      if (!ortoModPt) ortoModPt = await import('./ortografia.mjs');
+      const r = ortoModPt.revisarPortuguesMaterial(S.draft, { registro: reg });
+      const ic = { erro: '⛔', aviso: '⚠️', estilo: 'ℹ️' }, cl = { erro: 'hard', aviso: 'warn', estilo: 'info' };
+      out.innerHTML = r.resumo.total
+        ? '<p><b>' + r.resumo.total + '</b> sinal(is): ' + r.resumo.erro + ' erro(s), ' + r.resumo.aviso + ' aviso(s), ' + r.resumo.estilo + ' de estilo' + (r.resumo.total > r.achados.length ? ' (mostrando os ' + r.achados.length + ' mais importantes)' : '') + '.</p>' +
+          r.achados.map((x) => '<div class="find ' + cl[x.severidade] + '">' + ic[x.severidade] + ' <b>' + esc(x.trecho.trim() || '(espaço)') + '</b> · ' + esc(x.rotulo) + '<br><span class="muted">' + esc(x.msg) + (x.fix ? ' Sugestão: <b>' + esc(x.fix) + '</b>.' : '') + '<br>…' + esc(x.contexto) + '…</span></div>').join('')
+        : '<p>Nenhum sinal encontrado pelas regras. Isso não garante texto perfeito: a revisão humana continua necessária.</p>';
+    } catch (e) {
+      out.innerHTML = '<p class="muted">Não foi possível carregar a revisão (' + esc(e.message) + '). Ela precisa de http(s) e de um navegador recente.</p>';
+    }
+  }
+
   function vAud() {
     const d = S.draft, a = C.audit(d), tr = d.meta.teacherReview;
     d.meta = d.meta || {};
@@ -3930,7 +3959,7 @@ function montarHtml(d, cfg) {
       fonteAud(d) +
       '<div class="card"><h3>10 categorias</h3>' + a.categories.map((c) => '<div class="cat"><span>' + esc(c.name) + '</span><div class="bar"><i style="width:' + c.score * 10 + '%;background:' + (c.score >= 8 ? 'var(--ok)' : c.score >= 5 ? 'var(--warn)' : 'var(--bad)') + '"></i></div><b>' + c.score + '</b></div>' + c.findings.map((f) => '<div class="find ' + f.sev + '">' + (f.sev === 'hard' ? '⛔' : f.sev === 'warn' ? '⚠️' : 'ℹ️') + ' ' + esc(f.msg) + '</div>').join('')).join('') + '</div>' +
       '<div class="card"><h3>Revisão do professor</h3><p class="muted">A auditoria automática não confirma se o conteúdo está certo. Só você faz isso.</p><label><input type="checkbox" style="width:auto" data-a="review" ' + (tr && tr.done ? 'checked' : '') + '> Revisei o conteúdo e assumo a validação final' + (tr && tr.at ? ' (em ' + fmt(tr.at) + ')' : '') + '</label><p class="muted">Salve uma nova versão para registrar a revisão.</p></div>' +
-      ortografiaCard();
+      revisaoPtCard() + ortografiaCard();
   }
 
   /* ---------- Apostila completa ---------- */
@@ -4299,6 +4328,7 @@ function montarHtml(d, cfg) {
       const b = C.bancoDeQuestoes(mats); dl('banco-questoes-biblioteca.json', 'application/json', JSON.stringify(b, null, 2)); toast(b.total + ' questão(ões) de ' + mats.length + ' material(is).');
     },
     ortografia: () => ortografiaAcao(),
+    revisarpt: () => revisarPtAcao(),
     dlmd: () => { markExported(); dl(slug(S.draft.title) + '.md', 'text/markdown', C.toMarkdown(S.draft)); },
     dljson: () => { markExported(); dl(slug(S.draft.title) + '.json', 'application/json', JSON.stringify(C.normalize(S.draft), null, 2)); },
     dlsvg: (el) => { const b = S.draft.blocks[+el.dataset.i]; dl(slug(b.title) + '.svg', 'image/svg+xml', C.sanitizeSvg(b.svg)); },

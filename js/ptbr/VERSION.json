@@ -1,0 +1,15 @@
+{
+  "origem": "Prof-Ale/ScriptaLab",
+  "versao": "0.4.0",
+  "commit": "9fc0a8d0bf094820dadf079d1151112e290dcad8",
+  "arquivos": {
+    "ptRevisor.js": "f679bdd35313f592c2dd5aa505e7cd1be25a02553ac707124df811e1acff65f8",
+    "abnt10520.js": "def723d9f3eacf81a30564ef0862bb7475eb6633c994e8f06981add6fd0d807f",
+    "stylometry.js": "d8cd3889b4d834846393037fa0ba9e6225131e9ca24a966c9369dc5f4c1714eb",
+    "textUtils.js": "8239419a301e2e431a7d573fb225396d04dea79e952734051d9dc67d2f76afd0",
+    "spell.js": "f4a3d0fb9f9b8a916554e546675306b6782b79e815356436d08a05a7090de7c0",
+    "rules/ptbr.json": "82b8e0064d12527d46f719b4beb553fe3a83057be2abc61aa69085cff72684d8",
+    "rules/abnt10520.json": "d0ea08f53b8af02aec185d996d47af1aca3f6debbc5606db8d4d1eb50908b7e6",
+    "rules/stylometry.json": "9aceb434311a3556023fe0a56d3cbae75a66e4e842adc1ced5097ab2bf980502"
+  }
+}
