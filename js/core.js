@@ -642,25 +642,50 @@
 
   const FONTS_LINK = '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Fredoka:wght@600;700&family=Nunito:wght@400;600;700;800&family=Patrick+Hand&display=swap" rel="stylesheet">';
 
+  /* Personagens expressivos oficiais do Professor Alê (ilustração cartoon editorial — opcional no material) */
+  const CHARACTER_POSES = {
+    'avatars/prof-ale_confiante.png': 'Confiante (capa e apresentação)',
+    'avatars/prof-ale_acolhedor.png': 'Acolhedor (boas-vindas e abertura)',
+    'avatars/prof-ale_tablet-caneta.png': 'Tablet e caneta (dicas e resolução)',
+    'avatars/prof-ale_descobridor.png': 'Descobridor (curiosidades e investigação)',
+    'avatars/prof-ale_pensador.png': 'Pensador (atenção e desafios)',
+    'avatars/prof-ale_comemorador-conquista.png': 'Conquista (síntese e conclusão)',
+    'avatars/prof-ale_comemorador-trofeu.png': 'Troféu (fechamento)',
+  };
+  const CALLOUT_POSE = {
+    dica: 'avatars/prof-ale_tablet-caneta.png',
+    sabia: 'avatars/prof-ale_descobridor.png',
+    atencao: 'avatars/prof-ale_pensador.png',
+    prova: 'avatars/prof-ale_confiante.png',
+  };
+
   const COVER_CSS = [
-    '.mlclean{--c1:#1e6fd9;--c2:#22a559;--c3:#f28a1f;--c4:#e0457b;--c5:#7a4bd1;--bg:#fffdf8;--tt:#14264f;--ac:#f2b705;box-sizing:border-box;width:794px;max-width:100%;min-height:1100px;margin:0 auto;padding:42px 48px 36px;background:radial-gradient(circle at 88% 12%,rgba(242,183,5,.14) 0%,transparent 38%),radial-gradient(circle at 12% 88%,rgba(30,111,217,.10) 0%,transparent 42%),var(--bg);border:4px solid var(--tt);border-radius:16px;display:flex;flex-direction:column;justify-content:space-between;font-family:"Nunito","Segoe UI",Arial,sans-serif;color:var(--tt);-webkit-print-color-adjust:exact;print-color-adjust:exact}',
-    '.mlclean-top{display:flex;align-items:center;justify-content:space-between;gap:16px;border-bottom:3px solid var(--ac);padding-bottom:18px}',
-    '.mlclean-logo{max-height:76px;max-width:210px;object-fit:contain;border-radius:10px}',
-    '.mlclean-brand{font-family:"Fredoka",sans-serif;font-size:15px;font-weight:700;color:var(--tt);letter-spacing:.6px;text-transform:uppercase;text-align:right}',
-    '.mlclean-brand small{display:block;font-family:"Caveat",cursive;font-size:20px;font-weight:700;color:#b87700;text-transform:none;letter-spacing:0}',
-    '.mlclean-mid{text-align:center;padding:24px 10px}',
-    '.mlclean-pills{display:inline-flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:18px}',
-    '.mlclean-pills span{background:#eef4ff;border:2px solid var(--tt);border-radius:99px;padding:4px 14px;font-size:13px;font-weight:800;color:var(--tt)}',
-    '.mlclean-title{margin:0 auto 14px;max-width:650px;font-family:"Fredoka","Trebuchet MS",sans-serif;font-weight:700;font-size:48px;line-height:1.08;color:var(--tt);text-shadow:2px 2px 0 var(--ac)}',
-    '.mlclean-sub{margin:0 auto 28px;max-width:600px;font-family:"Caveat","Patrick Hand",cursive;font-size:30px;line-height:1.18;color:#2c4a8f;font-weight:700}',
-    '.mlclean-avatar-wrap{display:inline-flex;flex-direction:column;align-items:center;gap:10px;background:#fff;border:3px solid var(--tt);border-radius:22px;padding:18px 28px;box-shadow:6px 6px 0 var(--ac)}',
-    '.mlclean-avatar{width:148px;height:148px;border-radius:50%;object-fit:cover;object-position:top center;border:4px solid var(--ac);box-shadow:0 4px 14px rgba(20,38,79,.18)}',
-    '.mlclean-author{font-family:"Caveat","Patrick Hand",cursive;font-size:28px;font-weight:700;color:var(--tt);line-height:1.1}',
-    '.mlclean-visual{display:flex;justify-content:center;margin:6px 0 18px}.mlclean-art{margin:0;width:100%}.mlclean-art img{display:block;width:100%;max-height:520px;object-fit:cover;border-radius:18px;border:3px solid var(--tt);box-shadow:6px 6px 0 var(--ac)}',
-    '.mlclean-role{font-size:12.5px;font-weight:700;color:#55607a;letter-spacing:.3px}',
-    '.mlclean-bot{display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:2px dashed #b9c3d9;padding-top:14px;font-size:12.5px;color:#55607a;font-weight:700}',
-    '@media print{.mlclean{width:210mm;min-height:296mm;border-radius:0;padding:18mm 18mm 14mm}}',
-    '@media(max-width:620px){.mlclean{padding:24px 18px;min-height:0}.mlclean-title{font-size:34px}.mlclean-sub{font-size:24px}}',
+    '.mlclean{--c1:#1e6fd9;--c2:#22a559;--c3:#f28a1f;--c4:#e0457b;--c5:#7a4bd1;--bg:#fbf8f1;--tt:#0d2b5b;--ac:#f7b500;box-sizing:border-box;width:794px;max-width:100%;min-height:1100px;margin:0 auto;padding:0;background:radial-gradient(rgba(13,43,91,.045) 1px,transparent 1px) 0 0/22px 22px,var(--bg);border:1px solid #d5dce8;border-radius:14px;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;font-family:"Nunito","Segoe UI",Arial,sans-serif;color:var(--tt);box-shadow:0 12px 34px rgba(13,43,91,.12);-webkit-print-color-adjust:exact;print-color-adjust:exact}',
+    '.mlclean-top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:24px 44px;background:var(--tt);color:#fff;border-bottom:6px solid var(--ac);position:relative}',
+    '.mlclean-top::after{content:"";position:absolute;right:0;top:0;bottom:0;width:120px;background:linear-gradient(135deg,transparent 48%,rgba(247,181,0,.16) 48%)}',
+    '.mlclean-logo{max-height:58px;max-width:185px;object-fit:contain;border-radius:8px;background:#fff;padding:4px 8px;position:relative;z-index:1}',
+    '.mlclean-brand{font-family:"Fredoka","Nunito",sans-serif;font-size:14px;font-weight:700;color:#fff;letter-spacing:1.1px;text-transform:uppercase;text-align:right;position:relative;z-index:1}',
+    '.mlclean-brand small{display:block;font-family:"Nunito",sans-serif;font-size:12px;font-weight:700;color:var(--ac);text-transform:none;letter-spacing:.3px;margin-top:2px}',
+    '.mlclean-mid{flex:1;display:flex;flex-direction:column;justify-content:center;padding:38px 48px 28px;text-align:left}',
+    '.mlclean-pills{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}',
+    '.mlclean-pills span{background:#fff;border:1.5px solid var(--tt);border-radius:6px;padding:4px 12px;font-size:12px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:var(--tt)}',
+    '.mlclean-pills span:first-child{background:var(--ac);border-color:var(--ac);color:var(--tt)}',
+    '.mlclean-title{margin:0 0 12px;max-width:680px;font-family:"Fredoka","Nunito","Trebuchet MS",sans-serif;font-weight:700;font-size:46px;line-height:1.06;letter-spacing:-.4px;color:var(--tt)}',
+    '.mlclean-sub{margin:0 0 26px;max-width:620px;font-family:"Nunito","Segoe UI",sans-serif;font-size:20px;line-height:1.38;color:#33486e;font-weight:600;border-left:4px solid var(--ac);padding-left:14px}',
+    '.mlclean-visual{margin:4px 0 26px}',
+    '.mlclean-art{margin:0;width:100%}.mlclean-art img{display:block;width:100%;max-height:470px;object-fit:cover;border-radius:14px;border:2px solid var(--tt);box-shadow:0 10px 24px rgba(13,43,91,.16)}',
+    '.mlclean-stage{display:grid;grid-template-columns:180px 1fr;gap:24px;align-items:center;background:#fff;border:1.5px solid #cfd8e8;border-top:5px solid var(--c1);border-radius:14px;padding:24px 26px;box-shadow:0 8px 22px rgba(13,43,91,.07)}',
+    '.mlclean-emblem{display:flex;align-items:center;justify-content:center;width:154px;height:154px;margin:0 auto}',
+    '.mlclean-character{margin:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(160deg,#eef4ff,#fff7dc);border:2px solid var(--ac);border-radius:14px;padding:8px}',
+    '.mlclean-character img{display:block;width:154px;height:154px;object-fit:contain}',
+    '.mlclean-obj-kicker{font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.9px;color:#9a4600;margin:0 0 8px}',
+    '.mlclean-obj-list{margin:0;padding-left:18px;font-size:14.5px;line-height:1.48;color:#1d2b44}.mlclean-obj-list li{margin:5px 0}',
+    '.mlclean-author-bar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:auto;padding-top:18px;border-top:2px solid #d9e1ef}',
+    '.mlclean-author{font-family:"Fredoka","Nunito",sans-serif;font-size:21px;font-weight:700;color:var(--tt);line-height:1.15}',
+    '.mlclean-role{font-size:12.5px;font-weight:700;color:#4d5d7e;letter-spacing:.2px;margin-top:2px}',
+    '.mlclean-bot{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 44px;background:#eef3fb;border-top:1.5px solid #cfd8e8;font-size:12.5px;color:#33486e;font-weight:700}',
+    '@media print{.mlclean{width:210mm;min-height:296mm;border-radius:0;border:0;box-shadow:none}.mlclean-mid{padding:14mm 16mm 10mm}.mlclean-top,.mlclean-bot{padding-left:16mm;padding-right:16mm}}',
+    '@media(max-width:620px){.mlclean{min-height:0}.mlclean-top,.mlclean-mid,.mlclean-bot{padding-left:18px;padding-right:18px}.mlclean-title{font-size:32px}.mlclean-sub{font-size:17px}.mlclean-stage{grid-template-columns:1fr;text-align:center}.mlclean-obj-list{text-align:left}}',
   ].join('\n');
 
   const POSTER_CSS = [
@@ -747,12 +772,22 @@
     const p = m.poster || {};
     const auth = String(p.author || m.author || DEFAULT_AUTHOR).trim();
     const title = (p && p.title) || m.title || 'Material Didático';
-    const sub = (p && p.subtitle) || (m.topic && m.topic !== title ? m.topic : 'Material didático visual');
+    const sub = (p && p.subtitle) || (m.topic && m.topic !== title ? m.topic : 'Caderno de estudo e mediação pedagógica');
     const lg = logoHtml(p.logoChoice, 'mlclean-logo');
-    // A capa nunca leva foto nem avatar do autor. Com arte (feita pela IA, sem texto) ela vira a ilustração da capa; sem arte, o emblema da área.
-    const coverVisual = coverArtOk(p.coverArt)
-      ? '<figure class="mlclean-art"><img src="' + esc(p.coverArt) + '" alt="' + esc(p.coverArtAlt || 'Ilustração da capa: ' + title) + '"></figure>'
-      : '<div class="mlclean-emblem" style="width:150px;height:150px">' + emblemFor(m.epistemicType || 'geral', 150) + '</div>';
+    const objs = (m.objectives || []).slice(0, 3);
+    const objHtml = objs.length
+      ? '<div><p class="mlclean-obj-kicker">Objetivos de aprendizagem</p><ul class="mlclean-obj-list">' + objs.map((o) => '<li>' + esc(o) + '</li>').join('') + '</ul></div>'
+      : '<div><p class="mlclean-obj-kicker">Caderno Editorial</p><p style="margin:0;font-size:14.5px;line-height:1.5;color:#33486e">' + esc(EPISTEMIC[m.epistemicType] ? EPISTEMIC[m.epistemicType].label : 'Material didático estruturado') + '</p></div>';
+    // A capa nunca leva foto pessoal do autor. Com arte anexada, exibe a ilustração; com personagem editorial ativado, exibe o Professor Alê cartoon; no padrão Clean, exibe o emblema editorial + objetivos.
+    let coverVisual;
+    if (coverArtOk(p.coverArt)) {
+      coverVisual = '<figure class="mlclean-art"><img src="' + esc(p.coverArt) + '" alt="' + esc(p.coverArtAlt || 'Ilustração da capa: ' + title) + '"></figure>';
+    } else if (p.showCharacter === true) {
+      const pose = CHARACTER_POSES[p.characterPose] ? p.characterPose : 'avatars/prof-ale_confiante.png';
+      coverVisual = '<div class="mlclean-stage"><figure class="mlclean-character"><img src="' + assetSrc(pose) + '" alt="Personagem editorial Professor Alê"></figure>' + objHtml + '</div>';
+    } else {
+      coverVisual = '<div class="mlclean-stage"><div class="mlclean-emblem">' + emblemFor(m.epistemicType || 'geral', 148) + '</div>' + objHtml + '</div>';
+    }
     const profLabel = m.contentProfile === 'expositivo' ? 'Expositivo' : m.contentProfile === 'expositivo_visual' ? 'Expositivo Visual' : m.contentProfile === 'pratica' ? 'Prática' : 'Completo';
     const pills = [m.discipline, m.level, profLabel].filter(Boolean).map((x) => '<span>' + esc(x) + '</span>').join('');
     return '<article class="mlclean" style="' + themeStyle(p.theme) + '">' +
@@ -761,7 +796,7 @@
       '<h1 class="mlclean-title">' + esc(title) + '</h1>' +
       '<p class="mlclean-sub">' + esc(sub) + '</p>' +
       '<div class="mlclean-visual">' + coverVisual + '</div>' +
-      '<div class="mlclean-author">' + esc(auth) + '</div><div class="mlclean-role">Autoria Docente · MathLab Educação</div></section>' +
+      '<div class="mlclean-author-bar"><div><div class="mlclean-author">' + esc(auth) + '</div><div class="mlclean-role">Autoria Docente · MathLab Educação</div></div></div></section>' +
       '<footer class="mlclean-bot"><span>' + (m.duration ? '⏱️ ' + esc(m.duration) : 'Material de Apoio Pedagógico') + '</span><span>' + esc(estadoRevisao(m).texto) + '</span></footer>' +
       '</article>';
   }
@@ -815,23 +850,39 @@
     return L.join('\n');
   }
 
-  /* Prompt só da ARTE da capa: sem texto, sem pessoa. O título, o subtítulo e o autor o site escreve em HTML (sem erro de letra). */
+  /* Prompt editorial de alta qualidade para a ARTE da capa (sem texto — o site compõe título, subtítulo e autoria em HTML). */
   function buildCoverPrompt(m) {
     const p = m.poster || {};
     const tema = String(m.topic || m.title || p.title || 'o tema da aula').trim();
     const nivel = [m.discipline, m.level].filter(Boolean).join(', ');
     const th = (POSTER_THEMES[p.theme] || POSTER_THEMES.alegre);
-    return [
-      'Crie a ILUSTRAÇÃO DE CAPA de um material didático sobre "' + tema + '"' + (nivel ? ' (' + nivel + ', escola pública brasileira)' : '') + '.',
-      'Formato: retrato, proporção 3:4, 1200 por 1600 pixels. Composição centrada e legível de longe, sem detalhes pequenos; o título fica fora da imagem, o site escreve em volta dela.',
-      'Mostre uma ÚNICA cena ou metáfora visual forte do assunto, em ilustração educacional plana, traço limpo, cores sólidas, alto contraste, boa leitura em impressão preto e branco. Use objetos e símbolos do próprio tema; nada de fotografia.',
-      'Paleta: azul-marinho (#14264F) como base, amarelo (#F2B705) como destaque' + (th && th.nome ? ', combinando com o tema de cores "' + th.nome + '"' : '') + ', fundo claro.',
-      'PROIBIDO na imagem: qualquer texto, letra, número, fórmula ou legenda; logotipos e marcas; rostos, pessoas, personagens, mascotes e fotos de pessoas reais; molduras e bordas desenhadas.',
-      'Entregue só a imagem, em PNG ou JPEG.'
-    ].join('\n');
+    const objs = (m.objectives || []).slice(0, 2).join('; ');
+    const epiVisual = {
+      formal: 'composição geométrica editorial contemporânea com formas precisas, camadas translúcidas, proporções arquitetônicas e metáforas matemáticas visuais (sem escrever números nem fórmulas)',
+      empirica: 'ilustração científica editorial moderna mostrando o fenômeno e o modelo em corte visual limpo, com instrumentos, escalas e elementos naturais estilizados',
+      interpretativa: 'ilustração conceitual editorial de capa de livro (estilo revista literária/filosófica), metáfora visual forte com contraste de luz e sombra e simbolismo cultural',
+      historica: 'ilustração editorial histórica em camadas temporais, objetos de época, mapas estilizados e arquitetura simbólica sem estereótipos',
+      linguistica: 'composição editorial tipográfico-visual (sem palavras legíveis), metáforas de narrativa, voz, leitura e diálogo em camadas cromáticas limpas',
+      pratica: 'ilustração editorial técnica e dinâmica mostrando ferramentas, movimento, engrenagens ou fluxo prático em perspectiva isométrica limpa',
+      geral: 'ilustração editorial contemporânea de capa de livro didático, metáfora visual clara e memorável do conceito central'
+    }[m.epistemicType || 'geral'] || 'ilustração editorial contemporânea de capa de livro didático';
+    const wantChar = p.showCharacter === true || (p.profAleDiscipline && PROFESSOR_ALE_IDENTITY.disciplines[p.profAleDiscipline]);
+    const charCtx = wantChar ? getProfessorAleContext(m.discipline, p.profAleDiscipline && p.profAleDiscipline !== 'none' ? p.profAleDiscipline : '') : null;
+    const lines = [
+      'Crie uma ILUSTRAÇÃO DE CAPA de nível editorial (livro didático contemporâneo / revista científica de referência) sobre "' + tema + '"' + (nivel ? ' (' + nivel + ')' : '') + '.',
+      objs ? 'Conceitos-chave que a metáfora visual deve evocar: ' + objs + '.' : '',
+      'Direção de arte: ' + epiVisual + '. Estilo ilustração editorial moderna (acabamento vetorial-guache sutil, formas nítidas, profundidade por planos, iluminação suave e direcional, composição assimétrica equilibrada com área de respiro). Nada de clip-art infantil genérico, nada de fotografia e nada de 3D plástico.',
+      'Formato: retrato, proporção 3:4, 1200 × 1600 px, enquadramento limpo e legível de longe (o título e a autoria ficam fora da arte, compostos em HTML pelo site).',
+      'Paleta editorial obrigatória: azul-marinho profundo (#0D2B5B) como âncora, amarelo-ouro (#F7B500) como ponto focal, papel creme (#F8F3E6) como fundo de respiro' + (th && th.nome ? ', harmonizado com o tema "' + th.nome + '"' : '') + '. Alto contraste para tela e impressão A4.',
+      wantChar
+        ? 'PERSONAGEM OPCIONAL ATIVADO: inclua o personagem editorial Professor Alê (' + charCtx.label + ') — ' + charCtx.visual + '. Traços consistentes: óculos, cabelo curto, estilo cartoon editorial sofisticado, integrado naturalmente à cena (nunca foto real). PROIBIDO: qualquer texto, letra, número, fórmula, legenda, logotipo ou marca d\'água.'
+        : 'PROIBIDO na imagem: qualquer texto, letra, número, fórmula ou legenda; logotipos e marcas; rostos, pessoas, personagens, mascotes e fotos de pessoas reais; molduras ou bordas desenhadas.',
+      'Entregue somente a imagem final, em PNG ou JPEG de alta resolução.'
+    ];
+    return lines.filter(Boolean).join('\n');
   }
 
-  /* ---------- Pedido para colar no Gem/Claude/ChatGPT (modo sem custo) ---------- */
+  /* ---------- Pedido para colar no Gem/Claude/ChatGPT (modo sem custo — alinhado à APB v2.0.0) ---------- */
   function buildRequestText(r) {
     r = r || {};
     const t = r.type && r.type !== 'auto' ? r.type : detectType(r.discipline);
@@ -846,10 +897,10 @@
     const exclSecs = SECTION_CATALOG.filter((x) => !selSecs.some((s) => s[0] === x[0]));
     const noEx = !selSecs.some((x) => x[0] === 'exercicios') && !selSecs.some((x) => x[0] === 'gabarito');
     return [
-      'Use o MathLab Aulas Visuais para criar um material didático.',
+      'Use o MathLab Aulas Visuais + Arquitetura Pedagógica Brasileira (v2.0.0) para criar um material didático substantivo e rigoroso.',
       'Autor: ' + auth,
-      'Fundamento da organização pedagógica: Psicologia Histórico-Cultural (Vigotski, Luria, Leontiev — ZDP, mediação semiótica e progressão dos conceitos cotidianos aos científicos; sem confundir ZDP com scaffolding de Wood, Bruner & Ross, 1976).',
-      'Princípio epistemológico: a Psicologia Histórico-Cultural fundamenta a organização pedagógica, mas NÃO substitui a epistemologia, os métodos nem os critérios de rigor próprios da disciplina.',
+      'Fundamento pedagógico: Psicologia Histórico-Cultural (Vigotski, Luria, Leontiev — ZDP, mediação semiótica e articulação entre conceitos cotidianos e científicos; nunca atribua scaffolding a Vigotski) articulada aos três planos da APB sem fusão indevida de teorias.',
+      'Princípio epistemológico: a mediação pedagógica NÃO substitui a epistemologia, os métodos nem os critérios de rigor próprios da disciplina.',
       'Disciplina: ' + (r.discipline || '[informe]'),
       'Epistemologia / Tipo de conhecimento: ' + EPISTEMIC[t].label + (r.type && r.type !== 'auto' ? ' (definido manualmente)' : ' (detectado pela disciplina)'),
       'Etapa de ensino: ' + (r.level || '[informe]'),
@@ -865,9 +916,14 @@
       'Seções selecionadas (incluir): ' + selSecs.map((x) => x[1]).join(', ') + '.',
       exclSecs.length ? 'Seções NÃO selecionadas (não incluir): ' + exclSecs.map((x) => x[1]).join(', ') + '.' : '',
       noEx ? 'ATENÇÃO: O professor desmarcou exercícios e gabarito — NÃO inclua lista de exercícios nem gabarito.' : '',
-      'Extensão do miolo: SEM limite máximo de páginas — desenvolva com profundidade adequada ao tema e à duração.',
+      'Padrão obrigatório de qualidade do conteúdo:',
+      '  1. Zero frases genéricas de enchimento; cada bloco deve ensinar o objeto em sua estrutura conceitual, com subtítulos, listas, tabelas e exemplos contrastantes.',
+      '  2. Mediação observável: inclua perguntas concretas que o professor pode fazer e analise erros típicos como indícios do pensamento do estudante.',
+      '  3. Exemplos resolvidos passo a passo (justificando cada passagem, não só dando a resposta final) e gabarito comentado conferido quando houver exercícios.',
+      '  4. Recursos visuais que realmente ensinam: inclua ao menos 1 figura SVG limpa com <title> e <desc> (reta numérica, esquema, diagrama, linha do tempo ou mapa conceitual) quando ajudar a compreender o conceito.',
+      '  5. Extensão do miolo: SEM limite máximo de páginas — desenvolva com a profundidade real que o tema e a duração exigem.',
       r.objectives ? 'Objetivos desejados: ' + r.objectives : '',
-      'Entregue o material (com caixas de destaque nos blocos) e a apostila visual (capa em pôster com author "' + auth + '") no formato ' + SCHEMA + '.',
+      'Entregue o material (com 3 a 6 caixas de destaque "callout" nos blocos) e o pôster resumo (author "' + auth + '") no formato ' + SCHEMA + '.',
       'Responda SOMENTE com um bloco de código JSON válido, sem texto antes nem depois.',
       'Não invente referências; se não pesquisou, deixe "references" vazio e declare a limitação em "limitations".',
     ].filter(Boolean).join('\n');
@@ -941,6 +997,8 @@
       m.poster = {
         title: String(p.title || m.title), subtitle: String(p.subtitle || ''), author: String(p.author || m.author || DEFAULT_AUTHOR), mascot: String(p.mascot || ''),
         coverClean: p.coverClean !== false,
+        showCharacter: p.showCharacter === true,
+        characterPose: CHARACTER_POSES[p.characterPose] ? p.characterPose : 'avatars/prof-ale_confiante.png',
         openingInfographic: p.openingInfographic === true,
         profAleDiscipline: PROFESSOR_ALE_IDENTITY.disciplines[p.profAleDiscipline] ? p.profAleDiscipline : 'none',
         interiorStyle: INTERIOR_STYLES[p.interiorStyle] ? p.interiorStyle : (isLegacy ? 'ludico' : 'editorial'),
@@ -1512,6 +1570,7 @@
     '.mlc .math{font-family:Cambria,"Times New Roman",serif;font-style:italic;background:#fff3b8;padding:0 4px;border-radius:3px}',
     '.mlc .fig{text-align:center;margin:10px 0;padding:10px;border:2px dashed var(--c);border-radius:12px;background:#fcfdff}.mlc .fig svg{max-width:100%;height:auto}',
     '.mlco{border-radius:12px;padding:9px 13px;margin:10px 0 2px;border:2.5px solid var(--tt);font-size:13.5px;line-height:1.42;box-shadow:2px 2px 0 var(--tt)}',
+    '.mlco-char{display:flex;align-items:center;gap:12px}.mlco-char img{width:54px;height:54px;object-fit:contain;flex:0 0 54px;border-radius:10px;background:rgba(255,255,255,.7);padding:2px}',
     '.mlco h4{margin:0 0 3px;font-family:"Fredoka","Trebuchet MS",sans-serif;font-size:15.5px;letter-spacing:.2px}',
     '.mlco.gold{background:#fff3b8}.mlco.know{background:#dff3ff}.mlco.warn{background:#ffe0dc;border-color:#d6453d}.mlco.warn h4{color:#d6453d}.mlco.prova{background:#efe6ff;border-color:#7a4bd1}.mlco.prova h4{color:#7a4bd1}',
     '.mlinfo{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}.mlinfo span{background:#fff;border:2.5px solid var(--tt);border-radius:10px;padding:4px 11px;font-size:12.5px;font-weight:800;color:var(--tt)}',
@@ -1637,11 +1696,19 @@
     /* páginas de conteúdo: empacota por peso */
     let cur = null, w = 0, n = 0;
     const open = () => { cur = { kind: 'content', html: '@@HEAD@@', title: '', items: [] }; pages.push(cur); w = 0; };
+    const useChar = !!(m.poster && m.poster.showCharacter === true);
+    const calloutHtml = (kind, textHtml, extraCls) => {
+      const c = CALLOUTS[kind] || CALLOUTS.dica;
+      const pose = useChar ? CALLOUT_POSE[kind] || 'avatars/prof-ale_confiante.png' : '';
+      return '<div class="mlco ' + c[1] + (extraCls ? ' ' + extraCls : '') + (pose ? ' mlco-char' : '') + '">' +
+        (pose ? '<img src="' + assetSrc(pose) + '" alt="Professor Alê — ' + esc(c[0]) + '">' : '') +
+        '<div><h4>' + c[0] + '</h4>' + textHtml + '</div></div>';
+    };
     m.blocks.forEach((b) => {
       const bw = blockWeight(b);
       if (!cur || (w > 0 && w + bw > BUDGET)) open();
       n += 1; w += bw;
-      const co = b.callout ? '<div class="mlco ' + CALLOUTS[b.callout.kind][1] + '"><h4>' + CALLOUTS[b.callout.kind][0] + '</h4>' + inline(b.callout.text) + '</div>' : '';
+      const co = b.callout ? calloutHtml(b.callout.kind, inline(b.callout.text), '') : '';
       cur.html += card(n, BLOCK_TYPES[b.type][1], b.title, renderMarkdown(b.content) + (b.svg ? '<div class="fig">' + sanitizeSvg(b.svg) + '</div>' : '') + renderBlockImageHtml(b.image) + co, BLOCK_COLOR[b.type] || 1, b.title, BLOCK_PEDAGOGY[b.type] || '');
       cur.items.push({ n: n, title: b.title });
     });
@@ -1650,8 +1717,8 @@
     let fin = '@@HEAD@@<h2 class="mlh2">Em resumo e síntese</h2>';
     const sm = (m.poster && m.poster.summary) || [];
     if (sm.length) fin += '<div class="mlsum mlmove">' + sm.map((s) => '<div><i>' + esc(s.icon || '⭐') + '</i><strong>' + esc(s.label) + '</strong>' + esc(s.text || '') + '</div>').join('') + '</div>';
-    if (m.poster && m.poster.goldTip) fin += '<div class="mlco gold mlmove"><h4>' + CALLOUTS.dica[0] + '</h4>' + esc(m.poster.goldTip) + '</div>';
-    if (m.poster && m.poster.attention) fin += '<div class="mlco warn mlmove"><h4>' + CALLOUTS.atencao[0] + '</h4>' + esc(m.poster.attention) + '</div>';
+    if (m.poster && m.poster.goldTip) fin += calloutHtml('dica', esc(m.poster.goldTip), 'mlmove');
+    if (m.poster && m.poster.attention) fin += calloutHtml('atencao', esc(m.poster.attention), 'mlmove');
     fin += '<div class="mlsynth mlmove"><h3>✍️ Minha Síntese (Registro do Estudante)</h3>' +
       '<div class="mlsynth-q">1. O que eu já percebia no dia a dia sobre este tema:</div><div class="mlsynth-line"></div>' +
       '<div class="mlsynth-q">2. A ideia científica principal que aprendi hoje:</div><div class="mlsynth-line"></div>' +
@@ -2059,5 +2126,5 @@
     return changes;
   }
 
-  return { BLUEPRINT_SCHEMA, UNIT_SCHEMA, estadoAcumulado, buildBlueprintRequest, normalizeBlueprint, importBlueprint, hashBlueprint, estadoBlueprint, approveBlueprint, proximaUnidade, buildUnitRequest, applyUnit, problemasParaReparo, buildRepairPrompt, applyRepair, REPAIR_SCHEMA, avisosDeImportacao, VERSION, SCHEMA, hashConteudo, estadoRevisao, DEFAULT_AUTHOR, REGISTROS, DESTINATARIOS, INTERIOR_STYLES, AVATAR_OPTIONS, LOGO_OPTIONS, EDITORIAL_IDENTITY, PROFESSOR_ALE_IDENTITY, PROFESSOR_ALE_DISCIPLINE_LABELS, getProfessorAleContext, BLOCK_PEDAGOGY, CONTENT_PROFILES, SECTION_CATALOG, PROFILE_SECTIONS, STAGE_PROFILES, calibrateStage, emblemFor, epistemicEmblemSvg: emblemFor, EPISTEMIC, BLOCK_TYPES, POSTER_THEMES, COVER_CSS, POSTER_CSS, INFOGRAPHIC_CSS, DOC_CSS, VISUALS, esc, uid, wc, clone, detectType, sanitizeSvg, renderMathExpr, getKatexStyleTag, renderMarkdown, renderCleanCover, renderPoster, renderOpeningInfographic, buildImagePrompt, buildCoverPrompt, coverArtOk, normalizeBridgeImage, renderBlockImageHtml, buildRequestText, normalize, fromV2, parseModelJson, importFromText, audit, toMarkdown, toHTML, toApostila, CALLOUTS, scaffold, demo, demoHistoria, diffMaterialBlocks, slidePlan, toSlides, BANK_SCHEMA, extrairQuestoes, bancoDeQuestoes, listaDeExercicios };
+  return { BLUEPRINT_SCHEMA, UNIT_SCHEMA, estadoAcumulado, buildBlueprintRequest, normalizeBlueprint, importBlueprint, hashBlueprint, estadoBlueprint, approveBlueprint, proximaUnidade, buildUnitRequest, applyUnit, problemasParaReparo, buildRepairPrompt, applyRepair, REPAIR_SCHEMA, avisosDeImportacao, VERSION, SCHEMA, hashConteudo, estadoRevisao, DEFAULT_AUTHOR, REGISTROS, DESTINATARIOS, INTERIOR_STYLES, AVATAR_OPTIONS, CHARACTER_POSES, CALLOUT_POSE, LOGO_OPTIONS, EDITORIAL_IDENTITY, PROFESSOR_ALE_IDENTITY, PROFESSOR_ALE_DISCIPLINE_LABELS, getProfessorAleContext, BLOCK_PEDAGOGY, CONTENT_PROFILES, SECTION_CATALOG, PROFILE_SECTIONS, STAGE_PROFILES, calibrateStage, emblemFor, epistemicEmblemSvg: emblemFor, EPISTEMIC, BLOCK_TYPES, POSTER_THEMES, COVER_CSS, POSTER_CSS, INFOGRAPHIC_CSS, DOC_CSS, VISUALS, esc, uid, wc, clone, detectType, sanitizeSvg, renderMathExpr, getKatexStyleTag, renderMarkdown, renderCleanCover, renderPoster, renderOpeningInfographic, buildImagePrompt, buildCoverPrompt, coverArtOk, normalizeBridgeImage, renderBlockImageHtml, buildRequestText, normalize, fromV2, parseModelJson, importFromText, audit, toMarkdown, toHTML, toApostila, CALLOUTS, scaffold, demo, demoHistoria, diffMaterialBlocks, slidePlan, toSlides, BANK_SCHEMA, extrairQuestoes, bancoDeQuestoes, listaDeExercicios };
 });
