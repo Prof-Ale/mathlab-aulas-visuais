@@ -108,11 +108,17 @@ test('esquema aceita os campos novos e os exemplos usam só o que ele declara', 
   }
 });
 
+const normEol = (s) => String(s).replace(/\r\n/g, '\n');
+
 test('o UMD do site (js/portfolio.js) está em dia com tools/portfolio.mjs', () => {
-  const antes = fs.readFileSync(path.join(ROOT, 'js', 'portfolio.js'), 'utf8');
+  const arq = path.join(ROOT, 'js', 'portfolio.js');
+  const antesRaw = fs.readFileSync(arq, 'utf8');
   execFileSync(process.execPath, ['tools/build-v2-umd.js'], { cwd: ROOT });
-  const depois = fs.readFileSync(path.join(ROOT, 'js', 'portfolio.js'), 'utf8');
-  assert.equal(depois, antes, 'rode node tools/build-v2-umd.js e envie js/portfolio.js');
+  const depoisRaw = fs.readFileSync(arq, 'utf8');
+  if (antesRaw !== depoisRaw && normEol(antesRaw) === normEol(depoisRaw)) {
+    fs.writeFileSync(arq, antesRaw, 'utf8');
+  }
+  assert.equal(normEol(depoisRaw), normEol(antesRaw), 'rode node tools/build-v2-umd.js e envie js/portfolio.js');
   assert.equal(typeof P.PERFIS, 'object');
   for (const k of ['montarFlipbook', 'montarCorpo', 'montarHtml', 'verificar']) assert.equal(typeof P[k], 'function', k);
 });
@@ -120,7 +126,7 @@ test('o UMD do site (js/portfolio.js) está em dia com tools/portfolio.mjs', () 
 test('StPageFlip embutida: licença MIT presente e hash conferido', () => {
   const dir = path.join(ROOT, 'assets/vendor/page-flip');
   assert.match(fs.readFileSync(path.join(dir, 'LICENSE'), 'utf8'), /MIT License/);
-  const h = crypto.createHash('sha256').update(LIB).digest('hex');
+  const h = crypto.createHash('sha256').update(normEol(LIB), 'utf8').digest('hex');
   assert.equal(h, 'bbaca0bbef57a22bb66a3fc69d67baf9a17fb9a9c89ec9ed35e2b91abe4bd1e7');
 });
 

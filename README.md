@@ -213,7 +213,7 @@ As diretrizes visuais oficiais e a **Ficha Oficial do Personagem Professor Alê 
 
 ### Comandos
 ```bash
-npm test                                  # executa todas as 21 suítes em tests/
+npm test                                  # executa todas as 22 suítes em tests/
 npm run build                             # gera dist/mathlab-standalone.html
 npm run pdf -- --demo apostila-demo.pdf   # gera PDF acessível e reproduzível (requer Playwright)
 ```
@@ -229,9 +229,9 @@ Veja o passo a passo completo para configurar **Claude (Skill)**, **Gemini (Gem)
 
 ## Testes e limitações conhecidas
 
-- **Suíte automatizada:** `npm test` executa 21 arquivos de teste (`core`, `instrucoes`, `validacao`, `contrato`, `avisos`, `reparo`, `plano`, `app-bridge`, `pdf`, `dominios`, `livro`, `fontes`, `manifesto`, `capa-formulas`, `slides`, `banco`, `ortografia`, `revisor-portugues`, `portfolio-perfis`, `central-revisao`, `ui-ux-roadmap`). Os 2 testes end-to-end de geração de PDF em `tests/pdf.test.js` são ignorados automaticamente quando o `playwright` não está instalado.
+- **Suíte automatizada:** `npm test` executa 22 arquivos de teste (`core`, `instrucoes`, `validacao`, `contrato`, `avisos`, `reparo`, `plano`, `app-bridge`, `pdf`, `dominios`, `livro`, `fontes`, `manifesto`, `capa-formulas`, `slides`, `banco`, `ortografia`, `revisor-portugues`, `portfolio-perfis`, `central-revisao`, `ui-ux-roadmap`, `pptx-capa-personagem`). Os 2 testes end-to-end de geração de PDF em `tests/pdf.test.js` são ignorados automaticamente quando o `playwright` não está instalado.
 - **Limitações conhecidas:**
-  - Não exporta `.docx` nem `.pptx` neste repositório (disponíveis no App Node `mathlab-aulas-visuais-app`).
+  - Não exporta `.docx` neste repositório (disponível no App Node `mathlab-aulas-visuais-app`; apresentações `.pptx` 16:9 agora podem ser exportadas diretamente no navegador pela aba Exportar).
   - Persistência em `localStorage` depende do navegador/perfil local (use o backup JSON da Biblioteca).
   - No `npm run pdf`, emojis e alguns subscritos Unicode podem recorrer à fonte do sistema operacional.
   - A auditoria automática não substitui a revisão pedagógica e científica do professor.

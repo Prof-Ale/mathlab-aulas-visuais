@@ -275,6 +275,7 @@
   }
 
   function render() {
+    if (typeof document !== 'undefined' && document.body) document.body.classList.toggle('has-draft', !!S.draft);
     const main = $('#main');
     // Preservação sistemática de foco dentro de #main (F-03)
     const ae = document.activeElement;
@@ -574,7 +575,9 @@
     if (!p) return '<div class="card empty"><h2>Este material ainda não tem apostila visual</h2><p>A apostila visual é o pôster de uma página com caixas numeradas, dicas e resumo.</p><button class="b gold" data-a="mkposter">Criar apostila visual</button></div>';
     const L = C.EPISTEMIC[d.epistemicType].labels;
     return '<div class="two"><div class="card"><h2>Capa Clean & Folha de Rosto</h2><p class="muted">A Capa Clean abre a apostila (título, subtítulo, logo, ilustração e autor; nunca leva foto do autor); a Folha de Rosto traz o mapa visual com caixas curtas (até 25 palavras).</p>' +
-      '<label><input type="checkbox" style="width:auto" data-f="poster.coverClean"' + (p.coverClean !== false ? ' checked' : '') + '> Incluir Capa Clean (Página 1) antes da Folha de Rosto</label>' +
+      '<label><input type="checkbox" style="width:auto" data-f="poster.coverClean"' + (p.coverClean !== false ? ' checked' : '') + '> Incluir Capa Editorial Clean (Página 1) antes da Folha de Rosto</label>' +
+      '<label><input type="checkbox" style="width:auto" data-f="poster.showCharacter"' + (p.showCharacter ? ' checked' : '') + '> Usar personagem Professor Alê no material (capa editorial, caixas de destaque e prompt da capa)</label>' +
+      (p.showCharacter ? '<label for="ps-charpose">Pose do personagem Professor Alê na capa</label><select id="ps-charpose" data-f="poster.characterPose">' + Object.keys(C.CHARACTER_POSES).map((k) => '<option value="' + k + '"' + ((p.characterPose || 'avatars/prof-ale_confiante.png') === k ? ' selected' : '') + '>' + esc(C.CHARACTER_POSES[k]) + '</option>').join('') + '</select>' : '') +
       '<label><input type="checkbox" style="width:auto" data-f="poster.openingInfographic"' + (p.openingInfographic ? ' checked' : '') + '> Incluir Infográfico de Abertura (sequência editorial em 4 camadas: Capa → Folha de Rosto → Infográfico → Miolo)</label>' +
       '<label for="ps-avatar">Foto do autor em “Sobre o Autor” (a capa nunca leva foto)</label><select id="ps-avatar" data-f="poster.avatarChoice">' + Object.keys(C.AVATAR_OPTIONS).map((k) => '<option value="' + k + '"' + ((p.avatarChoice || 'none') === k ? ' selected' : '') + '>' + esc(C.AVATAR_OPTIONS[k]) + '</option>').join('') + '</select>' +
       '<label for="ps-profale">Variação contextual do Professor Alê por disciplina (opcional para prompt de imagem)</label><select id="ps-profale" data-f="poster.profAleDiscipline"><option value="none"' + ((!p.profAleDiscipline || p.profAleDiscipline === 'none') ? ' selected' : '') + '>Padrão editorial limpo (sem personagem no prompt)</option>' + Object.keys(C.PROFESSOR_ALE_DISCIPLINE_LABELS).map((k) => '<option value="' + k + '"' + (p.profAleDiscipline === k ? ' selected' : '') + '>' + esc(C.PROFESSOR_ALE_DISCIPLINE_LABELS[k]) + ' — ' + esc(C.PROFESSOR_ALE_IDENTITY.disciplines[k]) + '</option>').join('') + '</select>' +
@@ -698,7 +701,8 @@
       '<div class="exp-row"><div class="exp-meta"><b>Material simples em página corrida</b> <span class="exp-badge">Disponível neste navegador</span><br><span class="muted">Versão leve para impressão econômica sem capa em pôster.</span></div><div class="btns" style="margin:0"><button class="b ghost sm" data-a="dlhtml">📄 Baixar HTML</button><button class="b ghost sm" data-a="printall">🖨️ Imprimir</button></div></div>' +
       '<div class="exp-row"><div class="exp-meta"><b>PDF acessível marcado ou livro editorial (LaTeX/EPUB)</b> <span class="exp-badge cli">Requer programa no computador</span><br><span class="muted">PDF acessível: requer Node + Playwright (<code>npm run pdf</code>). Livro editorial via Pandoc/XeLaTeX: <b>atenção — o PDF gerado via LaTeX não é PDF/UA acessível para leitores de tela</b>; use a apostila ou o EPUB3 quando acessibilidade digital for prioridade.</span></div></div></div>' +
       '<div class="exp-group"><h3>📽️ Para projetar em sala</h3>' +
-      '<div class="exp-row"><div class="exp-meta"><b>Apresentação em sala (slides interativos)</b> <span class="exp-badge">Disponível neste navegador</span><br><span class="muted">HTML único offline com setas, índice (O) e tela cheia (F). Gabarito fora por padrão.</span></div><div class="btns" style="margin:0"><button class="b gold sm" data-a="openslides">▶️ Abrir apresentação</button><button class="b sm" data-a="dlslides">🎞️ Sem gabarito</button><button class="b ghost sm" data-a="dlslidesgab">🎞️ Com gabarito</button></div></div>' +
+      '<div class="exp-row"><div class="exp-meta"><b>Apresentação PowerPoint (.pptx)</b> <span class="exp-badge">Disponível neste navegador</span><br><span class="muted">Arquivo .pptx 16:9 editável para PowerPoint, LibreOffice Impress ou Google Slides (converte figuras SVG automaticamente).</span></div><div class="btns" style="margin:0"><button class="b gold sm" data-a="dlpptx">📊 Baixar PowerPoint (.pptx)</button><button class="b ghost sm" data-a="dlpptxgab">📊 .pptx com gabarito</button></div></div>' +
+      '<div class="exp-row"><div class="exp-meta"><b>Apresentação em sala (slides interativos HTML)</b> <span class="exp-badge">Disponível neste navegador</span><br><span class="muted">HTML único offline com setas, índice (O) e tela cheia (F). Gabarito fora por padrão.</span></div><div class="btns" style="margin:0"><button class="b sm" data-a="openslides">▶️ Abrir apresentação</button><button class="b ghost sm" data-a="dlslides">🎞️ Sem gabarito</button><button class="b ghost sm" data-a="dlslidesgab">🎞️ Com gabarito</button></div></div>' +
       '<div class="exp-row"><div class="exp-meta"><b>Pôster visual de 1 página</b> <span class="exp-badge">Disponível neste navegador</span><br><span class="muted">Mapa visual resumido para projetar ou afixar no mural da sala.</span></div><div class="btns" style="margin:0"><button class="b ghost sm" data-a="dlposter">🖼️ Baixar pôster</button></div></div></div>' +
       '<div class="exp-group"><h3>✏️ Para continuar editando e reaproveitar</h3>' +
       '<div class="exp-row"><div class="exp-meta"><b>Arquivo do material (para reimportar)</b> <span class="exp-badge">Disponível neste navegador</span><br><span class="muted">Guarda blocos, objetivos, referências e imagens para reabrir aqui ou no App.</span></div><div class="btns" style="margin:0"><button class="b ghost sm" data-a="dljson">💾 Baixar arquivo do material</button><button class="b ghost sm" data-a="dlmd">📝 Baixar Markdown</button></div></div>' +
@@ -1082,6 +1086,20 @@
     openslides: () => { markExported(); const u = URL.createObjectURL(new Blob([C.toSlides(S.draft)], { type: 'text/html;charset=utf-8' })); window.open(u, '_blank', 'noopener'); setTimeout(() => URL.revokeObjectURL(u), 60000); },
     dlslides: async () => { markExported(); dl(slug(S.draft.title) + '-slides.html', 'text/html', await inlineAssets(C.toSlides(S.draft))); },
     dlslidesgab: async () => { markExported(); dl(slug(S.draft.title) + '-slides-com-gabarito.html', 'text/html', await inlineAssets(C.toSlides(S.draft, { gabarito: true }))); },
+    dlpptx: async () => {
+      if (!window.MathLabPptx) { toast('Módulo PPTX indisponível.', true); return; }
+      markExported();
+      const blob = await window.MathLabPptx.toPptxBlob(S.draft, { gabarito: false });
+      const u = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = u; a.download = slug(S.draft.title) + '.pptx'; a.click(); setTimeout(() => URL.revokeObjectURL(u), 1500);
+      toast('Apresentação PowerPoint (.pptx) baixada.');
+    },
+    dlpptxgab: async () => {
+      if (!window.MathLabPptx) { toast('Módulo PPTX indisponível.', true); return; }
+      markExported();
+      const blob = await window.MathLabPptx.toPptxBlob(S.draft, { gabarito: true });
+      const u = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = u; a.download = slug(S.draft.title) + '-com-gabarito.pptx'; a.click(); setTimeout(() => URL.revokeObjectURL(u), 1500);
+      toast('Apresentação PowerPoint (.pptx com gabarito) baixada.');
+    },
     dlbanco: () => { markExported(); const b = C.bancoDeQuestoes(S.draft); dl(slug(S.draft.title) + '-banco-questoes.json', 'application/json', JSON.stringify(b, null, 2)); toast(b.total + ' questão(ões) extraída(s).'); },
     dllista: () => { markExported(); dl(slug(S.draft.title) + '-lista-exercicios.html', 'text/html', C.listaDeExercicios(C.bancoDeQuestoes(S.draft), { titulo: 'Lista de exercícios · ' + S.draft.title })); },
     dlbancolib: () => {
@@ -1144,6 +1162,10 @@
     if (el.dataset.form === 'type' || el.dataset.form === 'stageOverride') {
       S.form[el.dataset.form] = el.value;
       render(); return;
+    }
+    if (el.dataset.f === 'poster.showCharacter' || el.dataset.f === 'poster.characterPose' || el.dataset.f === 'poster.profAleDiscipline') {
+      setPath(el.dataset.f, el.type === 'checkbox' ? el.checked : el.value);
+      S.dirty = true; scheduleAutosave(); render(); return;
     }
     if ((el.type === 'checkbox' || el.type === 'file' || el.tagName === 'SELECT') && el.dataset.a && A[el.dataset.a]) A[el.dataset.a](el, e);
     else if (el.dataset.vis === 'kind') { S.vis.kind = el.value; S.vis.text = { numberLine: '-6, 6, -2, 5', timeline: '1789 | Revolução Francesa\n1822 | Independência do Brasil', flow: 'Observar\nFormular hipótese\nTestar\nConcluir', conceptMap: 'Tema central\nConceito A\nConceito B\nConceito C' }[el.value]; render(); }

@@ -220,16 +220,21 @@ html,body{overflow-x:clip}
 @media (pointer:coarse){button.b,label.b,button.b.sm,.subtab,.group-btn,.top-btn,summary{min-height:44px}}
 @media print{.top,.intro,.navzone,.continue-strip,.example-banner,.autosave-banner,.rev-strip,.foot,#toast{display:none!important}}
 
-/* Central de revisão */
-.rev-actions{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--gold);border-radius:12px;padding:12px 14px;margin-bottom:14px;box-shadow:var(--shadow)}
-.ra-next{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
-.ra-next .b{min-height:44px;font-size:1rem}
-.ra-nota{font-size:.82rem;color:var(--ink2);font-weight:700}
-.ra-btns{display:flex;flex-wrap:wrap;gap:6px}
-.ra-paste{margin-top:12px;border-top:1px dashed var(--line);padding-top:10px}
+/* Modo estúdio limpo: recolhe o hero quando há material aberto */
+body.has-draft .intro{display:none}
+body.has-draft .navzone{padding-top:10px}
+body.has-draft .group-desc{display:none}
+
+/* Central de revisão (compacta e limpa) */
+.rev-actions{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--gold);border-radius:10px;padding:10px 14px;margin-bottom:12px;box-shadow:var(--shadow)}
+.ra-next{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+.ra-next .b{min-height:38px;font-size:.92rem}
+.ra-nota{font-size:.8rem;color:var(--ink2);font-weight:700}
+.ra-btns{display:flex;flex-wrap:wrap;gap:6px;padding-top:8px;border-top:1px solid var(--line)}
+.ra-paste{margin-top:10px;border-top:1px dashed var(--line);padding-top:10px}
 .ra-paste textarea{width:100%}
-.ra-probs{margin-top:10px;font-size:.88rem}
-.ra-delta{margin-top:12px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--surface2)}
+.ra-probs{margin-top:8px;font-size:.86rem}
+.ra-delta{margin-top:10px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--surface2)}
 .ra-nums{display:flex;flex-wrap:wrap;gap:6px 16px;margin:6px 0;font-size:.9rem}
 .ra-delta details{margin:4px 0;font-size:.88rem}
 @media print{.rev-actions{display:none!important}}

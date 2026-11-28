@@ -21,7 +21,7 @@ html = html.replace(
   '<script src="assets/vendor/katex/katex.min.js"></script>',
   '<script>\n' + rd('assets/vendor/katex/katex.min.js').replace(/<\/script/gi, '<\\/script') + '\n</script>'
 );
-for (const s of ['js/racional.js', 'js/auditar-v2.js', 'js/portfolio.js', 'js/core.js', 'js/dominios.js', 'js/livro.js', 'js/fontes.js', 'js/app.js']) {
+for (const s of ['js/racional.js', 'js/auditar-v2.js', 'js/portfolio.js', 'js/core.js', 'js/pptx.js', 'js/dominios.js', 'js/livro.js', 'js/fontes.js', 'js/app.js']) {
   html = html.replace('<script src="' + s + '"></script>', '<script>\n' + rd(s).replace(/<\/script/gi, '<\\/script') + '\n</script>');
 }
 fs.mkdirSync(path.join(root, 'dist'), { recursive: true });
